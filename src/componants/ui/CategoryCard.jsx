@@ -43,14 +43,19 @@ const CategoryCard = ({
     return (
         <button
             className={`
-        flex flex-col items-center justify-center gap-2
+        flex flex-col items-center justify-center gap-3
         p-6 min-w-[140px] min-h-[140px]
-        bg-bg-section rounded-xl
-        border-2 transition-all duration-200
+        bg-white rounded-xl
+        border border-[#C4A77D] 
+        shadow-[0_2px_8px_rgba(122,74,46,0.12)]
+        transition-all duration-200
         cursor-pointer
+        hover:shadow-[0_4px_12px_rgba(122,74,46,0.18)]
+        hover:border-primary
+        hover:bg-[#FFFBF7]
         ${selected
-                    ? 'border-primary shadow-md'
-                    : 'border-transparent hover:border-border hover:shadow-md hover:bg-bg-card-hover'
+                    ? 'border-primary shadow-[0_4px_12px_rgba(122,74,46,0.18)] bg-[#FFFBF7]'
+                    : ''
                 }
         ${className}
       `}
@@ -69,7 +74,7 @@ const CategoryCard = ({
 
             {/* Category Name */}
             <h3 className={`
-        text-base font-medium text-center
+        text-base font-semibold text-center
         ${selected ? 'text-primary' : 'text-text-primary'}
         transition-colors duration-200
       `}>
@@ -78,7 +83,7 @@ const CategoryCard = ({
 
             {/* Book Count */}
             {bookCount !== undefined && (
-                <p className="text-sm text-text-sub">
+                <p className="text-sm text-text-sub font-medium">
                     {bookCount} cuốn sách
                 </p>
             )}
