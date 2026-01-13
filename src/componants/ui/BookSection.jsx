@@ -111,7 +111,7 @@ const BookSection = ({
                 <div
                     ref={scrollContainerRef}
                     onScroll={handleScroll}
-                    className="flex gap-4 overflow-x-auto scroll-smooth scrollbar-hide snap-x snap-mandatory"
+                    className="flex gap-4 md:gap-5 lg:gap-6 overflow-x-auto scroll-smooth scrollbar-hide snap-x snap-mandatory"
                     style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
                 >
                     {books.map((book) => (
@@ -136,8 +136,8 @@ const BookSection = ({
                             type="button"
                             onClick={() => scrollToPage(index)}
                             className={`w-2.5 h-2.5 rounded-full transition-all ${currentPage === index
-                                    ? 'bg-text-primary scale-110'
-                                    : 'bg-gray-300 hover:bg-gray-400'
+                                ? 'bg-text-primary scale-110'
+                                : 'bg-gray-300 hover:bg-gray-400'
                                 }`}
                             aria-label={`Trang ${index + 1}`}
                         />

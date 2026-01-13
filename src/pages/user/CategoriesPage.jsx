@@ -1,17 +1,12 @@
 // ==========================================
-// Page: CategoriesPage
-// Mô tả: Trang danh mục sách - hiển thị các thể loại
-// Vị trí: src/pages/user/CategoriesPage.jsx
-// ==========================================
-
-// ==========================================
 // Mock Data - Dữ liệu mẫu (sẽ thay bằng API sau)
 // ==========================================
 
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Header from '../../componants/layouts/Header';
 import CategoryCard from '../../componants/ui/CategoryCard';
+import BookSection from '../../componants/ui/BookSection';
 
 const CATEGORIES = [
     { id: 'lich-su', name: 'Lịch Sử', bookCount: 100 },
@@ -32,6 +27,23 @@ const CATEGORIES = [
     { id: 'truyen-tranh', name: 'Truyện Tranh', bookCount: 150 },
 ];
 
+// Mock books data cho mỗi category (6 cuốn mỗi loại)
+const SAMPLE_COVER = 'https://via.placeholder.com/200x280/FFF8F0/7D5B4F';
+
+const createSampleBooks = (categoryId, categoryName) => {
+    return Array.from({ length: 6 }, (_, i) => ({
+        id: `${categoryId}-${i + 1}`,
+        title: `${categoryName} ${i + 1}`,
+        author: 'Tác giả mẫu',
+        coverImage: `${SAMPLE_COVER}?text=${encodeURIComponent(categoryName)}+${i + 1}`,
+    }));
+};
+
+const SAMPLE_BOOKS = CATEGORIES.reduce((acc, cat) => {
+    acc[cat.id] = createSampleBooks(cat.id, cat.name);
+    return acc;
+}, {});
+
 // Số lượng category hiển thị mỗi trang (2 hàng x 4 cột)
 const ITEMS_PER_PAGE = 8;
 
@@ -45,6 +57,12 @@ const CategoriesPage = () => {
     // State quản lý trang hiện tại của carousel
     const [currentPage, setCurrentPage] = useState(0);
 
+    // State quản lý category đang chọn để xem quick view
+    const [selectedCategory, setSelectedCategory] = useState(null);
+
+    // Ref để scroll đến books section
+    const booksRef = useRef(null);
+
     // Tính tổng số trang
     const totalPages = Math.ceil(CATEGORIES.length / ITEMS_PER_PAGE);
 
@@ -54,10 +72,19 @@ const CategoriesPage = () => {
         return CATEGORIES.slice(startIndex, startIndex + ITEMS_PER_PAGE);
     };
 
-    // Xử lý khi click vào category
+    // Xử lý khi click vào category - Hiển thị quick view
     const handleCategoryClick = (categoryId) => {
-        // Điều hướng đến trang danh sách sách theo thể loại
-        navigate(`/categories/${categoryId}`);
+        const category = CATEGORIES.find(cat => cat.id === categoryId);
+        if (category) {
+            setSelectedCategory(category);
+            // Scroll xuống books section sau khi state update
+            setTimeout(() => {
+                booksRef.current?.scrollIntoView({
+                    behavior: 'smooth',
+                    block: 'start',
+                });
+            }, 100);
+        }
     };
 
     // Chuyển đến trang cụ thể
@@ -112,6 +139,17 @@ const CategoriesPage = () => {
                         </div>
                     )}
                 </section>
+
+                {/* Quick View Books Section - Hiển thị khi có category được chọn */}
+                {selectedCategory && (
+                    <section ref={booksRef} className="mt-8">
+                        <BookSection
+                            title={`Sách ${selectedCategory.name}`}
+                            books={SAMPLE_BOOKS[selectedCategory.id]}
+                            viewAllLink={`/categories/${selectedCategory.id}`}
+                        />
+                    </section>
+                )}
             </main>
         </div>
     );

@@ -75,11 +75,7 @@ const HeroSection = ({
                         centeredSlides={true}
                         loop={true}
                         initialSlide={5}
-                        speed={800}
-                        touchRatio={1.2}
-                        threshold={3}
-                        followFinger={true}
-                        cssMode={false}
+                        speed={600}
                         slidesPerView={5}
                         autoplay={{
                             delay: 3000,
@@ -93,8 +89,8 @@ const HeroSection = ({
                         coverflowEffect={{
                             rotate: 0,
                             stretch: 0,
-                            depth: 180,
-                            modifier: 1.5,
+                            depth: 120,
+                            modifier: 1,
                             slideShadows: false,
                         }}
                         breakpoints={{
@@ -103,7 +99,7 @@ const HeroSection = ({
                                 spaceBetween: 10,
                             },
                             640: {
-                                slidesPerView: 5,
+                                slidesPerView: 4,
                                 spaceBetween: 15,
                             },
                             1024: {
@@ -117,23 +113,20 @@ const HeroSection = ({
                             <SwiperSlide key={image.id || index}>
                                 {({ isActive }) => (
                                     <div
-                                        className="book-slide mx-auto"
+                                        className="book-slide"
                                         style={{
-                                            width: isActive ? '180px' : '120px',
-                                            height: isActive ? '260px' : '170px',
-                                            transform: isActive ? 'scale(1)' : 'scale(0.85)',
-                                            opacity: isActive ? 1 : 0.5,
-                                            transition: 'all 0.8s cubic-bezier(0.25, 0.1, 0.25, 1)',
-                                            zIndex: isActive ? 20 : 1,
+                                            transform: isActive ? 'scale(1.05)' : 'scale(0.85)',
+                                            opacity: isActive ? 1 : 0.7,
+                                            transition: 'all 0.5s ease-out',
                                         }}
                                     >
                                         {/* Book Cover */}
                                         <div
                                             className={`
-                                                w-full h-full rounded-lg overflow-hidden
-                                                transition-shadow duration-500
+                                                w-[170px] h-[250px] rounded-lg overflow-hidden
+                                                transition-all duration-500
                                                 ${isActive
-                                                    ? 'shadow-[0_25px_60px_rgba(0,0,0,0.6)] ring-4 ring-white/40'
+                                                    ? 'shadow-[0_20px_50px_rgba(0,0,0,0.6)] ring-4 ring-white/60'
                                                     : 'shadow-md'
                                                 }
                                             `}
@@ -158,10 +151,7 @@ const HeroSection = ({
                                                     `}
                                                 >
                                                     <svg
-                                                        className={`
-                                                            text-white/40 transition-all duration-500
-                                                            ${isActive ? 'w-16 h-16' : 'w-10 h-10'}
-                                                        `}
+                                                        className="w-14 h-14 text-white/40"
                                                         fill="currentColor"
                                                         viewBox="0 0 24 24"
                                                     >
@@ -199,14 +189,12 @@ const HeroSection = ({
                 
                 .hero-carousel .swiper-wrapper {
                     align-items: center;
-                    transition-timing-function: cubic-bezier(0.25, 0.1, 0.25, 1) !important;
                 }
                 
                 .hero-carousel .swiper-slide {
                     display: flex;
                     justify-content: center;
                     align-items: center;
-                    transition: all 0.8s cubic-bezier(0.25, 0.1, 0.25, 1);
                 }
                 
                 /* Book Slide Cursor */

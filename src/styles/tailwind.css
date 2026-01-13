@@ -110,3 +110,18 @@
         background-color: var(--color-bg-card-hover);
     }
 }
+
+/* =========================================================
+   ANIMATIONS
+   ========================================================= */
+@keyframes fadeSlideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}

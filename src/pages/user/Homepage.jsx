@@ -16,7 +16,7 @@ import BookSection from '../../componants/ui/BookSection';
 const SAMPLE_COVER = 'https://via.placeholder.com/200x280/FFF8F0/7D5B4F?text=Lịch+Sử+Việt+Nam';
 
 // Danh sách sách mẫu cho Hot list
-const hotListBooks = Array.from({ length: 12 }, (_, i) => ({
+const hotListBooks = Array.from({ length: 6 }, (_, i) => ({
     id: `hot-${i + 1}`,
     title: 'Lịch sử Việt Nam',
     author: 'Đào Duy Anh',
@@ -24,7 +24,7 @@ const hotListBooks = Array.from({ length: 12 }, (_, i) => ({
 }));
 
 // Danh sách sách mẫu cho Trinh Thám
-const detectiveBooks = Array.from({ length: 12 }, (_, i) => ({
+const detectiveBooks = Array.from({ length: 6 }, (_, i) => ({
     id: `detective-${i + 1}`,
     title: 'Lịch sử Việt Nam',
     author: 'Đào Duy Anh',
@@ -32,7 +32,7 @@ const detectiveBooks = Array.from({ length: 12 }, (_, i) => ({
 }));
 
 // Danh sách sách mẫu cho Khoa Học Viễn Tưởng
-const sciFiBooks = Array.from({ length: 12 }, (_, i) => ({
+const sciFiBooks = Array.from({ length: 6 }, (_, i) => ({
     id: `scifi-${i + 1}`,
     title: 'Lịch sử Việt Nam',
     author: 'Đào Duy Anh',
@@ -60,14 +60,14 @@ const Homepage = () => {
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
                     {/* Hot List Section */}
                     <BookSection
-                        title="Hot list"
+                        title="Mới nhất"
                         books={hotListBooks}
                         viewAllLink="/categories/hot"
                     />
 
                     {/* Trinh Thám Section */}
                     <BookSection
-                        title="Trinh Thám"
+                        title="Đề xuất"
                         books={detectiveBooks}
                         viewAllLink="/categories/detective"
                     />
