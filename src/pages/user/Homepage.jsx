@@ -7,6 +7,7 @@
 import Header from '../../componants/layouts/Header';
 import HeroSection from '../../componants/ui/HeroSection';
 import BookSection from '../../componants/ui/BookSection';
+import { useAuth } from '../../contexts/AuthContext';
 
 // ==========================================
 // Mock Data - Dữ liệu mẫu (sẽ thay bằng API sau)
@@ -43,6 +44,8 @@ const sciFiBooks = Array.from({ length: 6 }, (_, i) => ({
 // Homepage Component
 // ==========================================
 const Homepage = () => {
+    const { isAuthenticated } = useAuth();
+
     return (
         <div className="min-h-screen bg-bg-app">
             {/* Header / Navbar */}
@@ -65,12 +68,14 @@ const Homepage = () => {
                         viewAllLink="/categories/hot"
                     />
 
-                    {/* Trinh Thám Section */}
-                    <BookSection
-                        title="Đề xuất"
-                        books={detectiveBooks}
-                        viewAllLink="/categories/detective"
-                    />
+                    {/* Đề xuất Section - Chỉ hiển thị cho user đã đăng nhập */}
+                    {isAuthenticated && (
+                        <BookSection
+                            title="Đề xuất"
+                            books={detectiveBooks}
+                            viewAllLink="/categories/detective"
+                        />
+                    )}
 
                     {/* Khoa Học Viễn Tưởng Section */}
                     <BookSection

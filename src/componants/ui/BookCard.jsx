@@ -59,12 +59,12 @@ const BookCard = ({
                 </p>
 
                 {/* Borrow Button */}
-                <button
+                {/* <button
                     onClick={handleBorrowClick}
                     className="w-full py-1.5 px-3 bg-primary text-text-on-primary text-xs font-semibold rounded hover:bg-primary-hover transition-colors"
                 >
                     MƯỢN SÁCH
-                </button>
+                </button> */}
             </div>
         </div>
     );

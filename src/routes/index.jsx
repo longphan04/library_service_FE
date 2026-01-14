@@ -1,10 +1,14 @@
 // ==========================================
 // Routes Configuration
-// Mô tả: Cấu hình routing cho ứng dụng
+// Mô tả: Cấu hình routing cho ứng dụng với route guards
 // Vị trí: src/routes/index.jsx
 // ==========================================
 
 import { createBrowserRouter } from 'react-router-dom';
+
+// Route Guards
+import ProtectedRoute from '../componants/guards/ProtectedRoute';
+import GuestRoute from '../componants/guards/GuestRoute';
 
 // Pages
 import Homepage from '../pages/user/Homepage';
@@ -22,6 +26,10 @@ import Register from '../pages/auth/Register';
 // Router Configuration
 // ==========================================
 export const router = createBrowserRouter([
+    // ==========================================
+    // Public Routes (Guest ✅ | Authenticated ✅)
+    // ==========================================
+
     // Homepage (User)
     {
         path: '/',
@@ -52,23 +60,50 @@ export const router = createBrowserRouter([
         path: '/books/:bookId',
         element: <BookDetail />,
     },
-    // Bookshelf
+
+    // ==========================================
+    // Protected Routes (Guest ❌ → /login | Authenticated ✅)
+    // ==========================================
+
+    // Bookshelf - Kệ sách cá nhân
     {
         path: '/bookshelf',
-        element: <Bookshelf />,
+        element: (
+            <ProtectedRoute>
+                <Bookshelf />
+            </ProtectedRoute>
+        ),
     },
-    // Borrow History
+    // Borrow History - Lịch sử mượn sách
     {
         path: '/borrow-history',
-        element: <BorrowHistory />,
+        element: (
+            <ProtectedRoute>
+                <BorrowHistory />
+            </ProtectedRoute>
+        ),
     },
-    // Auth Routes
+
+    // ==========================================
+    // Guest Routes (Guest ✅ | Authenticated ❌ → /)
+    // ==========================================
+
+    // Login
     {
         path: '/login',
-        element: <Login />,
+        element: (
+            <GuestRoute>
+                <Login />
+            </GuestRoute>
+        ),
     },
+    // Register
     {
         path: '/register',
-        element: <Register />,
+        element: (
+            <GuestRoute>
+                <Register />
+            </GuestRoute>
+        ),
     },
 ]);
