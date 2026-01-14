@@ -187,7 +187,7 @@ const BookSearch = () => {
                 {/* Error Message */}
                 {error && (
                     <div className="mb-6 bg-red-50 border border-red-200 rounded-lg p-4 flex items-start gap-3">
-                        <AlertCircle className="h-5 w-5 text-red-500 flex-shrink-0 mt-0.5" />
+                        <AlertCircle className="h-5 w-5 text-red-500 shrink-0 mt-0.5" />
                         <div className="flex-1">
                             <h3 className="text-sm font-semibold text-red-800 mb-1">
                                 Lỗi

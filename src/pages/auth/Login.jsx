@@ -5,9 +5,10 @@
 // ==========================================
 
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '../../componants/ui/Index';
 import InputField from '../../componants/ui/InputField';
+import authService from '../../services/auth.service';
 
 // Import icons từ assets
 import { EmailIcon, LockIcon } from '../../assets/icons';
@@ -25,6 +26,9 @@ const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 // Login Component
 // ==========================================
 const Login = () => {
+    // Router navigate
+    const navigate = useNavigate();
+
     // ==========================================
     // State Management
     // Mô tả: Quản lý giá trị các trường trong form đăng nhập
@@ -137,21 +141,19 @@ const Login = () => {
         // Bật trạng thái loading
         setIsLoading(true);
 
-        // TODO: Gọi API đăng nhập thông qua service
-        // Giả lập thời gian xử lý API
         try {
-            // Simulate API call delay
-            await new Promise(resolve => setTimeout(resolve, 1500));
+            // Gọi API đăng nhập thật
+            await authService.login({
+                email: formData.email,
+                password: formData.password,
+            });
 
-            // Logic xử lý đăng nhập sẽ được thêm sau
-            // Ví dụ: await authService.login(formData);
-
-            // Giả lập lỗi đăng nhập để demo
-            // throw new Error('Login failed');
+            // Đăng nhập thành công - chuyển về trang chủ
+            navigate('/');
 
         } catch (error) {
-            // Hiển thị thông báo lỗi chung khi đăng nhập thất bại
-            setGeneralError('Email hoặc mật khẩu không đúng');
+            // Hiển thị thông báo lỗi từ authService
+            setGeneralError(error.message);
         } finally {
             // Tắt trạng thái loading
             setIsLoading(false);

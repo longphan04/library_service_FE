@@ -5,9 +5,10 @@
 // ==========================================
 
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '../../componants/ui/Index';
 import InputField from '../../componants/ui/InputField';
+import authService from '../../services/auth.service';
 
 // Import icons từ assets
 import { UserIcon, EmailIcon, LockIcon } from '../../assets/icons';
@@ -26,6 +27,9 @@ const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 // Register Component
 // ==========================================
 const Register = () => {
+    // Router navigate
+    const navigate = useNavigate();
+
     // ==========================================
     // State Management
     // Mô tả: Quản lý giá trị các trường trong form đăng ký
@@ -34,7 +38,6 @@ const Register = () => {
         name: '',
         email: '',
         password: '',
-        confirmPassword: '',
     });
 
     // State lưu trữ thông báo lỗi cho từng trường
@@ -42,8 +45,10 @@ const Register = () => {
         name: '',
         email: '',
         password: '',
-        confirmPassword: '',
     });
+
+    // State lưu trữ thông báo lỗi chung (ví dụ: đăng ký thất bại)
+    const [generalError, setGeneralError] = useState('');
 
     // State quản lý trạng thái loading khi submit form
     const [isLoading, setIsLoading] = useState(false);
@@ -57,8 +62,7 @@ const Register = () => {
         isLoading ||
         !formData.name.trim() ||
         !formData.email.trim() ||
-        !formData.password.trim() ||
-        !formData.confirmPassword.trim();
+        !formData.password.trim();
 
     // ==========================================
     // Validation Functions
@@ -98,16 +102,7 @@ const Register = () => {
         return '';
     };
 
-    // Kiểm tra xác nhận mật khẩu có khớp không
-    const validateConfirmPassword = (confirmPassword, password) => {
-        if (!confirmPassword.trim()) {
-            return 'Xác nhận mật khẩu không được để trống';
-        }
-        if (confirmPassword !== password) {
-            return 'Mật khẩu xác nhận không khớp';
-        }
-        return '';
-    };
+
 
     // Validate toàn bộ form trước khi submit
     const validateForm = () => {
@@ -115,7 +110,6 @@ const Register = () => {
             name: validateName(formData.name),
             email: validateEmail(formData.email),
             password: validatePassword(formData.password),
-            confirmPassword: validateConfirmPassword(formData.confirmPassword, formData.password),
         };
 
         setErrors(newErrors);
@@ -145,12 +139,20 @@ const Register = () => {
                 [field]: ''
             }));
         }
+
+        // Xóa thông báo lỗi chung khi user bắt đầu nhập lại
+        if (generalError) {
+            setGeneralError('');
+        }
     };
 
     // Xử lý khi người dùng submit form đăng ký
     const handleSubmit = async (e) => {
         // Ngăn chặn hành vi mặc định của form (reload trang)
         e.preventDefault();
+
+        // Xóa thông báo lỗi chung trước khi submit
+        setGeneralError('');
 
         // Validate form trước khi submit
         if (!validateForm()) {
@@ -160,21 +162,20 @@ const Register = () => {
         // Bật trạng thái loading
         setIsLoading(true);
 
-        // TODO: Gọi API đăng ký thông qua service
-        // Giả lập thời gian xử lý API
         try {
-            // Simulate API call delay
-            await new Promise(resolve => setTimeout(resolve, 1500));
+            // Gọi API đăng ký thật
+            await authService.register({
+                full_name: formData.name,
+                email: formData.email,
+                password: formData.password,
+            });
 
-            // Logic xử lý đăng ký sẽ được thêm sau
-            // Ví dụ: await authService.register(formData);
+            // Đăng ký thành công - chuyển về trang đăng nhập
+            navigate('/login');
 
         } catch (error) {
-            // Xử lý lỗi từ API
-            setErrors(prev => ({
-                ...prev,
-                email: 'Đã có lỗi xảy ra, vui lòng thử lại'
-            }));
+            // Hiển thị thông báo lỗi từ authService
+            setGeneralError(error.message);
         } finally {
             // Tắt trạng thái loading
             setIsLoading(false);
@@ -252,18 +253,18 @@ const Register = () => {
                         disabled={isLoading}
                     />
 
-                    {/* Trường xác nhận mật khẩu */}
-                    <InputField
-                        id="confirmPassword"
-                        label="Xác nhận mật khẩu"
-                        type="password"
-                        value={formData.confirmPassword}
-                        onChange={handleInputChange('confirmPassword')}
-                        placeholder="Xác nhận mật khẩu của bạn"
-                        icon={<LockIcon />}
-                        error={errors.confirmPassword}
-                        disabled={isLoading}
-                    />
+
+                    {/* ==========================================
+                        General Error Message
+                        Mô tả: Hiển thị thông báo lỗi chung (đăng ký thất bại)
+                    ========================================== */}
+                    {generalError && (
+                        <div className="text-center">
+                            <p className="text-sm text-error">
+                                {generalError}
+                            </p>
+                        </div>
+                    )}
 
                     {/* ==========================================
                         Submit Button
