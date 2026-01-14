@@ -1,0 +1,32 @@
+export const initialReturnTickets = [
+  {
+    id: "t4",
+    userName: "Mateus Cunha",
+    email: "cunha@gmail.com",
+    cardId: "c945633",
+    quantity: 1,
+    status: "received",
+    checked: false,
+    expirationDate: "15/05/2024",
+  },
+  {
+    id: "t7",
+    userName: "Emma Thompson",
+    email: "emma@gmail.com",
+    cardId: "e567890",
+    quantity: 2,
+    status: "received",
+    checked: false,
+    expirationDate: "17/05/2024",
+  },
+  {
+    id: "t8",
+    userName: "James Miller",
+    email: "james@gmail.com",
+    cardId: "j123456",
+    quantity: 3,
+    status: "completed",
+    checked: false,
+    expirationDate: "10/05/2024",
+  },
+];
