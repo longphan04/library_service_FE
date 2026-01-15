@@ -8,6 +8,7 @@ export default function ReturnTicketTable({
   onToggleOne,
   onConfirmOne,
   onWarnOne,
+  onViewTicket,
 }) {
   if (tickets.length === 0) {
     return (
@@ -33,6 +34,7 @@ export default function ReturnTicketTable({
             onToggleOne={onToggleOne}
             onConfirmOne={onConfirmOne}
             onWarnOne={onWarnOne}
+            onViewTicket={onViewTicket}
           />
         ))}
       </div>

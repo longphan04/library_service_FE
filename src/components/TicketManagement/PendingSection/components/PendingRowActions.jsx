@@ -8,8 +8,8 @@ export default function PendingRowActions({
   if (status === "rejected") {
     return (
       <span 
-        className="px-4 py-2 rounded text-white text-sm"
-        style={{ backgroundColor: "#000000" }}
+        className="px-6 py-3 rounded text-white text-base"
+        style={{ backgroundColor: "#000000", minWidth: "120px", textAlign: "center" }}
       >
         Đã từ chối
       </span>
@@ -18,18 +18,18 @@ export default function PendingRowActions({
 
   if (status === "pending") {
     return (
-      <div className="flex gap-2">
+      <div className="flex gap-3">
         <button
           onClick={() => onConfirmOne(id)}
-          className="px-4 py-2 rounded text-white text-sm transition hover:opacity-90"
-          style={{ backgroundColor: "#7A4A2E" }}
+          className="px-6 py-3 rounded text-white text-base transition hover:opacity-90"
+          style={{ backgroundColor: "#7A4A2E", minWidth: "110px" }}
         >
           Xác nhận
         </button>
         <button
           onClick={() => onRejectOne(id)}
-          className="px-4 py-2 rounded text-white text-sm transition hover:opacity-90"
-          style={{ backgroundColor: "#DE6767" }}
+          className="px-6 py-3 rounded text-white text-base transition hover:opacity-90"
+          style={{ backgroundColor: "#DE6767", minWidth: "100px" }}
         >
           Từ chối
         </button>
