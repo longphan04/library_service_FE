@@ -1,0 +1,127 @@
+@import "tailwindcss";
+
+/* =========================================================
+   DESIGN SYSTEM – LIBRARY MANAGEMENT SYSTEM
+   Tailwind CSS v4 (CSS-first)
+   ========================================================= */
+@theme {
+    /* ===== BACKGROUND ===== */
+    --color-bg-app: #F5EBE0;
+    /* Background toàn app */
+    --color-bg-nav: #FFFFFF;
+    /* Background navbar */
+    --color-bg-section: #FFFFFF;
+    /* Section */
+    --color-bg-hero: #7D5B4F;
+    /* Hero section */
+    --color-bg-card-hover: #FAF3EC;
+    /* Card hover */
+
+    /* ===== BRAND / PRIMARY ===== */
+    --color-primary: #7A4A2E;
+    /* Button chính, logo */
+    --color-primary-hover: #6A3F27;
+
+    /* ===== SECONDARY ===== */
+    --color-secondary: #E2C6A6;
+    /* Button phụ */
+    --color-secondary-hover: #D8B48F;
+    --color-secondary-border: #E2C6A6;
+
+    /* ===== NAVIGATION ===== */
+    --color-nav-text: #7D5B4F;
+    /* Text nav */
+    --color-nav-hover: #D48C70;
+    /* Hover nav */
+    --color-nav-icon: #7D5B4F;
+    --color-nav-icon-hover: #D48C70;
+
+    /* ===== TEXT ===== */
+    --color-text-primary: #3A2A20;
+    /* Text chính */
+    --color-text-sub: #91847F;
+    /* Sub text */
+    --color-text-logo-sub: #8A7A70;
+    /* Sub text logo */
+    --color-text-hero: #FDF5E6;
+    /* Text hero */
+    --color-text-on-primary: #FFFFFF;
+    /* Text trên button chính */
+    --color-text-on-secondary: #7A4A2E;
+    /* Text trên button phụ */
+
+    /* ===== ICON ===== */
+    --color-icon: #7A4A2E;
+
+    /* ===== BORDER ===== */
+    --color-border: #E2C6A6;
+
+    /* ===== STATUS ===== */
+    --color-success: #4ADE80;
+    --color-error: #DE6767;
+    --color-warning: #C48A3A;
+
+    /* ===== TYPOGRAPHY ===== */
+    --font-base: "Inter", sans-serif;
+}
+
+/* =========================================================
+   BASE STYLE
+   ========================================================= */
+@layer base {
+    body {
+        font-family: var(--font-base);
+        background-color: var(--color-bg-app);
+        color: var(--color-text-primary);
+    }
+}
+
+/* =========================================================
+   COMPONENT PRESETS (KHUYÊN DÙNG)
+   ========================================================= */
+@layer components {
+    .btn-primary {
+        @apply px-4 py-2 rounded-lg font-medium transition;
+        background-color: var(--color-primary);
+        color: var(--color-text-on-primary);
+    }
+
+    .btn-primary:hover {
+        background-color: var(--color-primary-hover);
+    }
+
+    .btn-secondary {
+        @apply px-4 py-2 rounded-lg font-medium transition border;
+        background-color: var(--color-secondary);
+        color: var(--color-text-on-secondary);
+        border-color: var(--color-secondary-border);
+    }
+
+    .btn-secondary:hover {
+        background-color: var(--color-secondary-hover);
+    }
+
+    .card {
+        @apply rounded-xl p-4 transition;
+        background-color: var(--color-bg-section);
+    }
+
+    .card:hover {
+        background-color: var(--color-bg-card-hover);
+    }
+}
+
+/* =========================================================
+   ANIMATIONS
+   ========================================================= */
+@keyframes fadeSlideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
