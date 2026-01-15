@@ -1,20 +1,36 @@
-export default function Tabs() {
-  const tabs = ["Quản lý sách", "Quản lý người dùng", "Quản lý phiếu"];
+function Tabs({ activeTab, onChange }) {
+  const tabs = [
+    { id: 'books', label: 'Quản lý sách' },
+    { id: 'users', label: 'Quản lý người dùng' },
+    { id: 'tickets', label: 'Quản lý phiếu' }
+  ];
 
   return (
-    <div className="flex gap-2 px-6 mt-4">
-      {tabs.map((t, i) => (
-        <button
-          key={i}
-          className={`px-4 py-2 rounded-t-xl text-sm
-            ${i === 0
-              ? "bg-primary text-white"
-              : "bg-white text-gray-500"}
-          `}
-        >
-          {t}
-        </button>
-      ))}
+    <div className="pt-6">
+      <div
+        className="flex bg-white"
+        style={{
+          width: '1000px',
+          borderTopLeftRadius: '20px',
+          borderTopRightRadius: '20px',
+        }}
+      >
+        {tabs.map((tab, index) => (
+          <div
+            key={tab.id}
+            onClick={() => onChange(tab.id)}
+            className={`py-5 text-xl font-medium flex-1 cursor-pointer flex justify-center
+              ${activeTab === tab.id ? 'text-white bg-[#7A4A2E]' : 'text-gray-700 opacity-40'}
+              ${index === 0 ? 'rounded-tl-[18px]' : ''}
+              ${index === tabs.length - 1 ? 'rounded-tr-[18px]' : ''}
+            `}
+          >
+            {tab.label}
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
+
+export default Tabs;

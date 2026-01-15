@@ -1,50 +1,46 @@
-import { ChevronUp, ChevronDown } from "lucide-react";
-import { useState } from "react";
-
-export default function BookCard() {
-  const [available, setAvailable] = useState(3);
-
+export default function BookCard({ book, isChecked, onCheckChange, onEdit }) {
   return (
-    <div className="bg-white rounded-xl p-4 flex gap-4">
-      <img
-        src="https://covers.openlibrary.org/b/id/7984916-L.jpg"
-        className="w-20 h-28 rounded"
-      />
-
-      <div className="flex-1">
-        <h3 className="font-semibold">Harry Potter ...</h3>
-        <p className="text-sm text-gray-500">Tác giả</p>
-        <p className="text-sm text-gray-500">Ngày xuất bản: ...</p>
-
-        {/* Số lượng */}
-        <div className="flex items-center gap-2 text-green-600 text-sm">
-          <span>Có sẵn: {available} trên 10</span>
-          <div className="flex flex-col">
-            <button onClick={() => setAvailable(a => Math.min(a + 1, 10))}>
-              <ChevronUp size={14} />
-            </button>
-            <button onClick={() => setAvailable(a => Math.max(a - 1, 0))}>
-              <ChevronDown size={14} />
-            </button>
+    <div className="max-w-full"> 
+      <div className="bg-white rounded-lg p-6 shadow-sm flex items-start gap-6 w-full">
+        <input 
+          type="checkbox" 
+          checked={isChecked}
+          onChange={(e) => onCheckChange(book.id, e.target.checked)}
+          className="mt-2 w-5 h-5"
+          style={{ accentColor: '#7A4A2E' }}
+        />
+      
+        <img 
+          src={`https://via.placeholder.com/100x140/7A4A2E/FFFFFF?text=HP`}
+          alt={book.title}
+          className="w-24 h-36 object-cover rounded"
+        />
+      
+        <div className="flex-1">
+          <h3 className="font-bold text-lg mb-2">{book.title}</h3>
+          <p className="text-sm text-gray-600 mb-1">{book.author}</p>
+          <p className="text-sm text-gray-600 mb-1">{book.publisher}</p>
+          <p className="text-sm text-gray-600 mb-1">{book.availability}</p>
+          <p className="text-sm text-gray-600 mb-4">{book.year}</p>
+        
+          <div className="flex flex-wrap gap-2 mb-3">
+            {book.tags && book.tags.map((tag, idx) => (
+              <span 
+                key={idx}
+                className="px-4 py-1.5 rounded-full text-white text-xs font-medium"
+                style={{ backgroundColor: '#7A4A2E' }}
+              >
+                {tag}
+              </span>
+            ))}
           </div>
         </div>
-
-        {/* Thể loại */}
-        <div className="flex gap-2 mt-2">
-          {["Kỹ ảo", "Tiểu thuyết"].map(t => (
-            <span
-              key={t}
-              className="px-2 py-1 bg-primary text-white text-xs rounded"
-            >
-              {t}
-            </span>
-          ))}
-        </div>
-      </div>
-
-      <div className="flex flex-col justify-between items-end">
-        <input type="checkbox" />
-        <button className="bg-primary text-white px-3 py-1 rounded text-sm">
+       
+        <button 
+          className="px-6 py-3 rounded text-white text-sm font-medium hover:opacity-90 transition-opacity whitespace-nowrap"
+          style={{ backgroundColor: '#7A4A2E' }}
+          onClick={() => onEdit && onEdit(book)}
+        >
           Chỉnh sửa
         </button>
       </div>
