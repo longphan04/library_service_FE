@@ -1,0 +1,17 @@
+@import "tailwindcss";
+
+/* Reset cho app dùng Tailwind */
+html,
+body,
+#root {
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+/* Body không được ép flex */
+body {
+  font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
+  background-color: #f6efe7;
+}
