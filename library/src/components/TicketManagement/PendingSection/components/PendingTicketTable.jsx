@@ -8,10 +8,11 @@ export default function PendingTicketTable({
   onToggleOne,
   onConfirmOne,
   onRejectOne,
+  onViewTicket, // Thêm prop mới
 }) {
   if (tickets.length === 0) {
     return (
-      <div className="text-center py-12 text-gray-500 bg-white rounded-lg shadow">
+      <div className="text-center py-12 text-gray-500">
         <div className="text-xl mb-2">📭</div>
         <p className="text-lg">Không có yêu cầu mượn sách nào</p>
       </div>
@@ -19,7 +20,7 @@ export default function PendingTicketTable({
   }
 
   return (
-    <div className="bg-white rounded-lg shadow overflow-hidden">
+    <div className="rounded-lg">
       <PendingTableHeader 
         allChecked={allChecked} 
         onToggleAll={onToggleAll}
@@ -33,6 +34,7 @@ export default function PendingTicketTable({
             onToggleOne={onToggleOne}
             onConfirmOne={onConfirmOne}
             onRejectOne={onRejectOne}
+            onViewTicket={onViewTicket} // Truyền prop xuống
           />
         ))}
       </div>

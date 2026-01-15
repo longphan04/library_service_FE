@@ -7,6 +7,7 @@ export default function ReceiveTicketTable({
   onToggleAll,
   onToggleOne,
   onConfirmOne,
+  onViewTicket, // Thêm prop mới
 }) {
   if (tickets.length === 0) {
     return (
@@ -31,6 +32,7 @@ export default function ReceiveTicketTable({
             ticket={ticket}
             onToggleOne={onToggleOne}
             onConfirmOne={onConfirmOne}
+            onViewTicket={onViewTicket} // Truyền prop xuống
           />
         ))}
       </div>

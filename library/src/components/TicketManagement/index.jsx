@@ -2,17 +2,30 @@ import PendingSection from "./PendingSection";
 import ReceiveBookSection from "./ReceiveBookSection";
 import ReturnBookSection from "./ReturnBookSection";
 
-export default function TicketManagement({ activeSection = "pending" }) {
+export default function TicketManagement({ 
+  activeSection = "pending",
+  allTickets,
+  setAllTickets,
+  updateTicketStatus,
+  bulkUpdateTickets
+}) {
   const renderSection = () => {
+    const commonProps = {
+      allTickets,
+      setAllTickets,
+      updateTicketStatus,
+      bulkUpdateTickets
+    };
+
     switch (activeSection) {
       case "pending":
-        return <PendingSection />;
+        return <PendingSection {...commonProps} />;
       case "receive":
-        return <ReceiveBookSection />;
+        return <ReceiveBookSection {...commonProps} />;
       case "return":
-        return <ReturnBookSection />;
+        return <ReturnBookSection {...commonProps} />;
       default:
-        return <PendingSection />;
+        return <PendingSection {...commonProps} />;
     }
   };
 
