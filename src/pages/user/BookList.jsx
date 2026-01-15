@@ -4,58 +4,41 @@
 // Vị trí: src/pages/user/BookList.jsx
 // ==========================================
 
-import { useState, useRef } from 'react';
+import { useRef, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import Header from '../../componants/layouts/Header';
 import BookCard from '../../componants/ui/BookCard';
 import Pagination from '../../componants/ui/Pagination';
 import { ArrowLeft } from 'lucide-react';
 import { Link } from 'react-router-dom';
-
-// ==========================================
-// Mock Data - Dữ liệu mẫu (sẽ thay bằng API sau)
-// ==========================================
-const SAMPLE_COVER = 'https://via.placeholder.com/200x280/FFF8F0/7D5B4F?text=Sách';
-
-const generateBooks = (count) =>
-    Array.from({ length: count }, (_, i) => ({
-        id: `book-${i + 1}`,
-        title: `Lịch sử Việt Nam - Tập ${i + 1}`,
-        author: 'Đào Duy Anh',
-        coverImage: SAMPLE_COVER,
-    }));
-
-// Tạo 60 sách mẫu
-const allBooks = generateBooks(60);
+import useBooks from '../../hooks/useBooks';
 
 // ==========================================
 // BookList Component
 // ==========================================
 const BookList = () => {
-    // State quản lý trang hiện tại
-    const [currentPage, setCurrentPage] = useState(1);
-
-    // Số sách mỗi trang
-    const booksPerPage = 12;
+    // Sử dụng hook với URL sync
+    const {
+        books,
+        loading,
+        error,
+        filters,
+        setFilters,
+        pagination,
+        refetch
+    } = useBooks({ limit: 12 });
 
     // Ref để scroll đến đầu danh sách
     const bookListRef = useRef(null);
 
     // ==========================================
-    // Tính toán phân trang
-    // ==========================================
-    const totalPages = Math.ceil(allBooks.length / booksPerPage);
-    const startIndex = (currentPage - 1) * booksPerPage;
-    const currentBooks = allBooks.slice(startIndex, startIndex + booksPerPage);
-
-    // ==========================================
     // Handler phân trang với Scroll-to-top
     // ==========================================
     const handlePageChange = (page) => {
-        // 1. Cập nhật state trang hiện tại
-        setCurrentPage(page);
+        // 1. Cập nhật filter (sẽ tự động sync với URL)
+        setFilters({ page });
 
         // 2. Scroll đến đầu danh sách sách (smooth animation)
-        // Có offset 100px để tránh bị che bởi header
         const headerOffset = 100;
         const elementPosition = bookListRef.current?.getBoundingClientRect().top ?? 0;
         const offsetPosition = elementPosition + window.pageYOffset - headerOffset;
@@ -65,6 +48,64 @@ const BookList = () => {
             behavior: 'smooth'
         });
     };
+
+    // ==========================================
+    // Loading State
+    // ==========================================
+    if (loading && books.length === 0) {
+        return (
+            <div className="min-h-screen bg-bg-app">
+                <Header />
+                <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+                    <div className="flex items-center gap-4 mb-8">
+                        <Link
+                            to="/"
+                            className="p-2 rounded-full hover:bg-primary/10 text-primary transition-colors"
+                        >
+                            <ArrowLeft size={24} />
+                        </Link>
+                        <div>
+                            <h1 className="text-2xl font-bold text-text-primary">
+                                Tất cả sách
+                            </h1>
+                            <p className="text-sm text-text-sub">Đang tải...</p>
+                        </div>
+                    </div>
+                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4 sm:gap-6">
+                        {Array.from({ length: 12 }).map((_, i) => (
+                            <div key={i} className="animate-pulse">
+                                <div className="aspect-3/4 bg-border rounded-lg mb-2"></div>
+                                <div className="h-4 bg-border rounded w-3/4 mb-1"></div>
+                                <div className="h-3 bg-border rounded w-1/2"></div>
+                            </div>
+                        ))}
+                    </div>
+                </main>
+            </div>
+        );
+    }
+
+    // ==========================================
+    // Error State
+    // ==========================================
+    if (error) {
+        return (
+            <div className="min-h-screen bg-bg-app">
+                <Header />
+                <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+                    <div className="text-center py-12">
+                        <p className="text-red-500 mb-4">Lỗi: {error}</p>
+                        <button
+                            onClick={refetch}
+                            className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90"
+                        >
+                            Thử lại
+                        </button>
+                    </div>
+                </main>
+            </div>
+        );
+    }
 
     // ==========================================
     // Render
@@ -89,7 +130,7 @@ const BookList = () => {
                             Tất cả sách
                         </h1>
                         <p className="text-sm text-text-sub">
-                            {allBooks.length} cuốn sách • Trang {currentPage}/{totalPages}
+                            {pagination.total} cuốn sách • Trang {pagination.page}/{pagination.totalPages || 1}
                         </p>
                     </div>
                 </div>
@@ -99,25 +140,34 @@ const BookList = () => {
                     ref={bookListRef}
                     className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4 sm:gap-6"
                 >
-                    {currentBooks.map((book) => (
+                    {books.map((book) => (
                         <BookCard
-                            key={book.id}
-                            id={book.id}
+                            key={book.id || book._id}
+                            id={book.id || book._id}
                             title={book.title}
-                            author={book.author}
-                            coverImage={book.coverImage}
+                            author={book.author?.name || book.authorName || 'Không rõ'}
+                            coverImage={book.coverImage || book.image || book.thumbnail}
                         />
                     ))}
                 </div>
 
+                {/* Empty State */}
+                {books.length === 0 && !loading && (
+                    <div className="text-center py-12">
+                        <p className="text-text-sub">Không tìm thấy sách nào</p>
+                    </div>
+                )}
+
                 {/* Pagination */}
-                <div className="mt-10">
-                    <Pagination
-                        currentPage={currentPage}
-                        totalPages={totalPages}
-                        onPageChange={handlePageChange}
-                    />
-                </div>
+                {pagination.totalPages > 1 && (
+                    <div className="mt-10">
+                        <Pagination
+                            currentPage={pagination.page}
+                            totalPages={pagination.totalPages}
+                            onPageChange={handlePageChange}
+                        />
+                    </div>
+                )}
             </main>
         </div>
     );

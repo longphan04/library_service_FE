@@ -8,7 +8,7 @@ import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '../../componants/ui/Index';
 import InputField from '../../componants/ui/InputField';
-import authService from '../../services/auth.service';
+import { useAuth } from '../../contexts/AuthContext';
 
 // Import icons từ assets
 import { EmailIcon, LockIcon } from '../../assets/icons';
@@ -28,6 +28,9 @@ const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const Login = () => {
     // Router navigate
     const navigate = useNavigate();
+
+    // Auth context
+    const { login: loginFromContext } = useAuth();
 
     // ==========================================
     // State Management
@@ -142,14 +145,21 @@ const Login = () => {
         setIsLoading(true);
 
         try {
-            // Gọi API đăng nhập thật
-            await authService.login({
+            // Gọi login từ AuthContext (sẽ update state và lưu token)
+            const response = await loginFromContext({
                 email: formData.email,
                 password: formData.password,
             });
 
-            // Đăng nhập thành công - chuyển về trang chủ
-            navigate('/');
+            // Lấy role từ response để redirect đúng dashboard
+            const userRole = response.user?.role || response.user?.roles?.[0] || 'MEMBER';
+
+            // Import getRedirectByRole inline để tránh circular dependency
+            const { getRedirectByRole } = await import('../../constants/roles');
+            const redirectPath = getRedirectByRole(userRole);
+
+            // Đăng nhập thành công - chuyển đến dashboard theo role
+            navigate(redirectPath);
 
         } catch (error) {
             // Hiển thị thông báo lỗi từ authService

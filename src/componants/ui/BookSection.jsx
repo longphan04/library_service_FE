@@ -114,16 +114,20 @@ const BookSection = ({
                     className="flex gap-4 md:gap-5 lg:gap-6 overflow-x-auto scroll-smooth scrollbar-hide snap-x snap-mandatory"
                     style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
                 >
-                    {books.map((book) => (
-                        <BookCard
-                            key={book.id}
-                            id={book.id}
-                            coverImage={book.coverImage}
-                            title={book.title}
-                            author={book.author}
-                            className="w-[140px] sm:w-[160px] snap-start"
-                        />
-                    ))}
+                    {books.map((book) => {
+                        const bookId = book.id || book._id;
+                        const coverImage = book.coverImage || book.image || book.thumbnail || 'https://via.placeholder.com/200x280/FFF8F0/7D5B4F?text=No+Image';
+                        return (
+                            <BookCard
+                                key={bookId}
+                                id={bookId}
+                                coverImage={coverImage}
+                                title={book.title}
+                                author={book.author}
+                                className="w-[140px] sm:w-[160px] snap-start"
+                            />
+                        );
+                    })}
                 </div>
             </div>
 

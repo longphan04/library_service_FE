@@ -5,6 +5,7 @@
 
 import { createContext, useContext, useState, useEffect } from 'react';
 import authService from '../services/auth.service';
+import { getRedirectByRole } from '../constants/roles';
 
 // Tạo Context
 const AuthContext = createContext(null);
@@ -48,6 +49,7 @@ export const AuthProvider = ({ children }) => {
 
     // ==========================================
     // Login Function
+    // Returns user data with role for redirect handling
     // ==========================================
     const login = async (credentials) => {
         try {
@@ -80,6 +82,14 @@ export const AuthProvider = ({ children }) => {
         }
     };
 
+    // ==========================================
+    // Get Redirect Path by User Role
+    // ==========================================
+    const getRedirectPath = () => {
+        const userRole = user?.role || user?.roles?.[0];
+        return getRedirectByRole(userRole);
+    };
+
     // Context value
     const value = {
         user,
@@ -87,6 +97,7 @@ export const AuthProvider = ({ children }) => {
         isLoading,
         login,
         logout,
+        getRedirectPath,
     };
 
     // Hiển thị loading khi đang check auth

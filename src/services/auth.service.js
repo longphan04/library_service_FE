@@ -1,37 +1,16 @@
 // ==========================================
 // Auth Service
-// Mô tả: Service xử lý authentication (login, logout, get user)
+// Mô tả: Service xử lý authentication (login, logout, register, refresh token)
 // ==========================================
 
-import axios from './axios';
+import axios, { getToken, getRefreshToken, setTokens, clearTokens } from './axios';
 
 // ==========================================
-// Token Management Functions
+// Token Management Functions (re-export)
 // ==========================================
+export { getToken, getRefreshToken, setTokens, clearTokens };
 
-/**
- * Lưu token vào localStorage
- * @param {string} token - JWT token từ server
- */
-export const setToken = (token) => {
-    localStorage.setItem('auth_token', token);
-};
-
-/**
- * Lấy token từ localStorage
- * @returns {string|null} - Token hoặc null nếu không có
- */
-export const getToken = () => {
-    return localStorage.getItem('auth_token');
-};
-
-/**
- * Xóa token khỏi localStorage
- */
-export const removeToken = () => {
-    localStorage.removeItem('auth_token');
-    localStorage.removeItem('user');
-};
+export const removeToken = clearTokens;
 
 /**
  * Kiểm tra xem user đã đăng nhập chưa
@@ -54,13 +33,17 @@ export const login = async (credentials) => {
     try {
         const response = await axios.post('/auth/login', credentials);
 
-        // Lưu token nếu login thành công
-        // Giả sử server trả về { token, user } hoặc { access_token, user }
-        const token = response.data.token || response.data.access_token;
+        // Handle various token field names from different API responses
+        const accessToken = response.data.accessToken || response.data.token || response.data.access_token;
+        const refreshToken = response.data.refreshToken || response.data.refresh_token;
         const user = response.data.user;
 
-        if (token) {
-            setToken(token);
+        // Log để debug
+        console.log('Login response:', response.data);
+        console.log('Access token:', accessToken);
+
+        if (accessToken) {
+            setTokens(accessToken, refreshToken);
         }
 
         if (user) {
@@ -69,9 +52,7 @@ export const login = async (credentials) => {
 
         return response.data;
     } catch (error) {
-        // Xử lý lỗi và throw error có thông báo rõ ràng
         if (error.response) {
-            // Server trả về response với status code lỗi
             const status = error.response.status;
             const message = error.response.data?.message;
 
@@ -83,10 +64,8 @@ export const login = async (credentials) => {
                 throw new Error(message || 'Đã có lỗi xảy ra');
             }
         } else if (error.request) {
-            // Request được gửi nhưng không nhận được response
             throw new Error('Không thể kết nối đến server');
         } else {
-            // Lỗi khác
             throw new Error('Đã có lỗi xảy ra');
         }
     }
@@ -98,14 +77,41 @@ export const login = async (credentials) => {
  */
 export const logout = async () => {
     try {
-        // Gọi API logout (optional - tùy backend có yêu cầu không)
         await axios.post('/auth/logout');
     } catch (error) {
-        // Vẫn xóa token local dù API lỗi
         console.error('Logout error:', error);
     } finally {
-        // Luôn xóa token và user data khỏi localStorage
-        removeToken();
+        clearTokens();
+    }
+};
+
+/**
+ * Refresh access token
+ * @returns {Promise} - New tokens
+ */
+export const refreshToken = async () => {
+    const currentRefreshToken = getRefreshToken();
+
+    if (!currentRefreshToken) {
+        throw new Error('No refresh token available');
+    }
+
+    try {
+        const response = await axios.post('/auth/refresh', {
+            refreshToken: currentRefreshToken,
+        });
+
+        const newAccessToken = response.data.token || response.data.access_token;
+        const newRefreshToken = response.data.refreshToken || response.data.refresh_token;
+
+        if (newAccessToken) {
+            setTokens(newAccessToken, newRefreshToken);
+        }
+
+        return response.data;
+    } catch (error) {
+        clearTokens();
+        throw error;
     }
 };
 
@@ -115,26 +121,24 @@ export const logout = async () => {
  */
 export const getCurrentUser = async () => {
     try {
-        const response = await axios.get('/auth/me');
+        const response = await axios.get('/users/me');
         const user = response.data;
 
-        // Cập nhật user trong localStorage
         if (user) {
             localStorage.setItem('user', JSON.stringify(user));
         }
 
         return user;
     } catch (error) {
-        // Nếu lỗi 401, token đã hết hạn (interceptor sẽ xử lý)
         if (error.response && error.response.status === 401) {
-            removeToken();
+            clearTokens();
         }
         throw error;
     }
 };
 
 /**
- * Đăng ký tài khoản mới (optional - cho tương lai)
+ * Đăng ký tài khoản mới
  * @param {Object} userData - { email, password, name, ... }
  * @returns {Promise} - Response từ server
  */
@@ -158,11 +162,14 @@ export const register = async (userData) => {
 const authService = {
     login,
     logout,
-    getCurrentUser,
     register,
-    setToken,
+    refreshToken,
+    getCurrentUser,
     getToken,
+    getRefreshToken,
+    setTokens,
     removeToken,
+    clearTokens,
     isAuthenticated,
 };
 

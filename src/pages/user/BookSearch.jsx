@@ -1,105 +1,151 @@
 // ==========================================
 // Page: BookSearch
-// Mô tả: Trang tìm kiếm sách với mock API
+// Mô tả: Trang tìm kiếm sách với filter, sort, pagination và URL sync
 // Vị trí: src/pages/user/BookSearch.jsx
 // ==========================================
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
+import { Link, useSearchParams } from 'react-router-dom';
 import Header from '../../componants/layouts/Header';
 import SearchBar from '../../componants/ui/SearchBar';
-import BookCard from '../../componants/ui/BookCard';
-import Spinner from '../../componants/ui/Spinner';
+import SortBar from '../../componants/ui/SortBar';
+import CategoryDropdown from '../../componants/ui/CategoryDropdown';
+import BookGrid from '../../componants/ui/BookGrid';
+import Pagination from '../../componants/ui/Pagination';
 import EmptyState from '../../componants/ui/EmptyState';
+import Spinner from '../../componants/ui/Spinner';
 import { BookX, AlertCircle, ArrowLeft } from 'lucide-react';
-import { Link, useSearchParams } from 'react-router-dom';
 
 // ==========================================
-// Mock Data - Dữ liệu mẫu sách
+// Mock Data - Dữ liệu mẫu
 // ==========================================
-const MOCK_BOOKS = [
-    {
-        id: 'book-1',
-        title: 'Lịch sử Việt Nam - Tập 1',
-        author: 'Đào Duy Anh',
-        coverImage: 'https://via.placeholder.com/200x280/FFF8F0/7D5B4F?text=Lịch+sử+VN',
-    },
-    {
-        id: 'book-2',
-        title: 'Truyện Kiều',
-        author: 'Nguyễn Du',
-        coverImage: 'https://via.placeholder.com/200x280/FFF8F0/7D5B4F?text=Truyện+Kiều',
-    },
-    {
-        id: 'book-3',
-        title: 'Số đỏ',
-        author: 'Vũ Trọng Phụng',
-        coverImage: 'https://via.placeholder.com/200x280/FFF8F0/7D5B4F?text=Số+đỏ',
-    },
-    {
-        id: 'book-4',
-        title: 'Chí Phèo',
-        author: 'Nam Cao',
-        coverImage: 'https://via.placeholder.com/200x280/FFF8F0/7D5B4F?text=Chí+Phèo',
-    },
-    {
-        id: 'book-5',
-        title: 'Lão Hạc',
-        author: 'Nam Cao',
-        coverImage: 'https://via.placeholder.com/200x280/FFF8F0/7D5B4F?text=Lão+Hạc',
-    },
-    {
-        id: 'book-6',
-        title: 'Tắt đèn',
-        author: 'Ngô Tất Tố',
-        coverImage: 'https://via.placeholder.com/200x280/FFF8F0/7D5B4F?text=Tắt+đèn',
-    },
-    {
-        id: 'book-7',
-        title: 'Vợ nhặt',
-        author: 'Kim Lân',
-        coverImage: 'https://via.placeholder.com/200x280/FFF8F0/7D5B4F?text=Vợ+nhặt',
-    },
-    {
-        id: 'book-8',
-        title: 'Tôi thấy hoa vàng trên cỏ xanh',
-        author: 'Nguyễn Nhật Ánh',
-        coverImage: 'https://via.placeholder.com/200x280/FFF8F0/7D5B4F?text=Hoa+vàng',
-    },
+const CATEGORIES = [
+    { id: 'lich-su', name: 'Lịch Sử' },
+    { id: 'khoa-hoc', name: 'Khoa Học' },
+    { id: 'van-hoc', name: 'Văn Học' },
+    { id: 'trinh-tham', name: 'Trinh Thám' },
+    { id: 'kinh-te', name: 'Kinh Tế' },
+    { id: 'tam-ly', name: 'Tâm Lý' },
+    { id: 'giao-duc', name: 'Giáo Dục' },
+    { id: 'nghe-thuat', name: 'Nghệ Thuật' },
+    { id: 'the-thao', name: 'Thể Thao' },
+    { id: 'am-nhac', name: 'Âm Nhạc' },
+    { id: 'nau-an', name: 'Nấu Ăn' },
+    { id: 'du-lich', name: 'Du Lịch' },
+    { id: 'thieu-nhi', name: 'Thiếu Nhi' },
+    { id: 'truyen-tranh', name: 'Truyện Tranh' },
 ];
+
+const SAMPLE_COVER = 'https://via.placeholder.com/200x280/FFF8F0/7D5B4F';
+
+// Generate mock books với category
+const generateMockBooks = () => {
+    const books = [];
+    CATEGORIES.forEach((cat) => {
+        for (let i = 1; i <= 15; i++) {
+            books.push({
+                id: `${cat.id}-${i}`,
+                title: `${cat.name} - Tập ${i}`,
+                author: 'Tác giả mẫu',
+                coverImage: `${SAMPLE_COVER}?text=${encodeURIComponent(cat.name)}+${i}`,
+                category: cat.id,
+                categoryName: cat.name,
+                createdAt: Date.now() - Math.random() * 10000000000,
+                popularity: Math.floor(Math.random() * 1000),
+            });
+        }
+    });
+    return books;
+};
+
+const ALL_BOOKS = generateMockBooks();
+const BOOKS_PER_PAGE = 12;
 
 // ==========================================
 // BookSearch Component
 // ==========================================
 const BookSearch = () => {
-    // Get query from URL params
-    const [searchParams] = useSearchParams();
-    const queryFromUrl = searchParams.get('q') || '';
+    // URL State Management
+    const [searchParams, setSearchParams] = useSearchParams();
 
-    // State Management
+    // Get params from URL
+    const queryFromUrl = searchParams.get('q') || '';
+    const sortFromUrl = searchParams.get('sort') || 'newest';
+    const categoryFromUrl = searchParams.get('category') || '';
+    const pageFromUrl = parseInt(searchParams.get('page')) || 1;
+
+    // Local State
     const [searchQuery, setSearchQuery] = useState(queryFromUrl);
-    const [books, setBooks] = useState([]);
-    const [filteredBooks, setFilteredBooks] = useState([]);
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState(null);
+    const [books, setBooks] = useState([]);
+    const [totalPages, setTotalPages] = useState(1);
+    const [viewMode, setViewMode] = useState('grid');
+
+    // Ref for scroll
+    const bookListRef = useRef(null);
 
     // ==========================================
-    // Mock API call - Simulate fetching books
+    // Update URL params helper
+    // ==========================================
+    const updateSearchParams = (updates) => {
+        const newParams = new URLSearchParams(searchParams);
+        Object.entries(updates).forEach(([key, value]) => {
+            if (value) {
+                newParams.set(key, String(value));
+            } else {
+                newParams.delete(key);
+            }
+        });
+        setSearchParams(newParams);
+    };
+
+    // ==========================================
+    // Fetch/Filter books (Mock API)
     // ==========================================
     const fetchBooks = async () => {
         setIsLoading(true);
         setError(null);
 
         try {
-            // Simulate API call với setTimeout
-            await new Promise((resolve) => setTimeout(resolve, 1500));
+            // Simulate API delay
+            await new Promise((resolve) => setTimeout(resolve, 500));
 
-            // Simulate random error (10% chance)
-            if (Math.random() < 0.1) {
+            // Simulate random error (5% chance)
+            if (Math.random() < 0.05) {
                 throw new Error('Không thể tải dữ liệu sách. Vui lòng thử lại.');
             }
 
-            setBooks(MOCK_BOOKS);
-            setFilteredBooks(MOCK_BOOKS);
+            // Filter by search query
+            let filtered = ALL_BOOKS;
+            if (queryFromUrl) {
+                const query = queryFromUrl.toLowerCase();
+                filtered = filtered.filter(
+                    (book) =>
+                        book.title.toLowerCase().includes(query) ||
+                        book.author.toLowerCase().includes(query)
+                );
+            }
+
+            // Filter by category
+            if (categoryFromUrl) {
+                filtered = filtered.filter((book) => book.category === categoryFromUrl);
+            }
+
+            // Sort
+            if (sortFromUrl === 'newest') {
+                filtered = [...filtered].sort((a, b) => b.createdAt - a.createdAt);
+            } else if (sortFromUrl === 'popular') {
+                filtered = [...filtered].sort((a, b) => b.popularity - a.popularity);
+            }
+
+            // Paginate
+            const total = Math.ceil(filtered.length / BOOKS_PER_PAGE);
+            const startIndex = (pageFromUrl - 1) * BOOKS_PER_PAGE;
+            const paginatedBooks = filtered.slice(startIndex, startIndex + BOOKS_PER_PAGE);
+
+            setBooks(paginatedBooks);
+            setTotalPages(total || 1);
         } catch (err) {
             setError(err.message);
         } finally {
@@ -108,28 +154,16 @@ const BookSearch = () => {
     };
 
     // ==========================================
-    // useEffect: Fetch books on component mount
+    // Effects
     // ==========================================
     useEffect(() => {
         fetchBooks();
-    }, []);
+    }, [queryFromUrl, sortFromUrl, categoryFromUrl, pageFromUrl]);
 
-    // ==========================================
-    // useEffect: Filter books based on search query
-    // ==========================================
+    // Sync local search state with URL
     useEffect(() => {
-        if (searchQuery.trim() === '') {
-            setFilteredBooks(books);
-        } else {
-            const query = searchQuery.toLowerCase();
-            const filtered = books.filter(
-                (book) =>
-                    book.title.toLowerCase().includes(query) ||
-                    book.author.toLowerCase().includes(query)
-            );
-            setFilteredBooks(filtered);
-        }
-    }, [searchQuery, books]);
+        setSearchQuery(queryFromUrl);
+    }, [queryFromUrl]);
 
     // ==========================================
     // Handlers
@@ -138,13 +172,68 @@ const BookSearch = () => {
         setSearchQuery(value);
     };
 
+    const handleSearchSubmit = () => {
+        updateSearchParams({ q: searchQuery, page: '' });
+    };
+
     const handleSearchClose = () => {
         setSearchQuery('');
+        updateSearchParams({ q: '', page: '' });
+    };
+
+    const handleSortChange = (newSort) => {
+        updateSearchParams({ sort: newSort, page: '' });
+    };
+
+    const handleCategoryChange = (newCategory) => {
+        updateSearchParams({ category: newCategory, page: '' });
+    };
+
+    const handlePageChange = (newPage) => {
+        updateSearchParams({ page: newPage === 1 ? '' : newPage });
+
+        // Scroll to top of book list
+        const headerOffset = 100;
+        const elementPosition = bookListRef.current?.getBoundingClientRect().top ?? 0;
+        const offsetPosition = elementPosition + window.pageYOffset - headerOffset;
+        window.scrollTo({ top: offsetPosition, behavior: 'smooth' });
+    };
+
+    const handleViewModeChange = (mode) => {
+        setViewMode(mode);
     };
 
     const handleRetry = () => {
         fetchBooks();
     };
+
+    // Handle Enter key in search
+    const handleSearchKeyDown = (e) => {
+        if (e.key === 'Enter') {
+            handleSearchSubmit();
+        }
+    };
+
+    // ==========================================
+    // Compute total results
+    // ==========================================
+    const getTotalResults = () => {
+        let filtered = ALL_BOOKS;
+        if (queryFromUrl) {
+            const query = queryFromUrl.toLowerCase();
+            filtered = filtered.filter(
+                (book) =>
+                    book.title.toLowerCase().includes(query) ||
+                    book.author.toLowerCase().includes(query)
+            );
+        }
+        if (categoryFromUrl) {
+            filtered = filtered.filter((book) => book.category === categoryFromUrl);
+        }
+        return filtered.length;
+    };
+
+    const totalResults = getTotalResults();
 
     // ==========================================
     // Render
@@ -175,12 +264,31 @@ const BookSearch = () => {
                 </div>
 
                 {/* Search Bar */}
-                <div className="mb-8">
+                <div className="mb-6">
                     <SearchBar
                         placeholder="Tìm kiếm theo tên sách hoặc tác giả..."
                         value={searchQuery}
                         onChange={handleSearchChange}
                         onClose={handleSearchClose}
+                        onKeyDown={handleSearchKeyDown}
+                    />
+                </div>
+
+                {/* Filter & Sort Bar */}
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
+                    {/* Category Dropdown */}
+                    <CategoryDropdown
+                        value={categoryFromUrl}
+                        onChange={handleCategoryChange}
+                        categories={CATEGORIES}
+                    />
+
+                    {/* Sort Bar */}
+                    <SortBar
+                        sortBy={sortFromUrl}
+                        onSortChange={handleSortChange}
+                        viewMode={viewMode}
+                        onViewModeChange={handleViewModeChange}
                     />
                 </div>
 
@@ -203,6 +311,35 @@ const BookSearch = () => {
                     </div>
                 )}
 
+                {/* Results Count */}
+                {!isLoading && !error && (
+                    <div className="mb-4 text-text-sub">
+                        {queryFromUrl || categoryFromUrl ? (
+                            <p>
+                                Tìm thấy{' '}
+                                <span className="font-semibold text-text-primary">
+                                    {totalResults}
+                                </span>{' '}
+                                kết quả
+                                {queryFromUrl && ` cho "${queryFromUrl}"`}
+                                {categoryFromUrl && (
+                                    <> trong danh mục <span className="font-semibold text-primary">
+                                        {CATEGORIES.find(c => c.id === categoryFromUrl)?.name}
+                                    </span></>
+                                )}
+                            </p>
+                        ) : (
+                            <p>
+                                Hiển thị{' '}
+                                <span className="font-semibold text-text-primary">
+                                    {totalResults}
+                                </span>{' '}
+                                cuốn sách
+                            </p>
+                        )}
+                    </div>
+                )}
+
                 {/* Loading State */}
                 {isLoading && (
                     <div className="flex justify-center items-center py-20">
@@ -213,52 +350,34 @@ const BookSearch = () => {
                     </div>
                 )}
 
-                {/* Results Count */}
+                {/* Books Grid/List */}
                 {!isLoading && !error && (
-                    <div className="mb-4 text-text-sub">
-                        {searchQuery ? (
-                            <p>
-                                Tìm thấy{' '}
-                                <span className="font-semibold text-text-primary">
-                                    {filteredBooks.length}
-                                </span>{' '}
-                                kết quả cho "{searchQuery}"
-                            </p>
-                        ) : (
-                            <p>
-                                Hiển thị{' '}
-                                <span className="font-semibold text-text-primary">
-                                    {filteredBooks.length}
-                                </span>{' '}
-                                cuốn sách
-                            </p>
-                        )}
-                    </div>
-                )}
-
-                {/* Books Grid */}
-                {!isLoading && !error && (
-                    <>
-                        {filteredBooks.length > 0 ? (
-                            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4 sm:gap-6">
-                                {filteredBooks.map((book) => (
-                                    <BookCard
-                                        key={book.id}
-                                        id={book.id}
-                                        title={book.title}
-                                        author={book.author}
-                                        coverImage={book.coverImage}
-                                    />
-                                ))}
-                            </div>
+                    <div ref={bookListRef}>
+                        {books.length > 0 ? (
+                            <BookGrid
+                                books={books}
+                                viewMode={viewMode}
+                                isLoading={isLoading}
+                            />
                         ) : (
                             <EmptyState
                                 icon={<BookX size={64} />}
                                 title="Không tìm thấy sách"
-                                description="Thử điều chỉnh từ khóa tìm kiếm của bạn"
+                                description="Thử điều chỉnh bộ lọc hoặc từ khóa tìm kiếm của bạn"
                             />
                         )}
-                    </>
+                    </div>
+                )}
+
+                {/* Pagination */}
+                {!isLoading && !error && totalPages > 1 && (
+                    <div className="mt-10">
+                        <Pagination
+                            currentPage={pageFromUrl}
+                            totalPages={totalPages}
+                            onPageChange={handlePageChange}
+                        />
+                    </div>
                 )}
             </main>
         </div>
