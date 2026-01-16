@@ -10,15 +10,15 @@ export default function ReturnRowActions({
       <div className="flex gap-3">
         <button
           onClick={() => onConfirmOne(id)}
-          className="px-6 py-3 rounded text-white text-base transition hover:opacity-90"
-          style={{ backgroundColor: "#7A4A2E", minWidth: "100px" }}
+          className="px-1 py-1 rounded text-white text-base transition hover:opacity-90"
+          style={{ backgroundColor: "#7A4A2E", minWidth: "110px" }}
         >
           Xác nhận
         </button>
         <button
           onClick={() => onWarnOne && onWarnOne(id)}
-          className="px-6 py-3 rounded text-white text-base transition hover:opacity-90"
-          style={{ backgroundColor: "#FF8B37", minWidth: "100px" }}
+          className="px-1 py-1 rounded text-white text-base transition hover:opacity-90"
+          style={{ backgroundColor: "#FF8B37", minWidth: "110px" }}
         >
           Cảnh báo
         </button>
@@ -29,10 +29,10 @@ export default function ReturnRowActions({
   if (status === "completed") {
     return (
       <span 
-        className="px-6 py-3 rounded text-white text-base text-center"
-        style={{ backgroundColor: "#6B7280", minWidth: "120px" }}
+        className="px-1 py-1 rounded text-white text-base text-center"
+        style={{ backgroundColor: "#4ADE80", minWidth: "120px" }}
       >
-        Đã hoàn thành
+        Hoàn thành
       </span>
     );
   }

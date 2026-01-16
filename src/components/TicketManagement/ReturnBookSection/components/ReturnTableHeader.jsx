@@ -4,7 +4,7 @@ export default function ReturnTableHeader({
 }) {
   return (
     <div 
-      className="grid grid-cols-[40px_2fr_2fr_1fr_1fr_1fr_250px] text-white px-4 py-4 rounded-t-lg"
+      className="grid grid-cols-[40px_1.4fr_1.2fr_1.1fr_0.9fr_0.9fr_80px_290px] text-white px-4 py-4 rounded-t-lg"
       style={{ backgroundColor: "#7A4A2E" }}
     >
       <input
@@ -19,6 +19,7 @@ export default function ReturnTableHeader({
       <div className="font-medium">ID thẻ</div>
       <div className="font-medium">Số lượng</div>
       <div className="font-medium">Hết hạn</div>
+      <div className="font-medium">Trạng thái</div>
       <div className="text-right">Hành động</div>
     </div>
   );

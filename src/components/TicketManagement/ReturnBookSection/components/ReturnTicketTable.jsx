@@ -20,7 +20,7 @@ export default function ReturnTicketTable({
   }
 
   return (
-    <div className="bg-white rounded-lg shadow overflow-hidden">
+    <div className="rounded-lg overflow-hidden">
       <ReturnTableHeader 
         allChecked={allChecked} 
         onToggleAll={onToggleAll}

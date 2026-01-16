@@ -19,7 +19,7 @@ export default function ReceiveTicketTable({
   }
 
   return (
-    <div className="bg-white rounded-lg shadow overflow-hidden">
+    <div className="rounded-lg overflow-hidden">
       <ReceiveTableHeader 
         allChecked={allChecked} 
         onToggleAll={onToggleAll}

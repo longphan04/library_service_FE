@@ -168,7 +168,7 @@ export default function TicketManagementPage() {
     <div className="p-6 bg-[#F5EBE0] min-h-screen">
       <div className="flex gap-10 border-b mb-6 text-lg">
         {TABS.map((tab) => (
-          <button
+          <div
             key={tab.key}
             onClick={() => setActiveTab(tab.key)}
             className={`pb-2 font-medium transition ${activeTab === tab.key
@@ -176,12 +176,12 @@ export default function TicketManagementPage() {
               : "text-gray-500 hover:text-gray-700"
               }`}
             style={{
-              color: activeTab === tab.key ? "#7A4A2E" : undefined,
+              color: activeTab === tab.key ? "#FF8B37" : undefined,
               borderColor: activeTab === tab.key ? "#7A4A2E" : undefined,
             }}
           >
             {tab.label}
-          </button>
+          </div>
         ))}
       </div>
 

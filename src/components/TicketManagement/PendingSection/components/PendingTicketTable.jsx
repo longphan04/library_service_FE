@@ -20,7 +20,7 @@ export default function PendingTicketTable({
   }
 
   return (
-    <div className="rounded-lg">
+    <div className="rounded-lg overflow-hidden">
       <PendingTableHeader 
         allChecked={allChecked} 
         onToggleAll={onToggleAll}

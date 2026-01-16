@@ -10,7 +10,6 @@ const usersData = [
     { id: 3, name: "Jorge Ferreira", email: "jorge@gmail.com", date: "14/03/2018", status: "active" },
 ];
 
-
 export default function UserManagement() {
     const {
         currentItems,
@@ -29,6 +28,7 @@ export default function UserManagement() {
         lockUsers,
         unlockUsers,
         setUsers,
+        users,
     } = useUserManagement(usersData);
 
     const handleSaveUser = (updatedUser) => {
@@ -40,6 +40,44 @@ export default function UserManagement() {
     };
 
     const [selectedUser, setSelectedUser] = useState(null);
+
+    // Ngăn sự kiện click lan truyền để checkbox và các nút hành động hoạt động độc lập
+    const handleRowClick = (user, e) => {
+        // Ngăn sự kiện click khi click vào checkbox, nút hành động hoặc các phần tử con khác
+        if (
+            e.target.tagName === 'INPUT' || 
+            e.target.tagName === 'BUTTON' ||
+            e.target.closest('.actions-container') ||
+            e.target.closest('button')
+        ) {
+            return;
+        }
+        
+        // Mở modal khi click vào các phần khác của hàng
+        setSelectedUser(user);
+    };
+
+    // Hàm để mở khóa một user cụ thể
+    const handleUnlockSingleUser = (userId) => {
+        setUsers(prev =>
+            prev.map(user =>
+                user.id === userId
+                    ? { ...user, status: "active" }
+                    : user
+            )
+        );
+    };
+
+    // Hàm để khóa một user cụ thể
+    const handleLockSingleUser = (userId) => {
+        setUsers(prev =>
+            prev.map(user =>
+                user.id === userId
+                    ? { ...user, status: "locked" }
+                    : user
+            )
+        );
+    };
 
     return (
         <div className="min-h-screen flex flex-col bg-[#F5EBE0]">
@@ -75,7 +113,7 @@ export default function UserManagement() {
                         </div>
                     </div>
 
-                    {/* RIGHT */}
+                    {/* RIGHT - Các nút hành động cho nhiều user */}
                     <div className="flex gap-6">
                         <button
                             onClick={unlockUsers}
@@ -83,7 +121,7 @@ export default function UserManagement() {
                             className="px-8 py-3 rounded text-white disabled:opacity-40"
                             style={{ backgroundColor: "#7A4A2E" }}
                         >
-                            Mở khóa
+                            Mở khóa ({selectedIds.length})
                         </button>
                         <button
                             onClick={lockUsers}
@@ -91,14 +129,15 @@ export default function UserManagement() {
                             className="px-8 py-3 rounded text-white disabled:opacity-40"
                             style={{ backgroundColor: "#DE6767" }}
                         >
-                            Khóa
+                            Khóa ({selectedIds.length})
                         </button>
                     </div>
                 </div>
             </div>
 
             {/* ================= TABLE HEADER ================= */}
-            <div className="bg-[#7A4A2E] text-white px-4 py-3 grid grid-cols-[40px_2fr_2fr_1.5fr_1.5fr_40px] items-center">
+            <div className="grid grid-cols-[40px_2.2fr_1.7fr_1.5fr_1.5fr_250px] text-white px-4 py-4 rounded-t-lg"
+                style={{ backgroundColor: "#7A4A2E" }}>
                 <input
                     type="checkbox"
                     checked={isAllSelected}
@@ -109,41 +148,66 @@ export default function UserManagement() {
                 <div>Email</div>
                 <div>Ngày tham gia</div>
                 <div>Trạng thái</div>
-                <div />
+                <div className="text-right pr-4">Thao tác</div>
             </div>
 
             {/* ================= TABLE BODY ================= */}
             {currentItems.map((user) => (
                 <div
                     key={user.id}
-                    className="grid grid-cols-[40px_2fr_2fr_1.5fr_1.5fr_40px] px-4 py-3 items-center border-b"
+                    className="grid grid-cols-[40px_2fr_2fr_1.5fr_1.5fr_250px] px-4 py-4 border-b border-gray-200 items-center hover:bg-gray-50 transition cursor-pointer"
+                    onClick={(e) => handleRowClick(user, e)}
                 >
-                    <input
-                        type="checkbox"
-                        checked={selectedUsers[user.id] || false}
-                        onChange={(e) => toggleUser(user.id, e.target.checked)}
-                        style={{ accentColor: '#7A4A2E' }}
-                    />
+                    {/* Checkbox - cần stopPropagation để không mở modal khi click */}
+                    <div onClick={(e) => e.stopPropagation()}>
+                        <input
+                            type="checkbox"
+                            checked={selectedUsers[user.id] || false}
+                            onChange={(e) => toggleUser(user.id, e.target.checked)}
+                            style={{ accentColor: '#7A4A2E' }}
+                            className="h-5 w-5 cursor-pointer"
+                        />
+                    </div>
 
-                    <div className="font-medium">{user.name}</div>
-                    <div>{user.email}</div>
-                    <div>{user.date}</div>
+                    <div className="font-medium text-gray-800">{user.name}</div>
+                    <div className="text-gray-600">{user.email}</div>
+                    <div className="text-gray-600">{user.date}</div>
 
                     <div>
                         <span
-                            className={`px-5 py-1 rounded text-white text-sm ${user.status === "active" ? "bg-black" : "bg-red-500"
+                            className={`px-4 py-2 rounded text-white text-sm ${user.status === "active" ? "bg-black" : "bg-red-500"
                                 }`}
                         >
                             {user.status === "active" ? "Hoạt động" : "Khóa"}
                         </span>
                     </div>
 
-                    {/* 3 DOT MENU */}
-                    <div
-                        className="cursor-pointer text-xl"
-                        onClick={() => setSelectedUser(user)}
+                    {/* ================= ACTIONS COLUMN ================= */}
+                    {/* Container cho các nút hành động - cần stopPropagation */}
+                    <div 
+                        className="flex justify-end gap-3 actions-container"
+                        onClick={(e) => e.stopPropagation()}
                     >
-                        ⋯
+                        {/* Các nút hành động cho từng user */}
+                        <div className="flex gap-2">
+                            {user.status === "locked" ? (
+                                <button
+                                    onClick={() => handleUnlockSingleUser(user.id)}
+                                    className="px-4 py-2.5 text-sm rounded text-white hover:opacity-90 transition"
+                                    style={{ backgroundColor: "#7A4A2E", minWidth: "80px" }}
+                                >
+                                    Mở khóa
+                                </button>
+                            ) : (
+                                <button
+                                    onClick={() => handleLockSingleUser(user.id)}
+                                    className="px-4 py-2.5 text-sm rounded text-white hover:opacity-90 transition"
+                                    style={{ backgroundColor: "#DE6767", minWidth: "80px" }}
+                                >
+                                    Khóa
+                                </button>
+                            )}
+                        </div>
                     </div>
                 </div>
             ))}
