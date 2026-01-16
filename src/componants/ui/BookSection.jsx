@@ -115,8 +115,8 @@ const BookSection = ({
                     style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
                 >
                     {books.map((book) => {
-                        const bookId = book.id || book._id;
-                        const coverImage = book.coverImage || book.image || book.thumbnail || 'https://via.placeholder.com/200x280/FFF8F0/7D5B4F?text=No+Image';
+                        const bookId = book.book_id || book.id || book._id;
+                        const coverImage = book.cover_url || book.coverImage || book.image || book.thumbnail || 'https://via.placeholder.com/200x280/FFF8F0/7D5B4F?text=No+Image';
                         return (
                             <BookCard
                                 key={bookId}

@@ -8,6 +8,7 @@
  * User roles trong hệ thống Library Management
  */
 export const ROLES = {
+    GUEST: 'GUEST',
     MEMBER: 'MEMBER',
     STAFF: 'STAFF',
     ADMIN: 'ADMIN',
@@ -17,7 +18,7 @@ export const ROLES = {
  * Dashboard routes theo role
  */
 export const ROLE_DASHBOARDS = {
-    [ROLES.MEMBER]: '/',       // Member → Homepage (hoặc /user nếu có)
+    [ROLES.MEMBER]: '/user',   // Member → User dashboard
     [ROLES.STAFF]: '/staff',   // Staff → Staff dashboard
     [ROLES.ADMIN]: '/admin',   // Admin → Admin dashboard
 };

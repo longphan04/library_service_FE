@@ -158,6 +158,27 @@ export const register = async (userData) => {
     }
 };
 
+/**
+ * Đổi mật khẩu
+ * @param {Object} data - { currentPassword, newPassword }
+ * @returns {Promise} - Response từ server
+ */
+export const changePassword = async (data) => {
+    try {
+        const response = await axios.patch('/auth/change-password', data);
+        return response.data;
+    } catch (error) {
+        if (error.response) {
+            const message = error.response.data?.message;
+            throw new Error(message || 'Đổi mật khẩu thất bại');
+        } else if (error.request) {
+            throw new Error('Không thể kết nối đến server');
+        } else {
+            throw new Error('Đã có lỗi xảy ra');
+        }
+    }
+};
+
 // Export default object chứa tất cả functions
 const authService = {
     login,
@@ -165,6 +186,7 @@ const authService = {
     register,
     refreshToken,
     getCurrentUser,
+    changePassword,
     getToken,
     getRefreshToken,
     setTokens,

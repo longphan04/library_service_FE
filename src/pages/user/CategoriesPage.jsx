@@ -54,11 +54,11 @@ const CategoriesPage = () => {
             const books = Array.isArray(response) ? response : response.data || [];
             // Transform books để đảm bảo format đúng
             const transformedBooks = books.map(book => ({
-                id: book.id || book._id,
-                _id: book._id || book.id,
+                id: book.book_id || book.id || book._id,
+                _id: book.book_id || book._id || book.id,
                 title: book.title,
-                author: book.author?.name || book.authorName || book.author || 'Không rõ',
-                coverImage: book.coverImage || book.image || book.thumbnail,
+                author: book.authors?.[0]?.name || book.author?.name || book.authorName || book.author || 'Không rõ',
+                coverImage: book.cover_url || book.coverImage || book.image || book.thumbnail,
             }));
             setCategoryBooks(transformedBooks);
         } catch (error) {

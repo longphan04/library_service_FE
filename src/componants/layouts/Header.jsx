@@ -45,13 +45,6 @@ const NAV_ITEMS = [
     { label: 'Kệ sách', path: '/bookshelf' },
 ];
 
-// Mock user data
-const MOCK_USER = {
-    name: 'User A',
-    email: 'UserA@gmail.com',
-    avatarUrl: 'https://via.placeholder.com/40/FFB6C1/FFFFFF?text=UA',
-};
-
 // User dropdown menu items
 const USER_MENU_ITEMS = [
     { id: 'edit-profile', label: 'Chỉnh sửa thông tin cá nhân', icon: Edit2, link: '/profile' },
@@ -62,12 +55,17 @@ const USER_MENU_ITEMS = [
     { id: 'ai-chat', label: 'AI Chat', icon: Bot, link: '/ai-chat' },
 ];
 
+// Default avatar placeholder
+const DEFAULT_AVATAR = 'https://via.placeholder.com/40/7D5B4F/FFFFFF?text=U';
+
 // ==========================================
 // Header Component
 // ==========================================
 const Header = () => {
     const navigate = useNavigate();
-    const { isAuthenticated, logout: authLogout } = useAuth();
+
+    // Get user data from AuthContext (fetched from API on mount)
+    const { isAuthenticated, user, isLoading: isAuthLoading, logout: authLogout } = useAuth();
 
     // State quản lý mobile menu mở/đóng
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -84,7 +82,13 @@ const Header = () => {
 
     // State quản lý edit profile modal
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-    const [user, setUser] = useState(MOCK_USER);
+
+    // ==========================================
+    // User Display Data (from AuthContext)
+    // ==========================================
+    const userDisplayName = user?.fullName || user?.name || user?.email?.split('@')[0] || 'User';
+    const userEmail = user?.email || '';
+    const userAvatar = user?.avatar || user?.avatarUrl || DEFAULT_AVATAR;
 
     // Toggle mobile menu
     const toggleMobileMenu = () => setIsMobileMenuOpen(prev => !prev);
@@ -140,13 +144,7 @@ const Header = () => {
     // Handle save profile
     const handleSaveProfile = (updatedData) => {
         console.log('Updating profile:', updatedData);
-
-        setUser(prev => ({
-            ...prev,
-            name: updatedData.name,
-            email: updatedData.email,
-        }));
-
+        // TODO: Call userService.updateMe() to update profile
         alert('Cập nhật thông tin thành công!');
     };
 
@@ -246,19 +244,36 @@ const Header = () => {
                                                 {/* User Info Section */}
                                                 <div className="p-4 border-b border-gray-100">
                                                     <div className="flex items-center gap-3">
-                                                        <img
-                                                            src={MOCK_USER.avatarUrl}
-                                                            alt={MOCK_USER.name}
-                                                            className="w-14 h-14 rounded-full object-cover ring-2 ring-pink-200"
-                                                        />
-                                                        <div className="flex-1">
-                                                            <h3 className="font-semibold text-text-primary">
-                                                                {MOCK_USER.name}
-                                                            </h3>
-                                                            <p className="text-sm text-text-sub">
-                                                                {MOCK_USER.email}
-                                                            </p>
-                                                        </div>
+                                                        {isAuthLoading ? (
+                                                            // Skeleton loading for user info
+                                                            <>
+                                                                <div className="w-14 h-14 rounded-full bg-gray-200 animate-pulse" />
+                                                                <div className="flex-1 space-y-2">
+                                                                    <div className="h-4 bg-gray-200 rounded w-24 animate-pulse" />
+                                                                    <div className="h-3 bg-gray-200 rounded w-32 animate-pulse" />
+                                                                </div>
+                                                            </>
+                                                        ) : (
+                                                            <>
+                                                                <img
+                                                                    src={userAvatar}
+                                                                    alt={userDisplayName}
+                                                                    className="w-14 h-14 rounded-full object-cover ring-2 ring-primary/20"
+                                                                    onError={(e) => {
+                                                                        e.target.onerror = null;
+                                                                        e.target.src = DEFAULT_AVATAR;
+                                                                    }}
+                                                                />
+                                                                <div className="flex-1">
+                                                                    <h3 className="font-semibold text-text-primary">
+                                                                        {userDisplayName}
+                                                                    </h3>
+                                                                    <p className="text-sm text-text-sub">
+                                                                        {userEmail}
+                                                                    </p>
+                                                                </div>
+                                                            </>
+                                                        )}
                                                     </div>
                                                 </div>
 

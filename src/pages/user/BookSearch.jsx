@@ -16,49 +16,13 @@ import EmptyState from '../../componants/ui/EmptyState';
 import Spinner from '../../componants/ui/Spinner';
 import { BookX, AlertCircle, ArrowLeft } from 'lucide-react';
 
+// Services
+import bookService from '../../services/book.service';
+import categoryService from '../../services/category.service';
+
 // ==========================================
-// Mock Data - Dữ liệu mẫu
+// Constants
 // ==========================================
-const CATEGORIES = [
-    { id: 'lich-su', name: 'Lịch Sử' },
-    { id: 'khoa-hoc', name: 'Khoa Học' },
-    { id: 'van-hoc', name: 'Văn Học' },
-    { id: 'trinh-tham', name: 'Trinh Thám' },
-    { id: 'kinh-te', name: 'Kinh Tế' },
-    { id: 'tam-ly', name: 'Tâm Lý' },
-    { id: 'giao-duc', name: 'Giáo Dục' },
-    { id: 'nghe-thuat', name: 'Nghệ Thuật' },
-    { id: 'the-thao', name: 'Thể Thao' },
-    { id: 'am-nhac', name: 'Âm Nhạc' },
-    { id: 'nau-an', name: 'Nấu Ăn' },
-    { id: 'du-lich', name: 'Du Lịch' },
-    { id: 'thieu-nhi', name: 'Thiếu Nhi' },
-    { id: 'truyen-tranh', name: 'Truyện Tranh' },
-];
-
-const SAMPLE_COVER = 'https://via.placeholder.com/200x280/FFF8F0/7D5B4F';
-
-// Generate mock books với category
-const generateMockBooks = () => {
-    const books = [];
-    CATEGORIES.forEach((cat) => {
-        for (let i = 1; i <= 15; i++) {
-            books.push({
-                id: `${cat.id}-${i}`,
-                title: `${cat.name} - Tập ${i}`,
-                author: 'Tác giả mẫu',
-                coverImage: `${SAMPLE_COVER}?text=${encodeURIComponent(cat.name)}+${i}`,
-                category: cat.id,
-                categoryName: cat.name,
-                createdAt: Date.now() - Math.random() * 10000000000,
-                popularity: Math.floor(Math.random() * 1000),
-            });
-        }
-    });
-    return books;
-};
-
-const ALL_BOOKS = generateMockBooks();
 const BOOKS_PER_PAGE = 12;
 
 // ==========================================
@@ -69,8 +33,8 @@ const BookSearch = () => {
     const [searchParams, setSearchParams] = useSearchParams();
 
     // Get params from URL
-    const queryFromUrl = searchParams.get('q') || '';
-    const sortFromUrl = searchParams.get('sort') || 'newest';
+    const queryFromUrl = searchParams.get('q') || searchParams.get('keyword') || '';
+    const sortFromUrl = searchParams.get('sort') || 'related';
     const categoryFromUrl = searchParams.get('category') || '';
     const pageFromUrl = parseInt(searchParams.get('page')) || 1;
 
@@ -80,10 +44,40 @@ const BookSearch = () => {
     const [error, setError] = useState(null);
     const [books, setBooks] = useState([]);
     const [totalPages, setTotalPages] = useState(1);
+    const [totalResults, setTotalResults] = useState(0);
     const [viewMode, setViewMode] = useState('grid');
+
+    // Categories state
+    const [categories, setCategories] = useState([]);
+    const [categoriesLoading, setCategoriesLoading] = useState(true);
 
     // Ref for scroll
     const bookListRef = useRef(null);
+
+    // ==========================================
+    // Fetch Categories on Mount
+    // ==========================================
+    useEffect(() => {
+        const fetchCategories = async () => {
+            setCategoriesLoading(true);
+            try {
+                const response = await categoryService.getAll();
+                const data = Array.isArray(response) ? response : response.data || [];
+                // Transform to expected format
+                const transformedCategories = data.map(cat => ({
+                    id: cat.id || cat._id,
+                    name: cat.name,
+                }));
+                setCategories(transformedCategories);
+            } catch (err) {
+                console.error('Error fetching categories:', err);
+            } finally {
+                setCategoriesLoading(false);
+            }
+        };
+
+        fetchCategories();
+    }, []);
 
     // ==========================================
     // Update URL params helper
@@ -97,57 +91,55 @@ const BookSearch = () => {
                 newParams.delete(key);
             }
         });
-        setSearchParams(newParams);
+        setSearchParams(newParams, { replace: true });
     };
 
     // ==========================================
-    // Fetch/Filter books (Mock API)
+    // Fetch Books from API
     // ==========================================
     const fetchBooks = async () => {
         setIsLoading(true);
         setError(null);
 
         try {
-            // Simulate API delay
-            await new Promise((resolve) => setTimeout(resolve, 500));
+            // Build API params
+            const params = {
+                page: pageFromUrl,
+                limit: BOOKS_PER_PAGE,
+            };
 
-            // Simulate random error (5% chance)
-            if (Math.random() < 0.05) {
-                throw new Error('Không thể tải dữ liệu sách. Vui lòng thử lại.');
-            }
-
-            // Filter by search query
-            let filtered = ALL_BOOKS;
+            // Add keyword search
             if (queryFromUrl) {
-                const query = queryFromUrl.toLowerCase();
-                filtered = filtered.filter(
-                    (book) =>
-                        book.title.toLowerCase().includes(query) ||
-                        book.author.toLowerCase().includes(query)
-                );
+                params.keyword = queryFromUrl;
             }
 
-            // Filter by category
+            // Add category filter
             if (categoryFromUrl) {
-                filtered = filtered.filter((book) => book.category === categoryFromUrl);
+                params.category = categoryFromUrl;
             }
 
-            // Sort
-            if (sortFromUrl === 'newest') {
-                filtered = [...filtered].sort((a, b) => b.createdAt - a.createdAt);
-            } else if (sortFromUrl === 'popular') {
-                filtered = [...filtered].sort((a, b) => b.popularity - a.popularity);
+            // Add sort (related, newest, popular)
+            if (sortFromUrl && sortFromUrl !== 'related') {
+                params.sort = sortFromUrl;
             }
 
-            // Paginate
-            const total = Math.ceil(filtered.length / BOOKS_PER_PAGE);
-            const startIndex = (pageFromUrl - 1) * BOOKS_PER_PAGE;
-            const paginatedBooks = filtered.slice(startIndex, startIndex + BOOKS_PER_PAGE);
+            const response = await bookService.getAll(params);
 
-            setBooks(paginatedBooks);
-            setTotalPages(total || 1);
+            // Handle different API response formats
+            if (Array.isArray(response)) {
+                setBooks(response);
+                setTotalResults(response.length);
+                setTotalPages(1);
+            } else {
+                const booksData = response.data || response.books || [];
+                setBooks(booksData);
+                setTotalResults(response.total || booksData.length);
+                setTotalPages(response.totalPages || Math.ceil((response.total || booksData.length) / BOOKS_PER_PAGE));
+            }
         } catch (err) {
-            setError(err.message);
+            console.error('Error fetching books:', err);
+            setError(err.message || 'Không thể tải dữ liệu sách. Vui lòng thử lại.');
+            setBooks([]);
         } finally {
             setIsLoading(false);
         }
@@ -173,12 +165,12 @@ const BookSearch = () => {
     };
 
     const handleSearchSubmit = () => {
-        updateSearchParams({ q: searchQuery, page: '' });
+        updateSearchParams({ q: searchQuery, keyword: searchQuery, page: '' });
     };
 
     const handleSearchClose = () => {
         setSearchQuery('');
-        updateSearchParams({ q: '', page: '' });
+        updateSearchParams({ q: '', keyword: '', page: '' });
     };
 
     const handleSortChange = (newSort) => {
@@ -214,26 +206,11 @@ const BookSearch = () => {
         }
     };
 
-    // ==========================================
-    // Compute total results
-    // ==========================================
-    const getTotalResults = () => {
-        let filtered = ALL_BOOKS;
-        if (queryFromUrl) {
-            const query = queryFromUrl.toLowerCase();
-            filtered = filtered.filter(
-                (book) =>
-                    book.title.toLowerCase().includes(query) ||
-                    book.author.toLowerCase().includes(query)
-            );
-        }
-        if (categoryFromUrl) {
-            filtered = filtered.filter((book) => book.category === categoryFromUrl);
-        }
-        return filtered.length;
+    // Get selected category name for display
+    const getSelectedCategoryName = () => {
+        const category = categories.find(c => c.id === categoryFromUrl);
+        return category?.name || '';
     };
-
-    const totalResults = getTotalResults();
 
     // ==========================================
     // Render
@@ -271,6 +248,7 @@ const BookSearch = () => {
                         onChange={handleSearchChange}
                         onClose={handleSearchClose}
                         onKeyDown={handleSearchKeyDown}
+                        onSearch={handleSearchSubmit}
                     />
                 </div>
 
@@ -280,7 +258,8 @@ const BookSearch = () => {
                     <CategoryDropdown
                         value={categoryFromUrl}
                         onChange={handleCategoryChange}
-                        categories={CATEGORIES}
+                        categories={categories}
+                        loading={categoriesLoading}
                     />
 
                     {/* Sort Bar */}
@@ -322,9 +301,9 @@ const BookSearch = () => {
                                 </span>{' '}
                                 kết quả
                                 {queryFromUrl && ` cho "${queryFromUrl}"`}
-                                {categoryFromUrl && (
+                                {categoryFromUrl && getSelectedCategoryName() && (
                                     <> trong danh mục <span className="font-semibold text-primary">
-                                        {CATEGORIES.find(c => c.id === categoryFromUrl)?.name}
+                                        {getSelectedCategoryName()}
                                     </span></>
                                 )}
                             </p>
@@ -355,7 +334,12 @@ const BookSearch = () => {
                     <div ref={bookListRef}>
                         {books.length > 0 ? (
                             <BookGrid
-                                books={books}
+                                books={books.map(book => ({
+                                    id: book.book_id || book.id || book._id,
+                                    title: book.title,
+                                    author: book.authors?.[0]?.name || book.author?.name || book.authorName || 'Không rõ',
+                                    coverImage: book.cover_url || book.coverImage || book.image || book.thumbnail,
+                                }))}
                                 viewMode={viewMode}
                                 isLoading={isLoading}
                             />

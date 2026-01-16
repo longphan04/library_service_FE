@@ -1,7 +1,7 @@
 // ==========================================
 // Book Service
 // Mô tả: Service xử lý books (GET /book, GET /book/:id)
-// Hỗ trợ query params: category, keyword, sort, page
+// Hỗ trợ query params: category, keyword, sort, page, limit
 // ==========================================
 
 import axios from './axios';

@@ -142,11 +142,11 @@ const BookList = () => {
                 >
                     {books.map((book) => (
                         <BookCard
-                            key={book.id || book._id}
-                            id={book.id || book._id}
+                            key={book.book_id || book.id || book._id}
+                            id={book.book_id || book.id || book._id}
                             title={book.title}
-                            author={book.author?.name || book.authorName || 'Không rõ'}
-                            coverImage={book.coverImage || book.image || book.thumbnail}
+                            author={book.authors?.[0]?.name || book.author?.name || book.authorName || 'Không rõ'}
+                            coverImage={book.cover_url || book.coverImage || book.image || book.thumbnail}
                         />
                     ))}
                 </div>

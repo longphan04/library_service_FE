@@ -9,8 +9,12 @@ import { createBrowserRouter } from 'react-router-dom';
 // Route Guards
 import ProtectedRoute from '../componants/guards/ProtectedRoute';
 import GuestRoute from '../componants/guards/GuestRoute';
+import RoleRoute from '../componants/guards/RoleRoute';
 
-// Pages
+// Role Constants
+import { ROLES } from '../constants/roles';
+
+// Pages - User
 import Homepage from '../pages/user/Homepage';
 import BookList from '../pages/user/BookList';
 import BookSearch from '../pages/user/BookSearch';
@@ -19,8 +23,14 @@ import CategoriesPage from '../pages/user/CategoriesPage';
 import CategoryBookList from '../pages/user/CategoryBookList';
 import BookDetail from '../pages/user/BookDetail';
 import Bookshelf from '../pages/user/Bookshelf';
+
+// Pages - Auth
 import Login from '../pages/auth/Login';
 import Register from '../pages/auth/Register';
+
+// Pages - Staff & Admin (Placeholder)
+import StaffDashboard from '../pages/staff/StaffDashboard';
+import AdminDashboard from '../pages/admin/AdminDashboard';
 
 // ==========================================
 // Router Configuration
@@ -62,9 +72,18 @@ export const router = createBrowserRouter([
     },
 
     // ==========================================
-    // Protected Routes (Guest ❌ → /login | Authenticated ✅)
+    // MEMBER Routes (Role: MEMBER)
     // ==========================================
 
+    // User Dashboard - MEMBER redirect destination after login
+    {
+        path: '/user',
+        element: (
+            <RoleRoute allowedRoles={[ROLES.MEMBER]}>
+                <Homepage />
+            </RoleRoute>
+        ),
+    },
     // Bookshelf - Kệ sách cá nhân
     {
         path: '/bookshelf',
@@ -85,7 +104,51 @@ export const router = createBrowserRouter([
     },
 
     // ==========================================
-    // Guest Routes (Guest ✅ | Authenticated ❌ → /)
+    // STAFF Routes (Role: STAFF)
+    // ==========================================
+
+    {
+        path: '/staff',
+        element: (
+            <RoleRoute allowedRoles={[ROLES.STAFF]}>
+                <StaffDashboard />
+            </RoleRoute>
+        ),
+    },
+    // Staff catch-all for future nested routes
+    {
+        path: '/staff/*',
+        element: (
+            <RoleRoute allowedRoles={[ROLES.STAFF]}>
+                <StaffDashboard />
+            </RoleRoute>
+        ),
+    },
+
+    // ==========================================
+    // ADMIN Routes (Role: ADMIN)
+    // ==========================================
+
+    {
+        path: '/admin',
+        element: (
+            <RoleRoute allowedRoles={[ROLES.ADMIN]}>
+                <AdminDashboard />
+            </RoleRoute>
+        ),
+    },
+    // Admin catch-all for future nested routes
+    {
+        path: '/admin/*',
+        element: (
+            <RoleRoute allowedRoles={[ROLES.ADMIN]}>
+                <AdminDashboard />
+            </RoleRoute>
+        ),
+    },
+
+    // ==========================================
+    // Guest Routes (Guest ✅ | Authenticated ❌ → redirect by role)
     // ==========================================
 
     // Login
@@ -107,3 +170,4 @@ export const router = createBrowserRouter([
         ),
     },
 ]);
+

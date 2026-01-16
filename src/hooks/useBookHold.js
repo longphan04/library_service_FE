@@ -1,20 +1,115 @@
 // ==========================================
 // Hook: useBookHold
 // Mô tả: Custom hook để quản lý book holds (đặt trước sách)
+// Hỗ trợ: fetch, create, remove với optimistic update, borrow all
+// Performance: O(1) lookups với Map, normalized data
 // ==========================================
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import bookHoldService from '../services/book-hold.service';
+import { createBorrowRequest } from '../services/borrow-ticket.service';
+
+// ==========================================
+// Data Normalization Helper
+// Tách logic biến đổi dữ liệu ra ngoài hook
+// ==========================================
 
 /**
- * Custom hook để quản lý book holds của user
- * @returns {Object} - { holds, loading, error, createHold, removeHold, refetch }
+ * Chuẩn hóa dữ liệu hold từ API về format nhất quán
+ * @param {Object} hold - Raw hold data from API
+ * @returns {Object} - Normalized hold object
  */
+const normalizeHoldData = (hold) => {
+    // Extract book data with fallbacks
+    const rawBook = hold.book || {};
+
+    // Normalize book ID - check all possible field names
+    const bookId = hold.book_id
+        || hold.bookId
+        || rawBook.book_id
+        || rawBook.id
+        || rawBook._id
+        || null;
+
+    // Normalize hold ID
+    const holdId = hold.hold_id || hold.id || hold._id || null;
+
+    // Normalize book info
+    const book = {
+        id: bookId,
+        title: rawBook.title || 'Không rõ',
+        author: rawBook.authors?.[0]?.name
+            || rawBook.author?.name
+            || rawBook.authorName
+            || 'Không rõ',
+        coverImage: rawBook.cover_url
+            || rawBook.coverImage
+            || rawBook.image
+            || null,
+        availableCopies: rawBook.available_copies
+            || rawBook.availableCopies
+            || 0,
+    };
+
+    return {
+        id: holdId,
+        holdId,
+        bookId,
+        book,
+        status: hold.status || 'ACTIVE',
+        createdAt: hold.created_at || hold.createdAt || null,
+    };
+};
+
+/**
+ * Chuẩn hóa mảng holds
+ * @param {Array} holds - Raw holds array from API
+ * @returns {Array} - Normalized holds array
+ */
+const normalizeHoldsArray = (data) => {
+    const rawArray = Array.isArray(data) ? data : data?.data || [];
+    return rawArray.map(normalizeHoldData);
+};
+
+// ==========================================
+// useBookHold Hook
+// ==========================================
+
 const useBookHold = () => {
     const [holds, setHolds] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [actionLoading, setActionLoading] = useState(false);
+
+    // ==========================================
+    // Performance: Map cho O(1) lookups
+    // ==========================================
+
+    /**
+     * Map: bookId -> hold object
+     * Cho phép lookup O(1) thay vì O(N)
+     */
+    const holdsByBookId = useMemo(() => {
+        const map = new Map();
+        holds.forEach((hold) => {
+            if (hold.bookId) {
+                map.set(hold.bookId, hold);
+            }
+        });
+        return map;
+    }, [holds]);
+
+    /**
+     * Set: bookIds đang được hold
+     * Cho phép check O(1)
+     */
+    const heldBookIds = useMemo(() => {
+        return new Set(holds.map((hold) => hold.bookId).filter(Boolean));
+    }, [holds]);
+
+    // ==========================================
+    // Fetch Holds từ API
+    // ==========================================
 
     const fetchHolds = useCallback(async () => {
         setLoading(true);
@@ -22,76 +117,159 @@ const useBookHold = () => {
 
         try {
             const response = await bookHoldService.getMyHolds();
-            setHolds(Array.isArray(response) ? response : response.data || []);
+            const normalizedHolds = normalizeHoldsArray(response);
+            setHolds(normalizedHolds);
         } catch (err) {
-            setError(err.message || 'Failed to fetch book holds');
+            setError(err.message || 'Không thể tải danh sách sách đang giữ');
             setHolds([]);
         } finally {
             setLoading(false);
         }
     }, []);
 
+    // Fetch on mount
     useEffect(() => {
         fetchHolds();
     }, [fetchHolds]);
 
-    /**
-     * Đặt trước sách
-     * @param {Object} data - { bookId }
-     */
+    // ==========================================
+    // Create Hold - Optimistic local update
+    // ==========================================
+
     const createHold = useCallback(async (data) => {
         setActionLoading(true);
         setError(null);
 
         try {
-            const newHold = await bookHoldService.create(data);
-            setHolds((prev) => [newHold, ...prev]);
+            const response = await bookHoldService.create(data);
+
+            // Normalize response và thêm vào state local
+            const newHold = normalizeHoldData(response);
+
+            setHolds((prev) => {
+                // Kiểm tra duplicate trước khi thêm
+                const exists = prev.some((h) => h.bookId === newHold.bookId);
+                if (exists) return prev;
+                return [newHold, ...prev];
+            });
+
             return newHold;
         } catch (err) {
-            setError(err.message || 'Failed to create book hold');
+            setError(err.message || 'Không thể đặt trước sách');
             throw err;
         } finally {
             setActionLoading(false);
         }
     }, []);
 
-    /**
-     * Hủy đặt trước sách
-     * @param {string|number} id - Book hold ID
-     */
+    // ==========================================
+    // Remove Hold - Optimistic Update
+    // ==========================================
+
     const removeHold = useCallback(async (id) => {
         setActionLoading(true);
         setError(null);
 
+        // Lưu state cũ để rollback
+        const previousHolds = holds;
+
+        // Optimistic: xóa khỏi UI ngay
+        setHolds((prev) => prev.filter((hold) =>
+            hold.id !== id && hold.holdId !== id
+        ));
+
         try {
             await bookHoldService.remove(id);
-            setHolds((prev) => prev.filter((hold) => hold.id !== id));
+            // Success - không cần làm gì thêm
         } catch (err) {
-            setError(err.message || 'Failed to remove book hold');
+            // Rollback on error
+            setHolds(previousHolds);
+            setError(err.message || 'Không thể xóa sách khỏi kệ');
             throw err;
         } finally {
             setActionLoading(false);
         }
-    }, []);
-
-    /**
-     * Kiểm tra sách đã được đặt chưa
-     * @param {string|number} bookId 
-     * @returns {boolean}
-     */
-    const isBookOnHold = useCallback((bookId) => {
-        return holds.some((hold) => hold.bookId === bookId || hold.book?.id === bookId);
     }, [holds]);
 
+    // ==========================================
+    // Borrow All Holds
+    // ==========================================
+
+    const borrowAllHolds = useCallback(async () => {
+        if (holds.length === 0) {
+            throw new Error('Kệ sách trống, không có sách để mượn');
+        }
+
+        setActionLoading(true);
+        setError(null);
+
+        try {
+            const holdIds = holds.map((hold) => hold.id || hold.holdId);
+            const result = await createBorrowRequest(holdIds);
+
+            // Clear kệ sách sau khi mượn thành công
+            setHolds([]);
+
+            return result;
+        } catch (err) {
+            setError(err.message || 'Không thể mượn sách');
+            throw err;
+        } finally {
+            setActionLoading(false);
+        }
+    }, [holds]);
+
+    // ==========================================
+    // Lookup Functions - O(1) với Map/Set
+    // ==========================================
+
+    /**
+     * Kiểm tra sách đã được hold chưa - O(1)
+     */
+    const isBookOnHold = useCallback((bookId) => {
+        return heldBookIds.has(bookId);
+    }, [heldBookIds]);
+
+    /**
+     * Lấy hold theo bookId - O(1)
+     */
+    const getHoldByBookId = useCallback((bookId) => {
+        return holdsByBookId.get(bookId) || null;
+    }, [holdsByBookId]);
+
+    // ==========================================
+    // Clear All (local only)
+    // ==========================================
+
+    const clearAllHolds = useCallback(() => {
+        setHolds([]);
+    }, []);
+
+    // ==========================================
+    // Return
+    // ==========================================
+
     return {
+        // State
         holds,
         loading,
         error,
         actionLoading,
+
+        // Actions
         createHold,
         removeHold,
-        isBookOnHold,
+        borrowAllHolds,
+        clearAllHolds,
         refetch: fetchHolds,
+
+        // Lookups (O(1))
+        isBookOnHold,
+        getHoldByBookId,
+
+        // Derived data
+        holdCount: holds.length,
+        isEmpty: holds.length === 0,
     };
 };
 
