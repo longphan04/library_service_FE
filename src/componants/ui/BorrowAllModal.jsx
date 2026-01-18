@@ -1,7 +1,7 @@
 // ==========================================
 // Component: BorrowAllModal
 // Mô tả: Modal xác nhận mượn tất cả sách trong kệ
-// Features: Portal rendering, A11y, useMemo optimization
+// Features: Portal rendering, useMemo optimization
 // Vị trí: src/componants/ui/BorrowAllModal.jsx
 // ==========================================
 

@@ -5,7 +5,7 @@
 // ==========================================
 
 import { Link } from 'react-router-dom';
-import BookCard from './BookCard';
+import BookCard from './BookCardUser';
 import Skeleton from './Skeleton';
 
 // ==========================================

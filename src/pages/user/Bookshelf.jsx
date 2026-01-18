@@ -9,7 +9,7 @@ import { useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { BookMarked, Plus, Trash2, RefreshCw, ShoppingCart, AlertTriangle } from 'lucide-react';
 import Header from '../../componants/layouts/Header';
-import BookCard from '../../componants/ui/BookCard';
+import BookCard from '../../componants/ui/BookCardUser';
 import Button from '../../componants/ui/Button';
 import BorrowAllModal from '../../componants/ui/BorrowAllModal';
 import Toast from '../../componants/ui/Toast';
@@ -140,8 +140,8 @@ const BookshelfItem = ({ hold, onRemove }) => {
             {status && (
                 <div className="mt-2 text-center">
                     <span className={`text-xs px-2 py-0.5 rounded-full ${status === 'ACTIVE'
-                            ? 'bg-primary/10 text-primary'
-                            : 'bg-gray-100 text-text-sub'
+                        ? 'bg-primary/10 text-primary'
+                        : 'bg-gray-100 text-text-sub'
                         }`}>
                         {status === 'ACTIVE' ? 'Đang giữ' : status}
                     </span>

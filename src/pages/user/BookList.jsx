@@ -7,7 +7,7 @@
 import { useRef, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import Header from '../../componants/layouts/Header';
-import BookCard from '../../componants/ui/BookCard';
+import BookCard from '../../componants/ui/BookCardUser';
 import Pagination from '../../componants/ui/Pagination';
 import { ArrowLeft } from 'lucide-react';
 import { Link } from 'react-router-dom';

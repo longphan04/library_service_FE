@@ -1,67 +1,70 @@
 // ==========================================
 // Page: Homepage
 // Mô tả: Trang chủ của hệ thống thư viện với dữ liệu từ API
+// 
+// Cấu trúc:
+//   - Header: Navigation bar
+//   - HeroSection: Banner chính với carousel sách
+//   - HotCategorySection: 3 danh mục nổi bật với hình ảnh
+//   - BookSection(s): Các section sách (Mới nhất, Đề xuất)
+//
 // Vị trí: src/pages/user/Homepage.jsx
 // ==========================================
 
 import { useState, useEffect } from 'react';
 import Header from '../../componants/layouts/Header';
 import HeroSection from '../../componants/ui/HeroSection';
+import HotCategorySection from '../../componants/ui/HotCategorySection';
 import BookSection from '../../componants/ui/BookSection';
 import { useAuth } from '../../contexts/AuthContext';
 import bookService from '../../services/book.service';
-import categoryService from '../../services/category.service';
 
 // ==========================================
 // Homepage Component
 // ==========================================
+
 const Homepage = () => {
+    // Kiểm tra trạng thái đăng nhập
     const { isAuthenticated } = useAuth();
 
+    // ==========================================
     // State cho các section sách
-    const [latestBooks, setLatestBooks] = useState([]);
-    const [recommendedBooks, setRecommendedBooks] = useState([]);
-    const [sciFiBooks, setSciFiBooks] = useState([]);
-    const [loading, setLoading] = useState(true);
-    const [categories, setCategories] = useState([]);
+    // ==========================================
 
+    /** Danh sách sách mới nhất */
+    const [latestBooks, setLatestBooks] = useState([]);
+
+    /** Danh sách sách đề xuất (chỉ hiển thị khi đã đăng nhập) */
+    const [recommendedBooks, setRecommendedBooks] = useState([]);
+
+    /** Trạng thái loading */
+    const [loading, setLoading] = useState(true);
+
+    // ==========================================
     // Fetch dữ liệu khi component mount
+    // ==========================================
+
     useEffect(() => {
         const fetchData = async () => {
             setLoading(true);
             try {
-                // Fetch categories để lấy ID
-                const categoriesRes = await categoryService.getAll();
-                const categoriesData = Array.isArray(categoriesRes) ? categoriesRes : categoriesRes.data || [];
-                setCategories(categoriesData);
-
-                // Fetch sách mới nhất
-                const latestRes = await bookService.getAll({ limit: 6, sort: '-createdAt' });
+                // Fetch sách mới nhất (6 cuốn, sắp xếp theo ngày tạo mới nhất)
+                const latestRes = await bookService.getAll({
+                    limit: 6,
+                    sort: '-createdAt'
+                });
                 setLatestBooks(Array.isArray(latestRes) ? latestRes : latestRes.data || []);
 
-                // Tìm category Khoa Học Viễn Tưởng
-                const sciFiCategory = categoriesData.find(cat =>
-                    cat.name?.toLowerCase().includes('khoa học viễn tưởng') ||
-                    cat.name?.toLowerCase().includes('sci-fi') ||
-                    cat.name?.toLowerCase().includes('science fiction')
-                );
-
-                if (sciFiCategory) {
-                    const sciFiRes = await bookService.getAll({
-                        category: sciFiCategory.id || sciFiCategory._id,
-                        limit: 6
-                    });
-                    setSciFiBooks(Array.isArray(sciFiRes) ? sciFiRes : sciFiRes.data || []);
-                }
-
-                // Fetch sách đề xuất (có thể dựa trên category khác hoặc random)
+                // Fetch sách đề xuất (chỉ khi đã đăng nhập)
                 if (isAuthenticated) {
                     const recommendedRes = await bookService.getAll({ limit: 6 });
-                    setRecommendedBooks(Array.isArray(recommendedRes) ? recommendedRes : recommendedRes.data || []);
+                    setRecommendedBooks(Array.isArray(recommendedRes)
+                        ? recommendedRes
+                        : recommendedRes.data || []);
                 }
 
             } catch (error) {
-                console.error('Error fetching homepage data:', error);
+                console.error('Lỗi khi tải dữ liệu trang chủ:', error);
             } finally {
                 setLoading(false);
             }
@@ -70,13 +73,18 @@ const Homepage = () => {
         fetchData();
     }, [isAuthenticated]);
 
-    // Loading skeleton
+    // ==========================================
+    // Loading Skeleton Component
+    // ==========================================
+
     const BookSectionSkeleton = ({ title }) => (
         <div className="bg-bg-section rounded-2xl p-6">
+            {/* Header skeleton */}
             <div className="flex justify-between items-center mb-6">
-                <div className="h-6 bg-border rounded w-1/4"></div>
-                <div className="h-4 bg-border rounded w-16"></div>
+                <div className="h-6 bg-border rounded w-1/4 animate-pulse"></div>
+                <div className="h-4 bg-border rounded w-16 animate-pulse"></div>
             </div>
+            {/* Grid skeleton */}
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-4">
                 {Array.from({ length: 6 }).map((_, i) => (
                     <div key={i} className="animate-pulse">
@@ -89,7 +97,14 @@ const Homepage = () => {
         </div>
     );
 
-    // Transform book data for BookSection component
+    // ==========================================
+    // Transform book data cho BookSection
+    // ==========================================
+
+    /**
+     * Chuẩn hóa dữ liệu sách từ API cho BookSection component
+     * Xử lý các field name khác nhau giữa các API response
+     */
     const transformBooks = (books) => {
         return books.map(book => ({
             id: book.book_id || book.id || book._id,
@@ -99,6 +114,10 @@ const Homepage = () => {
         }));
     };
 
+    // ==========================================
+    // Render
+    // ==========================================
+
     return (
         <div className="min-h-screen bg-bg-app">
             {/* Header / Navbar */}
@@ -106,7 +125,9 @@ const Homepage = () => {
 
             {/* Main Content */}
             <main>
-                {/* Hero Section */}
+                {/* ========================================== */}
+                {/* Hero Section - Banner chính với carousel */}
+                {/* ========================================== */}
                 <HeroSection
                     title="Ngọn Hải Đăng Tri Thức"
                     subtitle="Học từ quá khứ để xây dựng tương lai tốt đẹp hơn"
@@ -114,40 +135,42 @@ const Homepage = () => {
 
                 {/* Book Sections Container */}
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+
+                    {/* ========================================== */}
+                    {/* Hot Category Section */}
+                    {/* 3 danh mục nổi bật với hình ảnh và sách */}
+                    {/* ========================================== */}
+                    <HotCategorySection />
+
+                    {/* ========================================== */}
                     {/* Mới nhất Section */}
+                    {/* Hiển thị 6 sách mới nhất */}
+                    {/* ========================================== */}
                     {loading ? (
                         <BookSectionSkeleton title="Mới nhất" />
                     ) : (
                         <BookSection
                             title="Mới nhất"
                             books={transformBooks(latestBooks)}
-                            viewAllLink="/books?sort=-createdAt"
+                            viewAllLink="/search?sort=-createdAt"
                         />
                     )}
 
-                    {/* Đề xuất Section - Chỉ hiển thị cho user đã đăng nhập */}
+                    {/* ========================================== */}
+                    {/* Đề xuất Section */}
+                    {/* Chỉ hiển thị cho user đã đăng nhập */}
+                    {/* ========================================== */}
                     {isAuthenticated && (
                         loading ? (
                             <BookSectionSkeleton title="Đề xuất" />
                         ) : (
                             <BookSection
-                                title="Đề xuất"
+                                title="Đề xuất cho bạn"
                                 books={transformBooks(recommendedBooks)}
-                                viewAllLink="/books"
+                                viewAllLink="/search"
                             />
                         )
                     )}
-
-                    {/* Khoa Học Viễn Tưởng Section */}
-                    {loading ? (
-                        <BookSectionSkeleton title="Khoa Học Viễn Tưởng" />
-                    ) : sciFiBooks.length > 0 ? (
-                        <BookSection
-                            title="Khoa Học Viễn Tưởng"
-                            books={transformBooks(sciFiBooks)}
-                            viewAllLink="/search?category=khoa-hoc-vien-tuong"
-                        />
-                    ) : null}
                 </div>
             </main>
         </div>

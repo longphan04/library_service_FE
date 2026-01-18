@@ -9,7 +9,7 @@ import { Link } from 'react-router-dom';
 import { ArrowLeft, Clock, RefreshCw } from 'lucide-react';
 import Header from '../../componants/layouts/Header';
 import Tab from '../../componants/ui/Tab';
-import borrowTicketService from '../../services/borrow-ticket.service';
+import { getMyTickets } from '../../services/borrow-ticket.service';
 
 // ==========================================
 // Constants - Status Configuration
@@ -142,7 +142,7 @@ const BorrowHistory = () => {
         setError(null);
 
         try {
-            const response = await borrowTicketService.getMyTickets();
+            const response = await getMyTickets();
 
             // Handle different API response formats
             const data = Array.isArray(response) ? response : response.data || response.tickets || [];

@@ -28,9 +28,9 @@ import Bookshelf from '../pages/user/Bookshelf';
 import Login from '../pages/auth/Login';
 import Register from '../pages/auth/Register';
 
-// Pages - Staff & Admin (Placeholder)
-import StaffDashboard from '../pages/staff/StaffDashboard';
-import AdminDashboard from '../pages/admin/AdminDashboard';
+// Pages - Staff & Admin
+import MainLayout from '../pages/staff/MainLayout';
+import AdminLayout from '../componants/layouts/AdminLayout';
 
 // ==========================================
 // Router Configuration
@@ -111,7 +111,7 @@ export const router = createBrowserRouter([
         path: '/staff',
         element: (
             <RoleRoute allowedRoles={[ROLES.STAFF]}>
-                <StaffDashboard />
+                <MainLayout />
             </RoleRoute>
         ),
     },
@@ -120,7 +120,7 @@ export const router = createBrowserRouter([
         path: '/staff/*',
         element: (
             <RoleRoute allowedRoles={[ROLES.STAFF]}>
-                <StaffDashboard />
+                <MainLayout />
             </RoleRoute>
         ),
     },
@@ -133,7 +133,7 @@ export const router = createBrowserRouter([
         path: '/admin',
         element: (
             <RoleRoute allowedRoles={[ROLES.ADMIN]}>
-                <AdminDashboard />
+                <AdminLayout />
             </RoleRoute>
         ),
     },
@@ -142,7 +142,7 @@ export const router = createBrowserRouter([
         path: '/admin/*',
         element: (
             <RoleRoute allowedRoles={[ROLES.ADMIN]}>
-                <AdminDashboard />
+                <AdminLayout />
             </RoleRoute>
         ),
     },

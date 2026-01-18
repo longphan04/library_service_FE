@@ -1,7 +1,11 @@
 // ==========================================
 // Component: Toast
 // Mô tả: Toast notification với auto-hide
-// Vị trí: src/components/ui/Toast.jsx
+// 
+// Vị trí hiển thị: Top-right, dưới header (top-20 = 80px)
+// Z-index: 50 (dưới modal nhưng trên content)
+//
+// Vị trí: src/componants/ui/Toast.jsx
 // ==========================================
 
 import { useEffect } from 'react';
@@ -9,6 +13,7 @@ import { CheckCircle, XCircle, AlertCircle, Info, X } from 'lucide-react';
 
 /**
  * Toast Component - Notification popup
+ * 
  * @param {boolean} isOpen - Show/hide toast
  * @param {string} type - 'success' | 'error' | 'warning' | 'info'
  * @param {string} message - Message to display
@@ -22,7 +27,9 @@ const Toast = ({
     onClose,
     duration = 3000,
 }) => {
-    // Auto-hide after duration
+    // ==========================================
+    // Auto-hide sau duration (ms)
+    // ==========================================
     useEffect(() => {
         if (isOpen && duration > 0) {
             const timer = setTimeout(() => {
@@ -33,9 +40,12 @@ const Toast = ({
         }
     }, [isOpen, duration, onClose]);
 
+    // Không render nếu không mở
     if (!isOpen) return null;
 
-    // Icon mapping
+    // ==========================================
+    // Icon mapping theo type
+    // ==========================================
     const icons = {
         success: <CheckCircle className="w-5 h-5" />,
         error: <XCircle className="w-5 h-5" />,
@@ -43,20 +53,33 @@ const Toast = ({
         info: <Info className="w-5 h-5" />,
     };
 
-    // Style mapping
+    // ==========================================
+    // Style mapping theo type
+    // ==========================================
     const styles = {
-        success: 'bg-success/10 border-success text-success',
-        error: 'bg-error/10 border-error text-error',
-        warning: 'bg-warning/10 border-warning text-warning',
-        info: 'bg-primary/10 border-primary text-primary',
+        success: 'bg-green-50 border-green-500 text-green-600',
+        error: 'bg-red-50 border-red-500 text-red-600',
+        warning: 'bg-yellow-50 border-yellow-500 text-yellow-600',
+        info: 'bg-blue-50 border-blue-500 text-blue-600',
     };
 
+    // ==========================================
+    // Render
+    // ==========================================
     return (
-        <div className="fixed top-4 left-1/2 -translate-x-1/2 z-100 animate-slide-down">
+        <div
+            className="fixed top-20 right-4 z-50"
+            role="alert"
+            aria-live="polite"
+        >
             <div
                 className={`
-                    flex items-center gap-3 px-4 py-3 rounded-lg border-l-4 shadow-lg
-                    bg-bg-section min-w-[320px] max-w-md
+                    flex items-center gap-3 
+                    px-4 py-3 
+                    rounded-lg border-l-4 
+                    shadow-lg backdrop-blur-sm
+                    min-w-[280px] max-w-sm
+                    animate-in slide-in-from-right duration-300
                     ${styles[type]}
                 `}
             >
@@ -66,17 +89,17 @@ const Toast = ({
                 </div>
 
                 {/* Message */}
-                <p className="flex-1 text-sm font-medium text-text-primary">
+                <p className="flex-1 text-sm font-medium">
                     {message}
                 </p>
 
                 {/* Close Button */}
                 <button
                     onClick={onClose}
-                    className="shrink-0 text-text-sub hover:text-text-primary transition-colors"
-                    aria-label="Close"
+                    className="shrink-0 p-1 rounded-md hover:bg-black/5 transition-colors"
+                    aria-label="Đóng thông báo"
                 >
-                    <X size={18} />
+                    <X size={16} />
                 </button>
             </div>
         </div>

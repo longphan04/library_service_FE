@@ -218,7 +218,7 @@ const Login = () => {
                     {/* Trường nhập password */}
                     <InputField
                         id="password"
-                        label="Password"
+                        label="Mật Khẩu"
                         type="password"
                         value={formData.password}
                         onChange={handleInputChange('password')}

@@ -10,6 +10,9 @@ const instance = axios.create({
     baseURL: import.meta.env.VITE_API_BASE_URL,
     headers: {
         'Content-Type': 'application/json',
+        // Header bắt buộc khi sử dụng ngrok để bỏ qua warning page
+        // Nếu không có header này, ngrok sẽ trả về HTML thay vì JSON
+        'ngrok-skip-browser-warning': 'true',
     },
 });
 
@@ -137,6 +140,13 @@ instance.interceptors.response.use(
                     window.location.href = '/login';
                 }
             }
+        }
+
+        // Xử lý lỗi 403 (Forbidden - Không có quyền)
+        if (error.response && error.response.status === 403) {
+            console.error('Access forbidden:', error.response.data?.message || 'Bạn không có quyền truy cập');
+            // Có thể redirect về trang unauthorized hoặc homepage
+            // window.location.href = '/unauthorized';
         }
 
         return Promise.reject(error);

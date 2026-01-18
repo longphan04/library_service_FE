@@ -170,6 +170,10 @@ const useBookHold = () => {
         setActionLoading(true);
         setError(null);
 
+        // Debug: Log ID được gửi đi
+        console.log('🗑️ Attempting to remove hold with ID:', id);
+        console.log('📋 Current holds:', holds.map(h => ({ id: h.id, holdId: h.holdId, bookId: h.bookId })));
+
         // Lưu state cũ để rollback
         const previousHolds = holds;
 
@@ -180,8 +184,10 @@ const useBookHold = () => {
 
         try {
             await bookHoldService.remove(id);
+            console.log('✅ Thêm vào kệ sách thành công');
             // Success - không cần làm gì thêm
         } catch (err) {
+            console.error('❌ Xóa sách thành công', err.response?.data || err.message);
             // Rollback on error
             setHolds(previousHolds);
             setError(err.message || 'Không thể xóa sách khỏi kệ');

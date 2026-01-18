@@ -31,7 +31,7 @@ export const create = async (data) => {
  * @returns {Promise} - Response
  */
 export const remove = async (id) => {
-    const response = await axios.delete(`/book-hold/${id}`);
+    const response = await axios.delete(`/book-hold/me/${id}`);
     return response.data;
 };
 

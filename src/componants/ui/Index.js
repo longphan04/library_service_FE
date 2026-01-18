@@ -3,7 +3,7 @@ export { default as Button } from './Button';
 export { default as Badge } from './Badge';
 export { default as Card } from './Card';
 export { default as Dropdown } from './Dropdownlist';
-export { default as BookCard } from './BookCard';
+export { default as BookCard } from './BookCardUser';
 export { default as CategoryCard } from './CategoryCard';
 export { default as BookSection } from './BookSection';
 export { default as HeroSection } from './HeroSection';
