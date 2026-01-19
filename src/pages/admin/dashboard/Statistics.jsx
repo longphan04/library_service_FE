@@ -20,7 +20,7 @@ export default function StockInventory() {
                 </button>
 
                 <button
-                    onClick={() => navigate("/admin/Inventory")}
+                    onClick={() => navigate("/admin/inventory")}
                     className="px-6 py-2 rounded-full bg-[#E2C6A6] text-[#7A4A2E] hover:opacity-90"
                 >
                     Tồn kho

@@ -1,8 +1,8 @@
 import { Pencil } from "lucide-react";
 import { useState } from "react";
 
-import Modal from "@/components/admin/modal/Modal";
-import ActionButton from "@/components/admin/ui/ActionButton";
+import Modal from "@/componants/modal/Modal";
+import ActionButton from "@/componants/ui/ActionButton";
 
 export default function AdminProfile() {
     const [openEditModal, setOpenEditModal] = useState(false);

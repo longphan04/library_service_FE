@@ -18,7 +18,7 @@ export default function AdminLayout() {
     const isAdminHome = location.pathname === "/admin";
 
     return (
-        <div className="min-h-screen bg-bg-app relative">
+        <div className="min-h-screen bg-[#F6EFE7] relative">
 
             {/* OVERLAY – chỉ dùng cho trang chủ */}
             {openDashboardMenu && isAdminHome && (
@@ -149,19 +149,19 @@ export default function AdminLayout() {
                 >
                     <button
                         onClick={() => navigate("/admin/statistics")}
-                        className="bg-secondary text-text-on-secondary py-1 rounded text-sm"
+                        className="bg-[#E2C6A6] text-[#7A4A2E] py-1 rounded text-sm"
                     >
                         Thống kê
                     </button>
                     <button
                         onClick={() => navigate("/admin/inventory")}
-                        className="bg-secondary text-text-on-secondary py-1 rounded text-sm"
+                        className="bg-[#E2C6A6] text-[#7A4A2E] py-1 rounded text-sm"
                     >
                         Tồn kho
                     </button>
                     <button
                         onClick={() => navigate("/admin/inventory-log")}
-                        className="bg-secondary text-text-on-secondary py-1 rounded text-sm"
+                        className="bg-[#E2C6A6] text-[#7A4A2E] py-1 rounded text-sm"
                     >
                         Biến động kho
                     </button>
