@@ -58,8 +58,7 @@ import axios from './axios';
  * });
  */
 export const getAll = async (params = {}) => {
-    // Lọc bỏ các params có giá trị undefined, null hoặc chuỗi rỗng
-    // Điều này giúp tránh gửi params không cần thiết lên server
+    // Lọc bỏ các params rỗng/null/undefined
     const cleanParams = Object.entries(params).reduce((acc, [key, value]) => {
         if (value !== undefined && value !== null && value !== '') {
             acc[key] = value;
@@ -67,10 +66,10 @@ export const getAll = async (params = {}) => {
         return acc;
     }, {});
 
-    // Gọi API GET /book với các query params
+    // Gọi API: GET /book?category={id}&limit={n}&page={n}
+    // Ví dụ: GET /book?category=5&limit=6
     const response = await axios.get('/book', { params: cleanParams });
 
-    // Trả về data từ response
     return response.data;
 };
 

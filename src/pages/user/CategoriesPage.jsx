@@ -46,13 +46,15 @@ const CategoriesPage = () => {
         return categories.slice(startIndex, startIndex + ITEMS_PER_PAGE);
     };
 
-    // Fetch books khi chọn category
+    // Lấy danh sách sách khi chọn category
     const fetchCategoryBooks = async (categoryId) => {
         setBooksLoading(true);
         try {
+            // Gọi API: GET /book?category={categoryId}&limit=6
             const response = await bookService.getAll({ category: categoryId, limit: 6 });
             const books = Array.isArray(response) ? response : response.data || [];
-            // Transform books để đảm bảo format đúng
+
+            // Chuẩn hóa dữ liệu sách cho component
             const transformedBooks = books.map(book => ({
                 id: book.book_id || book.id || book._id,
                 _id: book.book_id || book._id || book.id,
@@ -60,22 +62,27 @@ const CategoriesPage = () => {
                 author: book.authors?.[0]?.name || book.author?.name || book.authorName || book.author || 'Không rõ',
                 coverImage: book.cover_url || book.coverImage || book.image || book.thumbnail,
             }));
+
             setCategoryBooks(transformedBooks);
         } catch (error) {
-            console.error('Error fetching category books:', error);
+            console.error('Lỗi khi lấy sách theo danh mục:', error);
             setCategoryBooks([]);
         } finally {
             setBooksLoading(false);
         }
     };
 
-    // Xử lý khi click vào category - Hiển thị quick view
+    // Xử lý khi click vào category card
     const handleCategoryClick = (categoryId) => {
+        // Tìm category trong danh sách đã fetch
         const category = categories.find(cat => cat.id === categoryId || cat._id === categoryId);
+
         if (category) {
+            // Cập nhật state và fetch sách mới
             setSelectedCategory(category);
             fetchCategoryBooks(category.id || category._id);
-            // Scroll xuống books section sau khi state update
+
+            // Cuộn xuống phần hiển thị sách
             setTimeout(() => {
                 booksRef.current?.scrollIntoView({
                     behavior: 'smooth',
@@ -193,6 +200,7 @@ const CategoriesPage = () => {
                             </div>
                         ) : (
                             <BookSection
+                                key={selectedCategory.id || selectedCategory._id}
                                 title={`Sách ${selectedCategory.name}`}
                                 books={categoryBooks}
                                 viewAllLink={`/search?category=${selectedCategory.id || selectedCategory._id}`}

@@ -10,7 +10,7 @@
 // Vị trí: src/componants/ui/BookSection.jsx
 // ==========================================
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowRight, ChevronLeft, ChevronRight } from 'lucide-react';
 import BookCard from './BookCardUser';
@@ -40,6 +40,11 @@ const BookSection = ({
     // State: Trang hiện tại
     // ==========================================
     const [currentPage, setCurrentPage] = useState(0);
+
+    // Reset về trang 1 khi books thay đổi (đổi category)
+    useEffect(() => {
+        setCurrentPage(0);
+    }, [books]);
 
     // ==========================================
     // Tính toán số trang và sách hiển thị

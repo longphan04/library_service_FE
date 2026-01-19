@@ -21,7 +21,13 @@ const useCategories = () => {
 
         try {
             const response = await categoryService.getAll();
-            setCategories(Array.isArray(response) ? response : response.data || []);
+            const rawCategories = Array.isArray(response) ? response : response.data || [];
+            // Normalize categories to ensure consistent id field
+            const normalizedCategories = rawCategories.map(cat => ({
+                ...cat,
+                id: cat.id || cat._id || cat.category_id,
+            }));
+            setCategories(normalizedCategories);
         } catch (err) {
             setError(err.message || 'Failed to fetch categories');
             setCategories([]);
