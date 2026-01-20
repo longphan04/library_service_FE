@@ -44,12 +44,6 @@ export default function useBookManagement() {
         }));
     }, []);
 
-    await axios.delete(`${API_URL}/${id}`, {
-        headers: {
-            // Authorization: `Bearer ${token}`,
-        },
-    });
-
 
     /* ================= SEARCH ================= */
     const handleSearch = useCallback(

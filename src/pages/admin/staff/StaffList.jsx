@@ -2,6 +2,8 @@ import { Lock, Unlock, Trash2, Pencil } from "lucide-react";
 import { useState, useEffect } from "react";
 
 import ActionButton from "@/componants/ui/ActionButton";
+import StatusBadge from "@/componants/ui/StatusBadge";
+import Toast from "@/componants/ui/Toast";
 import FormModal from "@/componants/modal/FormModal";
 import Modal from "@/componants/modal/Modal";
 import staffService from "@/services/staff.service";
@@ -14,12 +16,12 @@ export default function StaffManagement() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [searchTerm, setSearchTerm] = useState("");
-    
+
     const [openAddModal, setOpenAddModal] = useState(false);
     const [openConfirmModal, setOpenConfirmModal] = useState(false);
     const [pendingAction, setPendingAction] = useState(null);
     const [selectedStaff, setSelectedStaff] = useState(null);
-    
+
     const [formData, setFormData] = useState({
         name: '',
         email: '',
@@ -27,7 +29,10 @@ export default function StaffManagement() {
     });
     const [formError, setFormError] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
-    
+
+    // Toast state
+    const [toast, setToast] = useState({ isOpen: false, type: '', message: '' });
+
     const { loading: authLoading } = useAuth();
     const navigate = useNavigate();
 
@@ -45,15 +50,15 @@ export default function StaffManagement() {
             setLoading(true);
             setError(null);
             const data = await staffService.getStaff();
-            
+
             const staffList = Array.isArray(data) ? data : data.data || data.staff || [];
             setStaff(staffList);
             setFilteredStaff(staffList);
         } catch (err) {
             console.error("Error fetching staff:", err);
             setError(
-                err.response?.data?.message || 
-                err.message || 
+                err.response?.data?.message ||
+                err.message ||
                 "Lỗi khi tải danh sách nhân viên"
             );
         } finally {
@@ -87,60 +92,54 @@ export default function StaffManagement() {
     const handleAddStaff = async (e) => {
         e.preventDefault();
         setFormError('');
-        
+
         try {
             setIsSubmitting(true);
-            
+
             // Validate form
             if (!formData.name.trim()) {
                 throw new Error('Tên nhân viên không được để trống');
             }
-            
+
             if (!formData.email.trim()) {
                 throw new Error('Email không được để trống');
             }
-            
+
             if (!isValidEmail(formData.email)) {
                 throw new Error('Email không đúng định dạng');
             }
-            
+
             if (!formData.password) {
                 throw new Error('Mật khẩu không được để trống');
             }
-            
+
             if (formData.password.length < 8) {
                 throw new Error('Mật khẩu phải tối thiểu 8 ký tự');
             }
-            
+
             // Call API to create staff
-            let newStaffData = null;
-            try {
-                newStaffData = await staffService.createStaff(formData);
-            } catch (error) {
-                // If API fails, use form data as staff object (optimistic update)
-                console.warn('Create staff API failed, using form data:', error.message);
-                newStaffData = formData;
-            }
-            
+            const newStaffData = await staffService.createStaff(formData);
+
             // Add to list
             const transformedStaff = {
-                id: newStaffData.staff_id || newStaffData.id || Math.random(),
-                name: newStaffData.profile?.full_name || newStaffData.name,
+                id: newStaffData.user_id || newStaffData.id || Math.random(),
+                name: newStaffData.profile?.full_name || newStaffData.full_name || formData.name,
                 email: newStaffData.email,
                 status: newStaffData.status?.toLowerCase() || 'active',
                 isActive: newStaffData.status === 'ACTIVE' || newStaffData.status !== 'BANNED',
                 isBanned: newStaffData.status === 'BANNED',
                 createdAt: newStaffData.created_at || new Date().toISOString(),
             };
-            
+
             setStaff([...staff, transformedStaff]);
             setFilteredStaff([...filteredStaff, transformedStaff]);
-            
+
             // Reset form
             setFormData({ name: '', email: '', password: '' });
             setOpenAddModal(false);
-            
-            alert('Thêm nhân viên thành công!');
+
+            // Show success toast
+            setToast({ isOpen: true, type: 'success', message: 'Thêm nhân viên thành công!' });
         } catch (err) {
             setFormError(err.message || 'Lỗi khi thêm nhân viên');
         } finally {
@@ -166,22 +165,23 @@ export default function StaffManagement() {
                     // If delete fails, still update UI optimistically
                     console.warn('Delete API failed, updating UI anyway:', error.message);
                 }
-                
+
                 setStaff(staff.filter(s => s.id !== selectedStaff.id));
                 setFilteredStaff(filteredStaff.filter(s => s.id !== selectedStaff.id));
-                
-                alert('Xóa nhân viên thành công!');
+
+                // Show success toast
+                setToast({ isOpen: true, type: 'success', message: 'Xóa nhân viên thành công!' });
             } else {
                 // Toggle status
                 const newStatus = selectedStaff.status === 'active' ? 'banned' : 'active';
-                
+
                 try {
                     await staffService.updateStaffStatus(selectedStaff.id, newStatus);
                 } catch (error) {
                     // If update fails, still update UI optimistically
                     console.warn('Update API failed, updating UI anyway:', error.message);
                 }
-                
+
                 // Update local state
                 const updatedStaff = staff.map(s =>
                     s.id === selectedStaff.id
@@ -193,18 +193,20 @@ export default function StaffManagement() {
                     (s.name && s.name.toLowerCase().includes(searchTerm)) ||
                     (s.email && s.email.toLowerCase().includes(searchTerm))
                 ));
-                
+
                 const statusText = newStatus === 'active' ? 'Mở khóa' : 'Khóa';
-                alert(`${statusText} nhân viên thành công!`);
+                // Show success toast
+                setToast({ isOpen: true, type: 'success', message: `${statusText} nhân viên thành công!` });
             }
-            
+
             setOpenConfirmModal(false);
             setSelectedStaff(null);
             setPendingAction(null);
         } catch (err) {
             console.error("Error updating staff:", err);
             setError(err.message || 'Lỗi khi cập nhật nhân viên');
-            alert('Lỗi: ' + (err.message || 'Không xác định'));
+            // Show error toast
+            setToast({ isOpen: true, type: 'error', message: err.message || 'Lỗi khi cập nhật nhân viên' });
         } finally {
             setIsSubmitting(false);
         }
@@ -295,15 +297,10 @@ export default function StaffManagement() {
                                     <td className="px-6 py-4">
                                         <div className="flex justify-center gap-4">
                                             {/* STATUS BADGE */}
-                                            <span
-                                                className={`px-3 py-1 text-xs rounded-full text-white
-                                                ${s.isActive
-                                                        ? "bg-green-500"
-                                                        : "bg-red-500"
-                                                    }`}
-                                            >
-                                                {s.isActive ? "Hoạt động" : "Bị khóa"}
-                                            </span>
+                                            <StatusBadge
+                                                status={s.status}
+                                                isActive={s.isActive}
+                                            />
 
                                             {/* STATUS TOGGLE */}
                                             <button
@@ -380,7 +377,7 @@ export default function StaffManagement() {
                         <input
                             type="text"
                             value={formData.name}
-                            onChange={(e) => setFormData({...formData, name: e.target.value})}
+                            onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                             placeholder="Nhập tên nhân viên"
                             className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#E2C6A6]"
                             disabled={isSubmitting}
@@ -394,7 +391,7 @@ export default function StaffManagement() {
                         <input
                             type="email"
                             value={formData.email}
-                            onChange={(e) => setFormData({...formData, email: e.target.value})}
+                            onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                             placeholder="Nhập email"
                             className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#E2C6A6]"
                             disabled={isSubmitting}
@@ -408,7 +405,7 @@ export default function StaffManagement() {
                         <input
                             type="password"
                             value={formData.password}
-                            onChange={(e) => setFormData({...formData, password: e.target.value})}
+                            onChange={(e) => setFormData({ ...formData, password: e.target.value })}
                             placeholder="Tối thiểu 8 ký tự"
                             className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#E2C6A6]"
                             disabled={isSubmitting}
@@ -479,6 +476,15 @@ export default function StaffManagement() {
                     </ActionButton>
                 </div>
             </Modal>
+
+            {/* Toast Notification */}
+            <Toast
+                isOpen={toast.isOpen}
+                type={toast.type}
+                message={toast.message}
+                onClose={() => setToast((prev) => ({ ...prev, isOpen: false }))}
+                duration={3000}
+            />
         </div>
     );
 }
