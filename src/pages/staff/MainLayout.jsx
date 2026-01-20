@@ -1,5 +1,5 @@
 import { useState } from "react";
-import Header from "@/componants/layouts/Header";
+import HeaderStaff from "@/componants/layouts/HeaderStaff";
 import Tabs from "@/componants/ui/TabStaff";
 import BookManagement from "./BookManagement";
 import UserManagement from "./UserManagement";
@@ -12,7 +12,7 @@ function MainLayout() {
     <>
       <div className="fixed inset-0 bg-bg-app -z-10" />
       <div className="relative z-10 min-h-screen">
-        <Header />
+        <HeaderStaff />
         <Tabs activeTab={activeTab} onChange={setActiveTab} />
 
         {activeTab === "books" && <BookManagement />}
