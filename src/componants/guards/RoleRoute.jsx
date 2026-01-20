@@ -16,7 +16,7 @@ import { hasRole } from '../../constants/roles';
  *
  * @param {React.ReactNode} children - Component cần được bảo vệ
  * @param {string[]} allowedRoles - Danh sách roles được phép truy cập
- * @param {string} redirectTo - URL redirect nếu không có quyền (default: '/')
+ * @param {string} redirectTo - URL redirect nếu không có quyền (default: '/login')
  * @returns {React.ReactNode}
  *
  * @example
@@ -29,8 +29,19 @@ import { hasRole } from '../../constants/roles';
  *   <AdminDashboard />
  * </RoleRoute>
  */
-const RoleRoute = ({ children, allowedRoles = [], redirectTo = '/' }) => {
-    const { isAuthenticated, user } = useAuth();
+const RoleRoute = ({ children, allowedRoles = [], redirectTo = '/login' }) => {
+    const { isAuthenticated, user, isLoading } = useAuth();
+
+    // Nếu đang load, chờ
+    if (isLoading) {
+        return (
+            <div className="min-h-screen bg-bg-app flex items-center justify-center">
+                <div className="text-center">
+                    <p className="text-text-sub">Đang tải...</p>
+                </div>
+            </div>
+        );
+    }
 
     // Nếu chưa đăng nhập, redirect về login
     if (!isAuthenticated) {

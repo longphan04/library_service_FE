@@ -30,7 +30,15 @@ import Register from '../pages/auth/Register';
 
 // Pages - Staff & Admin
 import MainLayout from '../pages/staff/MainLayout';
-import AdminLayout from '../componants/layouts/AdminLayout';
+import AdminLayout from '../layouts/AdminLayout';
+
+// Admin Pages
+import Statistics from '../pages/admin/dashboard/Statistics';
+import Inventory from '../pages/admin/dashboard/Inventory';
+import InventoryLog from '../pages/admin/dashboard/InventoryLog';
+import UserList from '../pages/admin/users/UserList';
+import StaffList from '../pages/admin/staff/StaffList';
+import AdminProfile from '../pages/admin/account/AdminProfile';
 
 // ==========================================
 // Router Configuration
@@ -136,15 +144,36 @@ export const router = createBrowserRouter([
                 <AdminLayout />
             </RoleRoute>
         ),
-    },
-    // Admin catch-all for future nested routes
-    {
-        path: '/admin/*',
-        element: (
-            <RoleRoute allowedRoles={[ROLES.ADMIN]}>
-                <AdminLayout />
-            </RoleRoute>
-        ),
+        children: [
+            {
+                index: true,
+                element: <div />,
+            },
+            {
+                path: 'statistics',
+                element: <Statistics />,
+            },
+            {
+                path: 'inventory',
+                element: <Inventory />,
+            },
+            {
+                path: 'inventory-log',
+                element: <InventoryLog />,
+            },
+            {
+                path: 'users',
+                element: <UserList />,
+            },
+            {
+                path: 'staff',
+                element: <StaffList />,
+            },
+            {
+                path: 'account',
+                element: <AdminProfile />,
+            },
+        ],
     },
 
     // ==========================================

@@ -5,9 +5,9 @@ import {
     CornerDownLeft
 } from "lucide-react";
 
-import AdminPageLayout from "@/components/admin/layout/AdminPageLayout";
-import AdminTabs from "@/components/admin/navigation/AdminTabs";
-import AdminSection from "@/components/admin/layout/AdminSection";
+import AdminPageLayout from "@/componants/layouts/AdminPageLayout";
+import AdminTabs from "@/componants/ui/AdminTabs";
+import AdminSection from "@/componants/layouts/AdminSection";
 
 export default function InventoryLog() {
     const navigate = useNavigate();
