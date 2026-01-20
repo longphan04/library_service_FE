@@ -6,9 +6,10 @@
 
 import { useRef, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import Header from '../../componants/layouts/Header';
-import BookCard from '../../componants/ui/BookCardUser';
-import Pagination from '../../componants/ui/Pagination';
+import Header from '../../components/layouts/Header';
+import Footer from '../../components/layouts/Footer';
+import BookCard from '../../components/ui/BookCardUser';
+import Pagination from '../../components/ui/Pagination';
 import { ArrowLeft } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import useBooks from '../../hooks/useBooks';
@@ -54,7 +55,7 @@ const BookList = () => {
     // ==========================================
     if (loading && books.length === 0) {
         return (
-            <div className="min-h-screen bg-bg-app">
+            <div className="min-h-screen bg-bg-app flex flex-col">
                 <Header />
                 <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
                     <div className="flex items-center gap-4 mb-8">
@@ -81,6 +82,7 @@ const BookList = () => {
                         ))}
                     </div>
                 </main>
+                <Footer />
             </div>
         );
     }
@@ -90,7 +92,7 @@ const BookList = () => {
     // ==========================================
     if (error) {
         return (
-            <div className="min-h-screen bg-bg-app">
+            <div className="min-h-screen bg-bg-app flex flex-col">
                 <Header />
                 <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
                     <div className="text-center py-12">
@@ -103,6 +105,7 @@ const BookList = () => {
                         </button>
                     </div>
                 </main>
+                <Footer />
             </div>
         );
     }
@@ -169,6 +172,7 @@ const BookList = () => {
                     </div>
                 )}
             </main>
+            <Footer />
         </div>
     );
 };

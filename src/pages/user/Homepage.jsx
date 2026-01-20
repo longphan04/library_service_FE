@@ -12,10 +12,11 @@
 // ==========================================
 
 import { useState, useEffect } from 'react';
-import Header from '../../componants/layouts/Header';
-import HeroSection from '../../componants/ui/HeroSection';
-import HotCategorySection from '../../componants/ui/HotCategorySection';
-import BookSection from '../../componants/ui/BookSection';
+import Header from '../../components/layouts/Header';
+import Footer from '../../components/layouts/Footer';
+import HeroSection from '../../components/ui/HeroSection';
+import HotCategorySection from '../../components/ui/HotCategorySection';
+import BookSection from '../../components/ui/BookSection';
 import { useAuth } from '../../contexts/AuthContext';
 import bookService from '../../services/book.service';
 
@@ -173,6 +174,9 @@ const Homepage = () => {
                     )}
                 </div>
             </main>
+
+            {/* Footer - Sticky at bottom */}
+            <Footer />
         </div>
     );
 };

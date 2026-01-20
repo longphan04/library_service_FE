@@ -1,103 +1,170 @@
 // ==========================================
-// Page: CategoriesPage
-// Mô tả: Trang danh mục sách với dữ liệu từ API
+// Page: CategoriesPage (Refactored - Clean Architecture)
+// Mô tả: Trang danh mục sách với:
+//   - Separation of Concerns (logic tách vào custom hooks)
+//   - Race Condition handling
+//   - Caching (không gọi lại API nếu đã có dữ liệu)
+//   - useMemo cho pagination logic
+//   - useEffect cho smooth scroll
+//
 // Vị trí: src/pages/user/CategoriesPage.jsx
 // ==========================================
 
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useMemo, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import Header from '../../componants/layouts/Header';
-import CategoryCard from '../../componants/ui/CategoryCard';
-import BookSection from '../../componants/ui/BookSection';
-import useCategories from '../../hooks/useCategories';
-import bookService from '../../services/book.service';
 
-// Số lượng category hiển thị mỗi trang (2 hàng x 4 cột)
+// ==========================================
+// [CHANGE] Import Layout Components
+// ==========================================
+import Header from '../../components/layouts/Header';
+import Footer from '../../components/layouts/Footer';
+
+// ==========================================
+// [CHANGE] Import UI Components
+// ==========================================
+import CategoryCard from '../../components/ui/CategoryCard';
+import BookSection from '../../components/ui/BookSection';
+
+// ==========================================
+// [CHANGE] Import Custom Hooks (Clean Architecture)
+// ==========================================
+import useCategories from '../../hooks/useCategories';
+import useBooksByCategory from '../../hooks/useBooksByCategory';
+
+// ==========================================
+// Constants
+// ==========================================
+
+/** Số lượng category hiển thị mỗi trang (2 hàng x 4 cột) */
 const ITEMS_PER_PAGE = 8;
 
 // ==========================================
 // CategoriesPage Component
 // ==========================================
 const CategoriesPage = () => {
-    // Navigation hook
+    // ==========================================
+    // Navigation
+    // ==========================================
     const navigate = useNavigate();
 
-    // Fetch categories từ API
-    const { categories, loading: categoriesLoading, error: categoriesError } = useCategories();
+    // ==========================================
+    // [CHANGE] Custom Hooks - Separation of Concerns
+    // Logic fetch được tách ra hooks, component chỉ lo UI
+    // ==========================================
 
-    // State quản lý trang hiện tại của carousel
+    /** Hook quản lý danh sách categories */
+    const {
+        categories,
+        loading: categoriesLoading,
+        error: categoriesError
+    } = useCategories();
+
+    /** 
+     * [CHANGE] Hook quản lý sách theo category
+     * Bao gồm: caching, race condition handling, data normalization
+     */
+    const {
+        books: categoryBooks,
+        loading: booksLoading,
+        error: booksError,
+        selectedCategoryId,
+        fetchBooks,
+        clearSelection,
+    } = useBooksByCategory(6); // Limit 6 sách
+
+    // ==========================================
+    // Local State - UI Only
+    // ==========================================
+
+    /** Trang hiện tại của category carousel */
     const [currentPage, setCurrentPage] = useState(0);
 
-    // State quản lý category đang chọn để xem quick view
+    /** Category object đang được chọn (để hiển thị tên) */
     const [selectedCategory, setSelectedCategory] = useState(null);
-    const [categoryBooks, setCategoryBooks] = useState([]);
-    const [booksLoading, setBooksLoading] = useState(false);
 
-    // Ref để scroll đến books section
+    /** Ref để scroll đến books section */
     const booksRef = useRef(null);
 
-    // Tính tổng số trang
-    const totalPages = Math.ceil((categories?.length || 0) / ITEMS_PER_PAGE);
+    // ==========================================
+    // [CHANGE] useMemo - Performance Optimization
+    // Tính toán pagination chỉ khi categories thay đổi
+    // ==========================================
 
-    // Lấy danh sách category cho trang hiện tại
-    const getCurrentPageCategories = () => {
+    /** Tổng số trang */
+    const totalPages = useMemo(() => {
+        return Math.ceil((categories?.length || 0) / ITEMS_PER_PAGE);
+    }, [categories?.length]);
+
+    /** Danh sách category cho trang hiện tại */
+    const currentPageCategories = useMemo(() => {
         if (!categories || categories.length === 0) return [];
         const startIndex = currentPage * ITEMS_PER_PAGE;
         return categories.slice(startIndex, startIndex + ITEMS_PER_PAGE);
-    };
+    }, [categories, currentPage]);
 
-    // Lấy danh sách sách khi chọn category
-    const fetchCategoryBooks = async (categoryId) => {
-        setBooksLoading(true);
-        try {
-            // Gọi API: GET /book?category={categoryId}&limit=6
-            const response = await bookService.getAll({ category: categoryId, limit: 6 });
-            const books = Array.isArray(response) ? response : response.data || [];
+    // ==========================================
+    // [CHANGE] useEffect - Smooth Scroll
+    // Thay thế setTimeout bằng useEffect cho scroll mượt mà hơn
+    // ==========================================
 
-            // Chuẩn hóa dữ liệu sách cho component
-            const transformedBooks = books.map(book => ({
-                id: book.book_id || book.id || book._id,
-                _id: book.book_id || book._id || book.id,
-                title: book.title,
-                author: book.authors?.[0]?.name || book.author?.name || book.authorName || book.author || 'Không rõ',
-                coverImage: book.cover_url || book.coverImage || book.image || book.thumbnail,
-            }));
-
-            setCategoryBooks(transformedBooks);
-        } catch (error) {
-            console.error('Lỗi khi lấy sách theo danh mục:', error);
-            setCategoryBooks([]);
-        } finally {
-            setBooksLoading(false);
-        }
-    };
-
-    // Xử lý khi click vào category card
-    const handleCategoryClick = (categoryId) => {
-        // Tìm category trong danh sách đã fetch
-        const category = categories.find(cat => cat.id === categoryId || cat._id === categoryId);
-
-        if (category) {
-            // Cập nhật state và fetch sách mới
-            setSelectedCategory(category);
-            fetchCategoryBooks(category.id || category._id);
-
-            // Cuộn xuống phần hiển thị sách
-            setTimeout(() => {
+    useEffect(() => {
+        // Scroll đến books section khi có category được chọn và có sách
+        if (selectedCategoryId && categoryBooks.length > 0 && booksRef.current) {
+            // Đợi 1 frame để DOM update xong
+            requestAnimationFrame(() => {
                 booksRef.current?.scrollIntoView({
                     behavior: 'smooth',
                     block: 'start',
                 });
-            }, 100);
+            });
         }
-    };
+    }, [selectedCategoryId, categoryBooks.length]);
 
-    // Chuyển đến trang cụ thể
-    const goToPage = (pageIndex) => {
+    // ==========================================
+    // [CHANGE] Handlers - Memoized với useCallback
+    // ==========================================
+
+    /**
+     * Xử lý khi click vào category card
+     * - Tìm category object để hiển thị tên
+     * - Gọi hook để fetch sách (với caching + race condition handling)
+     */
+    const handleCategoryClick = useCallback((categoryId) => {
+        // DEBUG: Log category click
+        console.log('[CategoriesPage] 🖱️ Category clicked - ID:', categoryId);
+
+        // Tìm category trong danh sách
+        const category = categories?.find(
+            cat => cat.id === categoryId || cat._id === categoryId
+        );
+
+        // DEBUG: Log found category
+        console.log('[CategoriesPage] 📌 Found category:', category);
+
+        if (category) {
+            // Update selected category cho UI
+            setSelectedCategory(category);
+
+            // DEBUG: Log the ID being sent to fetchBooks
+            const catId = category.id || category._id;
+            console.log('[CategoriesPage] 🚀 Calling fetchBooks with ID:', catId);
+
+            // [CHANGE] Gọi hook để fetch sách
+            // Hook sẽ tự động check cache và handle race condition
+            fetchBooks(catId);
+        }
+    }, [categories, fetchBooks]);
+
+    /**
+     * Chuyển đến trang category cụ thể
+     */
+    const goToPage = useCallback((pageIndex) => {
         setCurrentPage(pageIndex);
-    };
+    }, []);
 
-    // Loading state
+    // ==========================================
+    // Render: Loading State
+    // ==========================================
     if (categoriesLoading) {
         return (
             <div className="min-h-screen bg-bg-app">
@@ -105,20 +172,23 @@ const CategoriesPage = () => {
                 <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
                     <div className="bg-bg-section rounded-2xl p-6 sm:p-8">
                         <div className="animate-pulse">
-                            <div className="h-8 bg-border rounded w-1/3 mb-8"></div>
-                            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 sm:gap-6">
-                                {Array.from({ length: 8 }).map((_, i) => (
-                                    <div key={i} className="h-24 bg-border rounded-xl"></div>
+                            <div className="h-8 bg-border rounded w-1/3 mb-8" />
+                            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 grid-rows-2 gap-4 sm:gap-6">
+                                {Array.from({ length: ITEMS_PER_PAGE }).map((_, i) => (
+                                    <div key={i} className="h-[140px] bg-border rounded-xl" />
                                 ))}
                             </div>
                         </div>
                     </div>
                 </main>
+                <Footer />
             </div>
         );
     }
 
-    // Error state
+    // ==========================================
+    // Render: Error State
+    // ==========================================
     if (categoriesError) {
         return (
             <div className="min-h-screen bg-bg-app">
@@ -128,41 +198,65 @@ const CategoriesPage = () => {
                         <p className="text-red-500">Lỗi: {categoriesError}</p>
                         <button
                             onClick={() => window.location.reload()}
-                            className="mt-4 px-4 py-2 bg-primary text-white rounded-lg"
+                            className="mt-4 px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary-hover transition-colors"
                         >
                             Thử lại
                         </button>
                     </div>
                 </main>
+                <Footer />
             </div>
         );
     }
 
+    // ==========================================
+    // Render: Main Content
+    // ==========================================
     return (
         <div className="min-h-screen bg-bg-app">
-            {/* Header / Navbar */}
+            {/* Header */}
             <Header />
 
             {/* Main Content */}
             <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-                {/* Categories Section */}
+
+                {/* ========================================== */}
+                {/* Categories Section - Fixed height layout */}
+                {/* ========================================== */}
                 <section className="bg-bg-section rounded-2xl p-6 sm:p-8">
                     {/* Section Title */}
                     <h2 className="text-xl sm:text-2xl font-semibold text-text-primary mb-8">
                         Khám phá theo thể loại
                     </h2>
 
-                    {/* Categories Grid - 2 rows x 4 columns */}
-                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 sm:gap-6 mb-8">
-                        {getCurrentPageCategories().map((category) => (
-                            <CategoryCard
-                                key={category.id || category._id}
-                                id={category.id || category._id}
-                                name={category.name}
-                                bookCount={category.bookCount || category.booksCount || 0}
-                                onClick={handleCategoryClick}
-                            />
-                        ))}
+                    {/* [CHANGE] Categories Grid - Fixed 2 rows với placeholder */}
+                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 grid-rows-2 gap-4 sm:gap-6 mb-8">
+                        {Array.from({ length: ITEMS_PER_PAGE }).map((_, index) => {
+                            const category = currentPageCategories[index];
+
+                            if (category) {
+                                const categoryId = category.id || category._id;
+                                return (
+                                    <CategoryCard
+                                        key={categoryId}
+                                        id={categoryId}
+                                        name={category.name}
+                                        bookCount={category.bookCount || category.booksCount || 0}
+                                        onClick={handleCategoryClick}
+                                        selected={selectedCategoryId === categoryId}
+                                    />
+                                );
+                            }
+
+                            // Empty placeholder để giữ grid layout ổn định
+                            return (
+                                <div
+                                    key={`empty-${index}`}
+                                    className="min-h-[140px]"
+                                    aria-hidden="true"
+                                />
+                            );
+                        })}
                     </div>
 
                     {/* Pagination Dots */}
@@ -180,35 +274,49 @@ const CategoriesPage = () => {
                                         }
                                     `}
                                     aria-label={`Trang ${index + 1}`}
+                                    aria-current={currentPage === index ? 'page' : undefined}
                                 />
                             ))}
                         </div>
                     )}
                 </section>
 
-                {/* Quick View Books Section - Hiển thị khi có category được chọn */}
+                {/* ========================================== */}
+                {/* Quick View Books Section */}
+                {/* [CHANGE] Sử dụng data từ useBooksByCategory hook */}
+                {/* ========================================== */}
                 {selectedCategory && (
                     <section ref={booksRef} className="mt-8">
                         {booksLoading ? (
+                            // Loading Skeleton
                             <div className="bg-bg-section rounded-2xl p-6 animate-pulse">
-                                <div className="h-6 bg-border rounded w-1/4 mb-6"></div>
+                                <div className="h-6 bg-border rounded w-1/4 mb-6" />
                                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-4">
                                     {Array.from({ length: 6 }).map((_, i) => (
-                                        <div key={i} className="aspect-3/4 bg-border rounded-lg"></div>
+                                        <div key={i} className="aspect-3/4 bg-border rounded-lg" />
                                     ))}
                                 </div>
                             </div>
+                        ) : booksError ? (
+                            // Error State
+                            <div className="bg-bg-section rounded-2xl p-6 text-center">
+                                <p className="text-red-500">{booksError}</p>
+                            </div>
                         ) : (
+                            // [CHANGE] BookSection với data đã được normalize từ hook
                             <BookSection
-                                key={selectedCategory.id || selectedCategory._id}
+                                key={selectedCategoryId}
                                 title={`Sách ${selectedCategory.name}`}
                                 books={categoryBooks}
-                                viewAllLink={`/search?category=${selectedCategory.id || selectedCategory._id}`}
+                                viewAllLink={`/search?category=${selectedCategoryId}`}
                             />
                         )}
                     </section>
                 )}
             </main>
+
+            {/* Footer */}
+            <Footer />
         </div>
     );
 };

@@ -14,10 +14,11 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import Header from '../../componants/layouts/Header';
-import BookCard from '../../componants/ui/BookCardUser';
-import Pagination from '../../componants/ui/Pagination';
-import Spinner from '../../componants/ui/Spinner';
+import Header from '../../components/layouts/Header';
+import Footer from '../../components/layouts/Footer';
+import BookCard from '../../components/ui/BookCardUser';
+import Pagination from '../../components/ui/Pagination';
+import Spinner from '../../components/ui/Spinner';
 import { ArrowLeft, RefreshCw } from 'lucide-react';
 
 // Import services để gọi API
@@ -400,12 +401,13 @@ const CategoryBookList = () => {
     // ==========================================
     if (loading && !category) {
         return (
-            <div className="min-h-screen bg-bg-app">
+            <div className="min-h-screen bg-bg-app flex flex-col">
                 <Header />
                 <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-                    <CategoryBookListSkeleton />
-                </main>
-            </div>
+                    <CategoryBookListSkeleton /></main>
+            
+            <Footer />
+</div>
         );
     }
 
@@ -415,7 +417,7 @@ const CategoryBookList = () => {
     // ==========================================
     if (error && books.length === 0) {
         return (
-            <div className="min-h-screen bg-bg-app">
+            <div className="min-h-screen bg-bg-app flex flex-col">
                 <Header />
                 <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
                     <div className="bg-bg-section rounded-2xl p-8 text-center">
@@ -443,9 +445,10 @@ const CategoryBookList = () => {
                                 Thử lại
                             </button>
                         </div>
-                    </div>
-                </main>
-            </div>
+                    </div></main>
+            
+            <Footer />
+</div>
         );
     }
 
@@ -454,7 +457,7 @@ const CategoryBookList = () => {
     // Hiển thị nội dung chính khi có dữ liệu
     // ==========================================
     return (
-        <div className="min-h-screen bg-bg-app">
+        <div className="min-h-screen bg-bg-app flex flex-col">
             {/* Header chung của ứng dụng */}
             <Header />
 
@@ -558,9 +561,10 @@ const CategoryBookList = () => {
                             onPageChange={handlePageChange}
                         />
                     </div>
-                )}
-            </main>
-        </div>
+                )}</main>
+        
+            <Footer />
+</div>
     );
 };
 

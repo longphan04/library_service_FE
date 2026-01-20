@@ -66,9 +66,15 @@ export const getAll = async (params = {}) => {
         return acc;
     }, {});
 
+    // DEBUG: Log API request params
+    console.log('[bookService.getAll] 📤 API Params:', cleanParams);
+
     // Gọi API: GET /book?category={id}&limit={n}&page={n}
     // Ví dụ: GET /book?category=5&limit=6
     const response = await axios.get('/book', { params: cleanParams });
+
+    // DEBUG: Log raw response data
+    console.log('[bookService.getAll] 📥 Response data:', response.data);
 
     return response.data;
 };

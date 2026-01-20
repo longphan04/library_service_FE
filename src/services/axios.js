@@ -19,7 +19,7 @@ const instance = axios.create({
 // ==========================================
 // Token Management
 // ==========================================
-const TOKEN_KEY = 'auth_token';
+const TOKEN_KEY = 'access_token';
 const REFRESH_TOKEN_KEY = 'refresh_token';
 
 export const getToken = () => localStorage.getItem(TOKEN_KEY);

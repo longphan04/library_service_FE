@@ -4,6 +4,7 @@
 // ==========================================
 
 import axios, { getToken, getRefreshToken, setTokens, clearTokens } from './axios';
+import { buildImageUrl } from '../utils/imageUrl';
 
 // ==========================================
 // Token Management Functions (re-export)
@@ -116,22 +117,46 @@ export const refreshToken = async () => {
 };
 
 /**
- * Lấy thông tin user hiện tại
- * @returns {Promise} - User data từ server
+ * Lấy thông tin user hiện tại từ API
+ * @returns {Promise<{id: string, email: string, name: string, role: string, avatar: string}>}
+ * @throws {Error} Nếu token không hợp lệ hoặc hết hạn
  */
 export const getCurrentUser = async () => {
-    try {
-        const response = await axios.get('/users/me');
-        const user = response.data;
+    const token = getToken();
 
-        if (user) {
-            localStorage.setItem('user', JSON.stringify(user));
-        }
+    // Không có token → chưa đăng nhập
+    if (!token) {
+        return null;
+    }
+
+    try {
+        const response = await axios.get('/profile/me');
+        const data = response.data;
+
+        // Lấy raw avatar path từ API (field avatar_url chứa path như "avatar/filename.jpg")
+        const rawAvatar = data.avatar_url || data.avatar || data.avatarUrl || data.profileImage;
+
+        // Normalize user data - đảm bảo các fields cần thiết
+        const user = {
+            id: data.id || data._id || data.userId,
+            email: data.email,
+            name: data.name || data.fullName || data.username,
+            role: data.role || data.roles?.[0] || 'MEMBER',
+            avatar: buildImageUrl(rawAvatar),
+        };
+
+        // Cache user data
+        localStorage.setItem('user', JSON.stringify(user));
 
         return user;
     } catch (error) {
-        if (error.response && error.response.status === 401) {
+        // Token hết hạn / không hợp lệ → logout và redirect
+        if (error.response?.status === 401) {
             clearTokens();
+            // Redirect về login nếu không phải đang ở trang login
+            if (!window.location.pathname.includes('/login')) {
+                window.location.href = '/login';
+            }
         }
         throw error;
     }

@@ -3,7 +3,7 @@ import InfoRow from "./InfoRow";
 export default function UserHeader({ user, status }) {
     return (
         <div className="flex gap-8 mb-8">
-            <div className="w-28 h-28 rounded-full bg-gray-300 flex items-center justify-center text-4xl flex-shrink-0">
+            <div className="w-28 h-28 rounded-full bg-gray-300 flex items-center justify-center text-4xl shrink-0">
                 👤
             </div>
 
@@ -18,8 +18,8 @@ export default function UserHeader({ user, status }) {
                     <span className="font-semibold w-32">Trạng thái:</span>
                     <span
                         className={`font-semibold text-lg ${status === "active"
-                                ? "text-green-600"
-                                : "text-red-500"
+                            ? "text-green-600"
+                            : "text-red-500"
                             }`}
                     >
                         {status === "active" ? "Hoạt động" : "Bị khóa"}

@@ -61,6 +61,20 @@
     --color-error: #DE6767;
     --color-warning: #C48A3A;
 
+    /* ===== FOOTER ===== */
+    --color-footer-bg: #1F2937;
+    /* Footer background (gray-800) */
+    --color-footer-text: #D1D5DB;
+    /* Footer text (gray-300) */
+    --color-footer-heading: #FFFFFF;
+    /* Footer headings */
+    --color-footer-text-muted: #9CA3AF;
+    /* Footer muted text (gray-400) */
+    --color-footer-border: #374151;
+    /* Footer border (gray-700) */
+    --color-footer-link-hover: #7A4A2E;
+    /* Footer link hover (brand primary) */
+
     /* ===== TYPOGRAPHY ===== */
     --font-base: "Inter", sans-serif;
 }

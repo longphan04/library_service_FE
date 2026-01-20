@@ -7,11 +7,12 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, RefreshCw } from 'lucide-react';
-import Header from '../../componants/layouts/Header';
-import Button from '../../componants/ui/Button';
-import VersionSelector from '../../componants/ui/VersionSelector';
-import BorrowConfirmationModal from '../../componants/ui/BorrowConfirmationModal';
-import Toast from '../../componants/ui/Toast';
+import Header from '../../components/layouts/Header';
+import Footer from '../../components/layouts/Footer';
+import Button from '../../components/ui/Button';
+import VersionSelector from '../../components/ui/VersionSelector';
+import BorrowConfirmationModal from '../../components/ui/BorrowConfirmationModal';
+import Toast from '../../components/ui/Toast';
 import useBookHold from '../../hooks/useBookHold';
 import bookService from '../../services/book.service';
 
@@ -201,7 +202,7 @@ const BookDetail = () => {
     // Loading State
     if (loading) {
         return (
-            <div className="min-h-screen bg-bg-app">
+            <div className="min-h-screen bg-bg-app flex flex-col">
                 <Header />
                 <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
                     <button
@@ -211,16 +212,17 @@ const BookDetail = () => {
                         <ArrowLeft size={20} />
                         <span className="text-sm font-medium">Quay lại</span>
                     </button>
-                    <BookDetailSkeleton />
-                </main>
-            </div>
+                    <BookDetailSkeleton /></main>
+            
+            <Footer />
+</div>
         );
     }
 
     // Error State
     if (error || !book) {
         return (
-            <div className="min-h-screen bg-bg-app">
+            <div className="min-h-screen bg-bg-app flex flex-col">
                 <Header />
                 <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
                     <div className="bg-bg-section rounded-2xl p-8 text-center">
@@ -236,9 +238,10 @@ const BookDetail = () => {
                                 Thử lại
                             </Button>
                         </div>
-                    </div>
-                </main>
-            </div>
+                    </div></main>
+            
+            <Footer />
+</div>
         );
     }
 
@@ -268,7 +271,7 @@ const BookDetail = () => {
     // Main Render
     // ==========================================
     return (
-        <div className="min-h-screen bg-bg-app">
+        <div className="min-h-screen bg-bg-app flex flex-col">
             {/* Header */}
             <Header />
 

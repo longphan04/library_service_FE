@@ -39,8 +39,16 @@ import axios from './axios';
  * @returns {Promise<BorrowTicket[]>} - Danh sách phiếu mượn
  */
 export const getMyTickets = async () => {
-    const response = await axios.get('/borrow-ticket/me');
-    return response.data;
+    console.log('[BorrowTicketService] 🔍 Calling GET /borrow-ticket/me...');
+
+    try {
+        const response = await axios.get('/borrow-ticket/me');
+        console.log('[BorrowTicketService] ✅ Response:', response.data);
+        return response.data;
+    } catch (error) {
+        console.error('[BorrowTicketService] ❌ Error:', error.response?.status, error.response?.data || error.message);
+        throw error;
+    }
 };
 
 /**
@@ -82,10 +90,19 @@ export const createBorrowRequest = async (bookHoldIds) => {
         throw new Error('No valid book hold IDs provided');
     }
 
-    const response = await axios.post('/borrow-ticket', {
-        bookHoldIds: validIds
-    });
-    return response.data;
+    // DEBUG: Log request payload
+    console.log('[createBorrowRequest] 📤 Sending request with payload:', { bookHoldIds: validIds });
+
+    try {
+        const response = await axios.post('/borrow-ticket', {
+            bookHoldIds: validIds
+        });
+        console.log('[createBorrowRequest] ✅ Success:', response.data);
+        return response.data;
+    } catch (error) {
+        console.error('[createBorrowRequest] ❌ Error:', error.response?.status, error.response?.data);
+        throw error;
+    }
 };
 
 /**

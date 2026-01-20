@@ -1,6 +1,6 @@
 import { useState } from "react";
-import Header from "@/componants/layouts/Header";
-import Tabs from "@/componants/ui/TabStaff";
+import Header from "@/components/layouts/Header";
+import Tabs from "@/components/ui/TabStaff";
 import BookManagement from "./BookManagement";
 import UserManagement from "./UserManagement";
 import TicketManagement from "./TicketManagement";

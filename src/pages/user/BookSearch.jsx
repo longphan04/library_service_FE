@@ -6,14 +6,15 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
-import Header from '../../componants/layouts/Header';
-import SearchBar from '../../componants/ui/SearchBar';
-import SortBar from '../../componants/ui/SortBar';
-import CategoryDropdown from '../../componants/ui/CategoryDropdown';
-import BookGrid from '../../componants/ui/BookGrid';
-import Pagination from '../../componants/ui/Pagination';
-import EmptyState from '../../componants/ui/EmptyState';
-import Spinner from '../../componants/ui/Spinner';
+import Header from '../../components/layouts/Header';
+import Footer from '../../components/layouts/Footer';
+import SearchBar from '../../components/ui/SearchBar';
+import SortBar from '../../components/ui/SortBar';
+import CategoryDropdown from '../../components/ui/CategoryDropdown';
+import BookGrid from '../../components/ui/BookGrid';
+import Pagination from '../../components/ui/Pagination';
+import EmptyState from '../../components/ui/EmptyState';
+import Spinner from '../../components/ui/Spinner';
 import { BookX, AlertCircle, ArrowLeft } from 'lucide-react';
 
 // Services
@@ -216,7 +217,7 @@ const BookSearch = () => {
     // Render
     // ==========================================
     return (
-        <div className="min-h-screen bg-bg-app">
+        <div className="min-h-screen bg-bg-app flex flex-col">
             {/* Header */}
             <Header />
 
@@ -362,9 +363,10 @@ const BookSearch = () => {
                             onPageChange={handlePageChange}
                         />
                     </div>
-                )}
-            </main>
-        </div>
+                )}</main>
+        
+            <Footer />
+</div>
     );
 };
 

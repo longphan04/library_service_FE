@@ -7,8 +7,9 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowLeft, Clock, RefreshCw } from 'lucide-react';
-import Header from '../../componants/layouts/Header';
-import Tab from '../../componants/ui/Tab';
+import Header from '../../components/layouts/Header';
+import Footer from '../../components/layouts/Footer';
+import Tab from '../../components/ui/Tab';
 import { getMyTickets } from '../../services/borrow-ticket.service';
 
 // ==========================================
@@ -336,8 +337,9 @@ const BorrowHistory = () => {
                     <div className="mt-4 text-sm text-text-sub">
                         Hiển thị {filteredHistory.length} kết quả
                     </div>
-                )}
-            </main>
+                )}</main>
+
+            <Footer />
         </div>
     );
 };

@@ -8,11 +8,12 @@
 import { useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { BookMarked, Plus, Trash2, RefreshCw, ShoppingCart, AlertTriangle } from 'lucide-react';
-import Header from '../../componants/layouts/Header';
-import BookCard from '../../componants/ui/BookCardUser';
-import Button from '../../componants/ui/Button';
-import BorrowAllModal from '../../componants/ui/BorrowAllModal';
-import Toast from '../../componants/ui/Toast';
+import Header from '../../components/layouts/Header';
+import Footer from '../../components/layouts/Footer';
+import BookCard from '../../components/ui/BookCardUser';
+import Button from '../../components/ui/Button';
+import BorrowAllModal from '../../components/ui/BorrowAllModal';
+import Toast from '../../components/ui/Toast';
 import useBookHold from '../../hooks/useBookHold';
 
 // ==========================================
@@ -244,7 +245,7 @@ const Bookshelf = () => {
     // ==========================================
 
     return (
-        <div className="min-h-screen bg-bg-app">
+        <div className="min-h-screen bg-bg-app flex flex-col">
             {/* Header */}
             <Header />
 

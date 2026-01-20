@@ -6,8 +6,8 @@
 
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Button } from '../../componants/ui/Index';
-import InputField from '../../componants/ui/InputField';
+import { Button } from '../../components/ui/Index';
+import InputField from '../../components/ui/InputField';
 import { useAuth } from '../../contexts/AuthContext';
 
 // Import icons từ assets

@@ -7,9 +7,9 @@
 import { createBrowserRouter } from 'react-router-dom';
 
 // Route Guards
-import ProtectedRoute from '../componants/guards/ProtectedRoute';
-import GuestRoute from '../componants/guards/GuestRoute';
-import RoleRoute from '../componants/guards/RoleRoute';
+import ProtectedRoute from '../components/guards/ProtectedRoute';
+import GuestRoute from '../components/guards/GuestRoute';
+import RoleRoute from '../components/guards/RoleRoute';
 
 // Role Constants
 import { ROLES } from '../constants/roles';
@@ -30,7 +30,7 @@ import Register from '../pages/auth/Register';
 
 // Pages - Staff & Admin
 import MainLayout from '../pages/staff/MainLayout';
-import AdminLayout from '../componants/layouts/AdminLayout';
+import AdminLayout from '../components/layouts/AdminLayout';
 
 // ==========================================
 // Router Configuration
