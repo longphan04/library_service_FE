@@ -7,25 +7,20 @@ import useBookManagement from "@/hooks/useBookManagement";
 
 export default function BookManagement() {
   const {
-    // State từ hook
+    books,
+    pagination,
+    categories,
     selectedCategory,
-    selectedBooks,
-    currentPage,
-    searchTerm: hookSearchTerm,
-    currentBooks,
-    filteredBooks,
-    totalPages,
-    startIndex,
-    booksPerPage,
-
-    // Functions từ hook
-    setCurrentPage,
-    handleCheckChange,
-    handleDeleteBooks,
+    categoryOptions,
     handleCategoryChange,
-    clearSearch: hookClearSearch,
+    setPagination,
+    page,
+    searchTerm: hookSearchTerm,
+    selectedBooks,
     setSearchTerm: hookSetSearchTerm,
-    setBooks
+    setPage,
+    setSelectedBooks,
+    handleDeleteBooks,
   } = useBookManagement();
 
   // State cho modal - ĐẢM BẢO khởi tạo đúng
@@ -135,13 +130,20 @@ export default function BookManagement() {
   // Xử lý click nút "Chỉnh sửa" trong BookCard
   const handleEditBookCard = (bookId) => {
     console.log("handleEditBookCard called for bookId:", bookId);
-    const bookToEdit = currentBooks.find(book => book.id === bookId);
+    const bookToEdit = books.find(book => book.id === bookId);
     if (bookToEdit) {
       console.log("Found book to edit:", bookToEdit);
       handleOpenEditBook(bookToEdit);
     } else {
       console.log("Book not found with id:", bookId);
     }
+  };
+
+  const handleCheckChange = (bookId, checked) => {
+    setSelectedBooks(prev => ({
+      ...prev,
+      [bookId]: checked,
+    }));
   };
 
   console.log("BookManagement render, showAddBookForm:", showAddBookForm);
@@ -159,14 +161,13 @@ export default function BookManagement() {
                 <div className="relative">
                   <select
                     value={selectedCategory}
-                    onChange={(e) => handleCategoryChange(e.target.value)}
-                    className="px-6 py-3 pr-12 rounded border border-[#7A4A2E] bg-white appearance-none cursor-pointer"
-                    style={{ minWidth: '200px' }}
+                    onChange={(e) => setSelectedCategory(e.target.value)}
+                    className="border px-3 py-2 rounded"
                   >
-                    <option value="all">Tất cả thể loại</option>
-                    <option value="fantasy">Kỳ ảo</option>
-                    <option value="sci-fi">Khoa học viễn tưởng</option>
-                    <option value="history">Lịch sử</option>
+                    {Array.isArray(categories) &&
+                      categories.map((cat) => (
+                        <button key={cat}>{cat}</button>
+                      ))}
                   </select>
                   <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none">
                     <svg className="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -232,9 +233,9 @@ export default function BookManagement() {
         {/* Books content section */}
         <div className="p-8 flex-1">
           <div className="max-w-8xl mx-auto">
-            {currentBooks.length > 0 ? (
+            {books.length > 0 ? (
               <div className="grid grid-cols-2 gap-8">
-                {currentBooks.map((book) => (
+                {books.map((book) => (
                   <BookCard
                     key={book.id}
                     book={book}
@@ -277,17 +278,20 @@ export default function BookManagement() {
         {/* Pagination section */}
         <div className="mt-auto p-8">
           <div className="max-w-8xl mx-auto">
-            {filteredBooks.length > 0 && (
+            {books.length > 0 && (
               <>
                 <div className="text-center mb-4 text-gray-600">
-                  Hiển thị {startIndex + 1}-{Math.min(startIndex + booksPerPage, filteredBooks.length)}
-                  trong tổng số {filteredBooks.length} sách
+                  Hiển thị {(page - 1) * 10 + 1}–
+                  {Math.min(page * 10, pagination.totalItems)}
+                  trong tổng số {pagination.totalItems} sách
                 </div>
 
                 <Pagination
-                  currentPage={currentPage}
-                  totalPages={totalPages}
-                  onPageChange={setCurrentPage}
+                  currentPage={pagination.page}
+                  totalPages={pagination.totalPages}
+                  onPageChange={(p) =>
+                    setPagination((prev) => ({ ...prev, page: p }))
+                  }
                 />
               </>
             )}
