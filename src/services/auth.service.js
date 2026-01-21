@@ -38,19 +38,36 @@ export const login = async (credentials) => {
         const refreshToken = response.data.refreshToken || response.data.refresh_token;
         const user = response.data.user;
 
-        // Log để debug
-        console.log('Login response:', response.data);
-        console.log('Access token:', accessToken);
-
         if (accessToken) {
             setTokens(accessToken, refreshToken);
         }
 
+        // Fetch profile data after login
+        let userData = user;
         if (user) {
-            localStorage.setItem('user', JSON.stringify(user));
+            try {
+                const profileResponse = await axios.get('/profile/me');
+                const profileData = profileResponse.data.data || profileResponse.data;
+
+                // Merge user data with profile data
+                userData = {
+                    ...user,
+                    profile: profileData,
+                    fullName: profileData.full_name,
+                    full_name: profileData.full_name,
+                };
+            } catch (profileError) {
+                console.error('Failed to fetch profile data:', profileError);
+                // Continue with basic user data if profile fetch fails
+            }
+
+            localStorage.setItem('user', JSON.stringify(userData));
         }
 
-        return response.data;
+        return {
+            ...response.data,
+            user: userData
+        };
     } catch (error) {
         if (error.response) {
             const status = error.response.status;
@@ -121,8 +138,22 @@ export const refreshToken = async () => {
  */
 export const getCurrentUser = async () => {
     try {
-        const response = await axios.get('/users/me');
-        const user = response.data;
+        // Get existing user data from localStorage to preserve roles
+        const existingUser = JSON.parse(localStorage.getItem('user') || '{}');
+
+        const response = await axios.get('/profile/me');
+        const profileData = response.data.data || response.data;
+
+        // Merge basic user info with profile data, preserving roles from existing user
+        const user = {
+            user_id: profileData.user_id,
+            email: profileData.email || existingUser.email || '',
+            status: profileData.status || existingUser.status || 'ACTIVE',
+            roles: existingUser.roles || ['USER'], // Preserve roles from existing user data
+            profile: profileData,
+            fullName: profileData.full_name,
+            full_name: profileData.full_name,
+        };
 
         if (user) {
             localStorage.setItem('user', JSON.stringify(user));

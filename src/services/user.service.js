@@ -14,7 +14,7 @@ import axios from './axios';
  * @returns {Promise} - User data
  */
 export const getMe = async () => {
-    const response = await axios.get('/users/me');
+    const response = await axios.get('/profile/me');
     return response.data;
 };
 
@@ -24,8 +24,9 @@ export const getMe = async () => {
  * @returns {Promise} - Updated user data
  */
 export const updateMe = async (data) => {
-    const response = await axios.put('/users/me', data);
-    return response.data;
+    const response = await axios.put('/profile/me', data);
+    // API returns profile data in response.data.data
+    return response.data.data || response.data;
 };
 
 // ==========================================
@@ -45,10 +46,10 @@ export const getUsers = async (options = {}) => {
         if (options.page) params.append('page', options.page);
         if (options.limit) params.append('limit', options.limit);
         if (options.status) params.append('status', options.status);
-        
+
         const url = params.toString() ? `/user/member?${params.toString()}` : '/user/member';
         const response = await axios.get(url);
-        
+
         // Transform API response to match frontend expectations
         if (response.data.data && Array.isArray(response.data.data)) {
             const transformedUsers = response.data.data.map(user => ({
@@ -61,18 +62,18 @@ export const getUsers = async (options = {}) => {
                 isActive: user.status === 'ACTIVE' || user.status === 'active',
                 isBanned: user.status === 'BANNED' || user.status === 'banned',
             }));
-            
+
             return {
                 data: transformedUsers,
-                pagination: response.data.pagination || { 
-                    page: 1, 
-                    limit: 18, 
+                pagination: response.data.pagination || {
+                    page: 1,
+                    limit: 18,
                     total: response.data.data.length,
                     totalItems: response.data.pagination?.totalItems || response.data.data.length,
                 },
             };
         }
-        
+
         return response.data;
     } catch (error) {
         console.error('Error fetching users:', error.response?.data || error.message);
@@ -109,11 +110,11 @@ export const updateUserStatus = async (userId, status) => {
         if (!['active', 'banned'].includes(status)) {
             throw new Error('Invalid status. Must be "active" or "banned"');
         }
-        
+
         // Convert status to API format (ACTIVE/BANNED for API, lowercase for frontend)
         // 'active' → 'ACTIVE', 'banned' → 'BANNED'
         const apiStatus = status === 'banned' ? 'BANNED' : 'ACTIVE';
-        
+
         // Try different endpoint patterns that might be used
         try {
             // Try pattern 1: PUT /user/{id}/status
@@ -125,7 +126,7 @@ export const updateUserStatus = async (userId, status) => {
             if (error.response?.status !== 404) {
                 throw error;
             }
-            
+
             // Try pattern 2: PUT /user/member/{id}/status
             try {
                 const response = await axios.put(`/user/member/${userId}/status`, {
@@ -136,7 +137,7 @@ export const updateUserStatus = async (userId, status) => {
                 if (error.response?.status !== 404) {
                     throw error;
                 }
-                
+
                 // Try pattern 3: PATCH /user/{id}
                 try {
                     const response = await axios.patch(`/user/${userId}`, {
@@ -192,7 +193,7 @@ const userService = {
     // User profile
     getMe,
     updateMe,
-    
+
     // Admin user management
     getUsers,
     getUserById,

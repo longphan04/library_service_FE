@@ -4,10 +4,11 @@
 // Vị trí: src/pages/auth/Login.jsx
 // ==========================================
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '../../componants/ui/Index';
 import InputField from '../../componants/ui/InputField';
+import Toast from '../../componants/ui/Toast';
 import { useAuth } from '../../contexts/AuthContext';
 
 // Import icons từ assets
@@ -52,6 +53,18 @@ const Login = () => {
 
     // State quản lý trạng thái loading khi submit form
     const [isLoading, setIsLoading] = useState(false);
+
+    // Toast state
+    const [toast, setToast] = useState({ isOpen: false, type: '', message: '' });
+
+    // Check for logout success message
+    useEffect(() => {
+        const logoutSuccess = sessionStorage.getItem('logoutSuccess');
+        if (logoutSuccess === 'true') {
+            setToast({ isOpen: true, type: 'success', message: 'Đăng xuất thành công!' });
+            sessionStorage.removeItem('logoutSuccess');
+        }
+    }, []);
 
     // ==========================================
     // Computed Values
@@ -157,6 +170,9 @@ const Login = () => {
             // Import getRedirectByRole inline để tránh circular dependency
             const { getRedirectByRole } = await import('../../constants/roles');
             const redirectPath = getRedirectByRole(userRole);
+
+            // Lưu thông báo thành công vào sessionStorage
+            sessionStorage.setItem('loginSuccess', 'true');
 
             // Đăng nhập thành công - chuyển đến dashboard theo role
             navigate(redirectPath);
@@ -286,6 +302,15 @@ const Login = () => {
                     </Link>
                 </div>
             </div>
+
+            {/* Toast Notification */}
+            <Toast
+                isOpen={toast.isOpen}
+                type={toast.type}
+                message={toast.message}
+                onClose={() => setToast((prev) => ({ ...prev, isOpen: false }))}
+                duration={3000}
+            />
         </div>
     );
 };

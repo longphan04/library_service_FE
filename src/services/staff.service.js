@@ -16,10 +16,10 @@ export const getStaff = async (options = {}) => {
         if (options.page) params.append('page', options.page);
         if (options.limit) params.append('limit', options.limit);
         if (options.status) params.append('status', options.status);
-        
+
         const url = params.toString() ? `/user/staff?${params.toString()}` : '/user/staff';
         const response = await axios.get(url);
-        
+
         // Transform API response to match frontend expectations
         if (response.data.data && Array.isArray(response.data.data)) {
             const transformedStaff = response.data.data.map(staff => ({
@@ -31,18 +31,18 @@ export const getStaff = async (options = {}) => {
                 username: staff.username || staff.email,
                 isActive: staff.status === 'ACTIVE' || staff.status === 'active',
             }));
-            
+
             return {
                 data: transformedStaff,
-                pagination: response.data.pagination || { 
-                    page: 1, 
-                    limit: 18, 
+                pagination: response.data.pagination || {
+                    page: 1,
+                    limit: 18,
                     total: response.data.data.length,
                     totalItems: response.data.pagination?.totalItems || response.data.data.length,
                 },
             };
         }
-        
+
         return response.data;
     } catch (error) {
         console.error('Error fetching staff:', error.response?.data || error.message);
@@ -77,37 +77,34 @@ export const addStaff = async (staffData) => {
 };
 
 /**
- * Đăng ký tài khoản cho nhân viên mới (dùng endpoint /register-staff)
+ * Đăng ký tài khoản cho nhân viên mới
+ * Uses the standard /auth/register endpoint with role parameter
  */
 export const createStaff = async (staffData) => {
     try {
-        // Try multiple endpoint patterns
-        const patterns = [
-            { method: 'post', url: '/register-staff', data: staffData },
-            { method: 'post', url: '/user/staff/register', data: staffData },
-            { method: 'post', url: '/user/register-staff', data: staffData },
-            { method: 'post', url: '/auth/register/staff', data: staffData },
-        ];
-        
-        let lastError = null;
-        
-        for (const pattern of patterns) {
-            try {
-                const response = await axios.post(pattern.url, pattern.data);
-                return response.data;
-            } catch (error) {
-                lastError = error;
-                // Continue to next pattern if 404
-                if (error.response?.status !== 404) {
-                    throw error;
-                }
-            }
-        }
-        
-        // If all patterns fail, throw last error
-        throw lastError;
+        // Prepare registration data with STAFF role
+        const registrationData = {
+            email: staffData.email,
+            password: staffData.password,
+            full_name: staffData.name,
+            role: 'STAFF', // Specify role as STAFF
+        };
+
+        // Use the standard registration endpoint
+        const response = await axios.post('/auth/register-staff', registrationData);
+        return response.data;
     } catch (error) {
         console.error('Error creating staff:', error.response?.data || error.message);
+
+        // Provide more helpful error messages
+        if (error.response?.status === 400) {
+            throw new Error(error.response.data?.message || 'Dữ liệu không hợp lệ');
+        } else if (error.response?.status === 409) {
+            throw new Error('Email đã tồn tại trong hệ thống');
+        } else if (error.response?.status === 500) {
+            throw new Error('Lỗi server. Vui lòng thử lại sau');
+        }
+
         throw error;
     }
 };
@@ -133,9 +130,9 @@ export const updateStaffStatus = async (staffId, status) => {
         if (!['active', 'banned'].includes(status)) {
             throw new Error('Invalid status. Must be "active" or "banned"');
         }
-        
+
         const apiStatus = status === 'banned' ? 'BANNED' : 'ACTIVE';
-        
+
         // Try multiple endpoint patterns
         const patterns = [
             { method: 'put', url: `/user/staff/${staffId}/status`, data: { status: apiStatus } },
@@ -143,9 +140,9 @@ export const updateStaffStatus = async (staffId, status) => {
             { method: 'patch', url: `/user/${staffId}`, data: { status: apiStatus } },
             { method: 'patch', url: `/admin/staff/${staffId}`, data: { status: apiStatus } },
         ];
-        
+
         let lastError = null;
-        
+
         for (const pattern of patterns) {
             try {
                 let response;
@@ -163,7 +160,7 @@ export const updateStaffStatus = async (staffId, status) => {
                 }
             }
         }
-        
+
         // If all patterns fail, throw last error
         throw lastError;
     } catch (error) {
@@ -177,8 +174,31 @@ export const updateStaffStatus = async (staffId, status) => {
  */
 export const deleteStaff = async (staffId) => {
     try {
-        const response = await axios.delete(`/user/staff/${staffId}`);
-        return response.data;
+        // Try multiple endpoint patterns
+        const patterns = [
+            `/user/${staffId}`,
+            `/user/staff/${staffId}`,
+            `/admin/staff/${staffId}`,
+            `/staff/${staffId}`,
+        ];
+
+        let lastError = null;
+
+        for (const url of patterns) {
+            try {
+                const response = await axios.delete(url);
+                return response.data;
+            } catch (error) {
+                lastError = error;
+                // Continue to next pattern if 404
+                if (error.response?.status !== 404) {
+                    throw error;
+                }
+            }
+        }
+
+        // If all patterns fail, throw last error
+        throw lastError;
     } catch (error) {
         console.error('Error deleting staff:', error);
         throw error;

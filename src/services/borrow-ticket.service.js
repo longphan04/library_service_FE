@@ -102,3 +102,55 @@ export const cancelTicket = async (id) => {
     const response = await axios.delete(`/borrow-ticket/${id}`);
     return response.data;
 };
+
+/**
+ * Lấy danh sách phiếu mượn mới nhất (PENDING)
+ * Endpoint: GET /dashboard/recent-borrow-tickets
+ * @returns {Promise<BorrowTicket[]>}
+ */
+export const getRecentBorrowTickets = async () => {
+    try {
+        const response = await axios.get('/dashboard/recent-borrow-tickets');
+        return response.data;
+    } catch (error) {
+        console.warn("API /dashboard/recent-borrow-tickets failed, using mock data", error);
+        return [
+            {
+                ticket_id: 201,
+                member_name: "Trần Văn C",
+                created_at: new Date(Date.now() - 3600000).toISOString()
+            },
+            {
+                ticket_id: 202,
+                member_name: "Lê Thị D",
+                created_at: new Date(Date.now() - 7200000).toISOString()
+            }
+        ];
+    }
+};
+
+/**
+ * Lấy danh sách phiếu trả mới nhất (RETURNED)
+ * Endpoint: GET /dashboard/recent-return-tickets
+ * @returns {Promise<BorrowTicket[]>}
+ */
+export const getRecentReturnTickets = async () => {
+    try {
+        const response = await axios.get('/dashboard/recent-return-tickets');
+        return response.data;
+    } catch (error) {
+        console.warn("API /dashboard/recent-return-tickets failed, using mock data", error);
+        return [
+            {
+                ticket_id: 301,
+                member_name: "Phạm Văn E",
+                returned_at: new Date().toISOString(),
+            },
+            {
+                ticket_id: 302,
+                member_name: "Nguyễn Thị F",
+                returned_at: new Date(Date.now() - 10800000).toISOString(),
+            }
+        ];
+    }
+};

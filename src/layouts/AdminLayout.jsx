@@ -1,17 +1,41 @@
 import { Outlet, useNavigate, useLocation } from "react-router-dom";
 import { LogOut, ArrowLeft } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import logo from "@/assets/icons/logo.png";
+import Toast from "@/componants/ui/Toast";
+import ActionButton from "@/componants/ui/ActionButton";
+import { useAuth } from "@/contexts/AuthContext";
 
 export default function AdminLayout() {
     const navigate = useNavigate();
     const location = useLocation();
+    const { logout: authLogout } = useAuth();
 
     const [openDashboardMenu, setOpenDashboardMenu] = useState(false);
     const [menuPos, setMenuPos] = useState({ x: 0, y: 0 });
 
-    const logout = () => {
-        navigate("/login");
+    // Toast state
+    const [toast, setToast] = useState({ isOpen: false, type: '', message: '' });
+
+    // Check for login success message
+    useEffect(() => {
+        const loginSuccess = sessionStorage.getItem('loginSuccess');
+        if (loginSuccess === 'true') {
+            setToast({ isOpen: true, type: 'success', message: 'Đăng nhập thành công!' });
+            sessionStorage.removeItem('loginSuccess');
+        }
+    }, []);
+
+    const logout = async () => {
+        try {
+            await authLogout();
+        } catch (error) {
+            console.error('Logout error:', error);
+        } finally {
+            // Lưu thông báo đăng xuất thành công vào sessionStorage
+            sessionStorage.setItem('logoutSuccess', 'true');
+            navigate("/login", { replace: true });
+        }
     };
 
     // ✅ XÁC ĐỊNH TRANG CHỦ ADMIN
@@ -147,26 +171,38 @@ export default function AdminLayout() {
                         transform: "translate(-50%, -50%)",
                     }}
                 >
-                    <button
+                    <ActionButton
                         onClick={() => navigate("/admin/statistics")}
-                        className="bg-[#E2C6A6] text-[#7A4A2E] py-1 rounded text-sm"
+                        variant="primary"
+                        className="justify-center text-sm py-1"
                     >
                         Thống kê
-                    </button>
-                    <button
+                    </ActionButton>
+                    <ActionButton
                         onClick={() => navigate("/admin/inventory")}
-                        className="bg-[#E2C6A6] text-[#7A4A2E] py-1 rounded text-sm"
+                        variant="primary"
+                        className="justify-center text-sm py-1"
                     >
                         Tồn kho
-                    </button>
-                    <button
+                    </ActionButton>
+                    <ActionButton
                         onClick={() => navigate("/admin/inventory-log")}
-                        className="bg-[#E2C6A6] text-[#7A4A2E] py-1 rounded text-sm"
+                        variant="primary"
+                        className="justify-center text-sm py-1"
                     >
                         Biến động kho
-                    </button>
+                    </ActionButton>
                 </div>
             )}
+
+            {/* Toast Notification */}
+            <Toast
+                isOpen={toast.isOpen}
+                type={toast.type}
+                message={toast.message}
+                onClose={() => setToast((prev) => ({ ...prev, isOpen: false }))}
+                duration={3000}
+            />
         </div>
     );
 }

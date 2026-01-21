@@ -131,6 +131,36 @@ export const getBookCopies = async (bookId) => {
 };
 
 // ==========================================
+// getRecentBooks - Lấy danh sách sách mới thêm
+// ==========================================
+
+/**
+ * Lấy danh sách sách mới được thêm vào thư viện
+ * Endpoint: GET /recent-books
+ * 
+ * @returns {Promise<Array>} Danh sách sách mới
+ */
+/**
+ * Lấy danh sách sách mới được thêm vào thư viện
+ * Endpoint: GET /dashboard/recent-books
+ * 
+ * @returns {Promise<Array>} Danh sách sách mới
+ */
+export const getRecentBooks = async () => {
+    try {
+        const response = await axios.get('/dashboard/recent-books');
+        return response.data;
+    } catch (error) {
+        console.warn("API /dashboard/recent-books failed, using mock data", error);
+        return [
+            { book_id: 101, title: "Dế Mèn Phiêu Lưu Ký", created_at: new Date().toISOString(), created_by_name: "Admin" },
+            { book_id: 102, title: "Đất Rừng Phương Nam", created_at: new Date(Date.now() - 86400000).toISOString(), created_by_name: "Mod" },
+            { book_id: 103, title: "Mắt Biếc", created_at: new Date(Date.now() - 172800000).toISOString(), created_by_name: "Admin" }
+        ];
+    }
+};
+
+// ==========================================
 // Utility Functions - Các hàm tiện ích
 // ==========================================
 
@@ -204,6 +234,7 @@ const bookService = {
     getAll,           // Lấy danh sách sách
     getById,          // Lấy chi tiết sách
     getBookCopies,    // Lấy danh sách bản sao
+    getRecentBooks,   // Lấy sách mới thêm
     buildQueryString, // Tạo query string
     parseQueryString, // Parse query string
 };

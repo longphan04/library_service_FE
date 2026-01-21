@@ -3,6 +3,8 @@ import { useState, useEffect } from "react";
 
 import Modal from "@/componants/modal/Modal";
 import ActionButton from "@/componants/ui/ActionButton";
+import StatusBadge from "@/componants/ui/StatusBadge";
+import Toast from "@/componants/ui/Toast";
 import userService from "@/services/user.service";
 import { useAuth } from "@/hooks/useAuth";
 import { useNavigate } from "react-router-dom";
@@ -19,6 +21,9 @@ export default function UserList() {
     const [pendingStatus, setPendingStatus] = useState(null);
     const [selectedUser, setSelectedUser] = useState(null);
     const [isUpdating, setIsUpdating] = useState(false);
+
+    // Toast state
+    const [toast, setToast] = useState({ isOpen: false, type: '', message: '' });
 
     const { loading: authLoading } = useAuth();
     const navigate = useNavigate();
@@ -37,7 +42,7 @@ export default function UserList() {
             setLoading(true);
             setError(null);
             const data = await userService.getUsers();
-            
+
             // Handle both array response and object with data property
             const usersList = Array.isArray(data) ? data : data.data || data.users || [];
             setUsers(usersList);
@@ -45,8 +50,8 @@ export default function UserList() {
         } catch (err) {
             console.error("Error fetching users:", err);
             setError(
-                err.response?.data?.message || 
-                err.message || 
+                err.response?.data?.message ||
+                err.message ||
                 "Lỗi khi tải danh sách người dùng"
             );
             setUsers([]);
@@ -117,9 +122,12 @@ export default function UserList() {
             // Show success message
             const statusText =
                 pendingStatus === "active" ? "Mở khóa" : "Khóa";
-            alert(
-                `${statusText} tài khoản ${selectedUser.name} thành công!`
-            );
+            // Show success toast
+            setToast({
+                isOpen: true,
+                type: 'success',
+                message: `${statusText} tài khoản ${selectedUser.name} thành công!`
+            });
 
             // Reset modals
             setOpenConfirmModal(false);
@@ -132,7 +140,12 @@ export default function UserList() {
                 err.message ||
                 "Lỗi khi cập nhật trạng thái người dùng"
             );
-            alert("Lỗi: " + (err.response?.data?.message || err.message));
+            // Show error toast
+            setToast({
+                isOpen: true,
+                type: 'error',
+                message: err.response?.data?.message || err.message || 'Lỗi khi cập nhật trạng thái người dùng'
+            });
         } finally {
             setIsUpdating(false);
         }
@@ -227,19 +240,10 @@ export default function UserList() {
                                             className="absolute left-1/2 top-1/2
                                             -translate-x-1/2 -translate-y-1/2"
                                         >
-                                            <span
-                                                className={`w-22.5 h-7
-                                                flex items-center justify-center
-                                                rounded-[14px] text-sm text-white
-                                                ${user.status === "active" || user.isActive
-                                                        ? "bg-green-500"
-                                                        : "bg-red-500"
-                                                    }`}
-                                            >
-                                                {user.status === "active" || user.isActive
-                                                    ? "Hoạt động"
-                                                    : "Bị khóa"}
-                                            </span>
+                                            <StatusBadge
+                                                status={user.status}
+                                                isActive={user.isActive}
+                                            />
                                         </div>
 
                                         {/* EDIT */}
@@ -343,6 +347,15 @@ export default function UserList() {
                     </ActionButton>
                 </div>
             </Modal>
+
+            {/* Toast Notification */}
+            <Toast
+                isOpen={toast.isOpen}
+                type={toast.type}
+                message={toast.message}
+                onClose={() => setToast((prev) => ({ ...prev, isOpen: false }))}
+                duration={3000}
+            />
         </div>
     );
 }
