@@ -241,34 +241,36 @@ const BookSearch = () => {
                     </div>
                 </div>
 
-                {/* Search Bar */}
-                <div className="mb-6">
-                    <SearchBar
-                        placeholder="Tìm kiếm theo tên sách hoặc tác giả..."
-                        value={searchQuery}
-                        onChange={handleSearchChange}
-                        onClose={handleSearchClose}
-                        onKeyDown={handleSearchKeyDown}
-                        onSearch={handleSearchSubmit}
-                    />
-                </div>
+                {/* Search, Filter & Sort - Single Row */}
+                <div className="flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-4 mb-6">
+                    {/* Left: Search + Category */}
+                    <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-6">
+                        {/* Search Bar */}
+                        <div className="w-full sm:w-98">
+                            <SearchBar
+                                placeholder="Tìm theo tên sách hoặc tác giả..."
+                                value={searchQuery}
+                                onChange={handleSearchChange}
+                                onClose={handleSearchClose}
+                                onKeyDown={handleSearchKeyDown}
+                                onSearch={handleSearchSubmit}
+                            />
+                        </div>
 
-                {/* Filter & Sort Bar */}
-                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
-                    {/* Category Dropdown */}
-                    <CategoryDropdown
-                        value={categoryFromUrl}
-                        onChange={handleCategoryChange}
-                        categories={categories}
-                        loading={categoriesLoading}
-                    />
+                        {/* Category Dropdown */}
+                        <CategoryDropdown
+                            value={categoryFromUrl}
+                            onChange={handleCategoryChange}
+                            categories={categories}
+                            loading={categoriesLoading}
+                        />
+                    </div>
 
-                    {/* Sort Bar */}
+                    {/* Right: Sort Bar */}
                     <SortBar
                         sortBy={sortFromUrl}
                         onSortChange={handleSortChange}
-                        viewMode={viewMode}
-                        onViewModeChange={handleViewModeChange}
+                        showViewToggle={false}
                     />
                 </div>
 
@@ -364,9 +366,9 @@ const BookSearch = () => {
                         />
                     </div>
                 )}</main>
-        
+
             <Footer />
-</div>
+        </div>
     );
 };
 

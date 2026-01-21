@@ -9,13 +9,14 @@ import { useState, useEffect, useMemo, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { X, BookOpen, Calendar, Clock, CheckCircle, AlertCircle, Loader2 } from 'lucide-react';
 import Button from './Button';
+import { FALLBACK_IMAGES } from '../../utils/imageUrl';
 
 // ==========================================
 // Constants
 // ==========================================
 
 const DEFAULT_LOAN_PERIOD = 60; // days
-const FALLBACK_IMAGE = 'https://via.placeholder.com/100x140/FFF8F0/7D5B4F?text=No+Image';
+const FALLBACK_IMAGE = FALLBACK_IMAGES.bookPlaceholder;
 
 // ==========================================
 // Date Formatter (Intl.DateTimeFormat)

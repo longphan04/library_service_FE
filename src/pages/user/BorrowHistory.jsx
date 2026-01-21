@@ -16,21 +16,21 @@ import { getMyTickets } from '../../services/borrow-ticket.service';
 // Constants - Status Configuration
 // ==========================================
 const STATUS_CONFIG = {
-    RETURNED: { label: 'Hoàn thành', color: 'bg-green-100 text-green-800' },
-    BORROWED: { label: 'Đang mượn', color: 'bg-blue-100 text-blue-800' },
-    PENDING: { label: 'Đang chờ', color: 'bg-yellow-100 text-yellow-800' },
-    OVERDUE: { label: 'Quá hạn', color: 'bg-red-100 text-red-800' },
-    APPROVED: { label: 'Đã duyệt', color: 'bg-indigo-100 text-indigo-800' },
-    CANCELLED: { label: 'Đã hủy', color: 'bg-gray-100 text-gray-800' },
-    REJECTED: { label: 'Từ chối', color: 'bg-red-100 text-red-800' },
+    RETURNED: { label: 'Hoàn thành', color: 'bg-status-returned-bg text-status-returned-text' },
+    BORROWED: { label: 'Đang mượn', color: 'bg-status-borrowed-bg text-status-borrowed-text' },
+    PENDING: { label: 'Đang chờ', color: 'bg-status-pending-bg text-status-pending-text' },
+    OVERDUE: { label: 'Quá hạn', color: 'bg-status-overdue-bg text-status-overdue-text' },
+    APPROVED: { label: 'Đã duyệt', color: 'bg-status-approved-bg text-status-approved-text' },
+    CANCELLED: { label: 'Đã hủy', color: 'bg-status-cancelled-bg text-status-cancelled-text' },
+    REJECTED: { label: 'Từ chối', color: 'bg-status-overdue-bg text-status-overdue-text' },
     // Lowercase variants for API compatibility
-    returned: { label: 'Hoàn thành', color: 'bg-green-100 text-green-800' },
-    borrowed: { label: 'Đang mượn', color: 'bg-blue-100 text-blue-800' },
-    pending: { label: 'Đang chờ', color: 'bg-yellow-100 text-yellow-800' },
-    overdue: { label: 'Quá hạn', color: 'bg-red-100 text-red-800' },
-    approved: { label: 'Đã duyệt', color: 'bg-indigo-100 text-indigo-800' },
-    cancelled: { label: 'Đã hủy', color: 'bg-gray-100 text-gray-800' },
-    rejected: { label: 'Từ chối', color: 'bg-red-100 text-red-800' },
+    returned: { label: 'Hoàn thành', color: 'bg-status-returned-bg text-status-returned-text' },
+    borrowed: { label: 'Đang mượn', color: 'bg-status-borrowed-bg text-status-borrowed-text' },
+    pending: { label: 'Đang chờ', color: 'bg-status-pending-bg text-status-pending-text' },
+    overdue: { label: 'Quá hạn', color: 'bg-status-overdue-bg text-status-overdue-text' },
+    approved: { label: 'Đã duyệt', color: 'bg-status-approved-bg text-status-approved-text' },
+    cancelled: { label: 'Đã hủy', color: 'bg-status-cancelled-bg text-status-cancelled-text' },
+    rejected: { label: 'Từ chối', color: 'bg-status-overdue-bg text-status-overdue-text' },
 };
 
 // Tab configuration
@@ -77,7 +77,7 @@ const StatusBadge = ({ status }) => {
     const config = STATUS_CONFIG[status] || STATUS_CONFIG[status?.toLowerCase()];
     if (!config) {
         return (
-            <span className="px-2 py-1 rounded text-xs font-semibold bg-gray-100 text-gray-800">
+            <span className="px-2 py-1 rounded text-xs font-semibold bg-status-cancelled-bg text-status-cancelled-text">
                 {status || 'Không rõ'}
             </span>
         );

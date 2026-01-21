@@ -21,7 +21,7 @@ import useBookHold from '../../hooks/useBookHold';
 // ==========================================
 
 const BookshelfSkeleton = () => (
-    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 sm:gap-6">
+    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4 sm:gap-6">
         {Array.from({ length: 8 }).map((_, i) => (
             <div key={i} className="animate-pulse">
                 <div className="aspect-3/4 bg-border rounded-lg mb-2"></div>
@@ -32,34 +32,7 @@ const BookshelfSkeleton = () => (
     </div>
 );
 
-// ==========================================
-// Empty State
-// ==========================================
 
-const EmptyState = ({ onExplore }) => (
-    <div className="bg-bg-section rounded-2xl p-12 text-center">
-        <div className="max-w-md mx-auto space-y-4">
-            <div className="inline-flex p-4 bg-primary/10 rounded-full">
-                <BookMarked className="w-12 h-12 text-primary" />
-            </div>
-            <div>
-                <h3 className="text-lg font-semibold text-text-primary mb-2">
-                    Kệ sách trống
-                </h3>
-                <p className="text-sm text-text-sub mb-6">
-                    Bạn chưa giữ cuốn sách nào. Hãy khám phá và thêm sách yêu thích vào kệ!
-                </p>
-            </div>
-            <Button
-                variant="primary"
-                onClick={onExplore}
-                leftIcon={<Plus size={18} />}
-            >
-                KHÁM PHÁ SÁCH
-            </Button>
-        </div>
-    </div>
-);
 
 // ==========================================
 // Confirm Delete Modal
@@ -250,10 +223,11 @@ const Bookshelf = () => {
             <Header />
 
             {/* Main Content */}
-            <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-                {/* Page Header */}
-                <div className="bg-bg-section rounded-2xl p-6 sm:p-8 mb-8">
-                    <div className="flex items-center justify-between flex-wrap gap-4">
+            <main className="flex-1 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full">
+                {/* Single Card Container - Boxed Layout like CategoriesPage */}
+                <section className="bg-bg-section rounded-2xl p-6 sm:p-8">
+                    {/* Page Header */}
+                    <div className="flex items-center justify-between flex-wrap gap-4 mb-6">
                         {/* Left: Title */}
                         <div className="flex items-center gap-3">
                             <div className="p-2 bg-primary/10 rounded-lg">
@@ -292,41 +266,62 @@ const Bookshelf = () => {
                             </Button>
                         </div>
                     </div>
-                </div>
 
-                {/* Error State */}
-                {error && (
-                    <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
-                        <p className="text-red-600 mb-2">{error}</p>
-                        <button
-                            onClick={refetch}
-                            className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
-                        >
-                            Thử lại
-                        </button>
-                    </div>
-                )}
+                    {/* Error State */}
+                    {error && (
+                        <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
+                            <p className="text-red-600 mb-2">{error}</p>
+                            <button
+                                onClick={refetch}
+                                className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
+                            >
+                                Thử lại
+                            </button>
+                        </div>
+                    )}
 
-                {/* Loading State */}
-                {loading && <BookshelfSkeleton />}
+                    {/* Loading State */}
+                    {loading && <BookshelfSkeleton />}
 
-                {/* Books Grid */}
-                {!loading && !error && !isEmpty && (
-                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 sm:gap-6">
-                        {holds.map((hold) => (
-                            <BookshelfItem
-                                key={hold.id}
-                                hold={hold}
-                                onRemove={handleRequestDelete}
-                            />
-                        ))}
-                    </div>
-                )}
+                    {/* Books Grid */}
+                    {!loading && !error && !isEmpty && (
+                        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4 sm:gap-6">
+                            {holds.map((hold) => (
+                                <BookshelfItem
+                                    key={hold.id}
+                                    hold={hold}
+                                    onRemove={handleRequestDelete}
+                                />
+                            ))}
+                        </div>
+                    )}
 
-                {/* Empty State */}
-                {!loading && !error && isEmpty && (
-                    <EmptyState onExplore={handleExplore} />
-                )}
+                    {/* Empty State - Inline, no extra wrapper */}
+                    {!loading && !error && isEmpty && (
+                        <div className="py-8 text-center">
+                            <div className="max-w-md mx-auto space-y-4">
+                                <div className="inline-flex p-4 bg-primary/10 rounded-full">
+                                    <BookMarked className="w-12 h-12 text-primary" />
+                                </div>
+                                <div>
+                                    <h3 className="text-lg font-semibold text-text-primary mb-2">
+                                        Kệ sách trống
+                                    </h3>
+                                    <p className="text-sm text-text-sub mb-6">
+                                        Bạn chưa giữ cuốn sách nào. Hãy khám phá và thêm sách yêu thích vào kệ!
+                                    </p>
+                                </div>
+                                <Button
+                                    variant="primary"
+                                    onClick={handleExplore}
+                                    leftIcon={<Plus size={18} />}
+                                >
+                                    KHÁM PHÁ SÁCH
+                                </Button>
+                            </div>
+                        </div>
+                    )}
+                </section>
             </main>
 
             {/* Borrow All Modal */}

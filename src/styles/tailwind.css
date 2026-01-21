@@ -61,6 +61,26 @@
     --color-error: #DE6767;
     --color-warning: #C48A3A;
 
+    /* ===== STATUS BADGES ===== */
+    /* Returned / Success */
+    --color-status-returned-bg: #DCFCE7;
+    --color-status-returned-text: #166534;
+    /* Borrowed / Active */
+    --color-status-borrowed-bg: #DBEAFE;
+    --color-status-borrowed-text: #1E40AF;
+    /* Pending / Waiting */
+    --color-status-pending-bg: #FEF9C3;
+    --color-status-pending-text: #854D0E;
+    /* Overdue / Danger */
+    --color-status-overdue-bg: #FEE2E2;
+    --color-status-overdue-text: #991B1B;
+    /* Approved */
+    --color-status-approved-bg: #E0E7FF;
+    --color-status-approved-text: #3730A3;
+    /* Cancelled / Neutral */
+    --color-status-cancelled-bg: #F3F4F6;
+    --color-status-cancelled-text: #374151;
+
     /* ===== FOOTER ===== */
     --color-footer-bg: #1F2937;
     /* Footer background (gray-800) */

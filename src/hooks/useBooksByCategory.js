@@ -11,6 +11,7 @@
 
 import { useState, useRef, useCallback } from 'react';
 import bookService from '../services/book.service';
+import { getBookCoverUrl } from '../utils/imageUrl';
 
 // ==========================================
 // Helper: Normalize Book Data
@@ -25,11 +26,9 @@ const normalizeBook = (book) => ({
         || book.authorName
         || book.author
         || 'Không rõ tác giả',
-    coverImage: book.cover_url
-        || book.coverImage
-        || book.image
-        || book.thumbnail
-        || 'https://via.placeholder.com/200x280/FFF8F0/7D5B4F?text=No+Image',
+    coverImage: getBookCoverUrl(
+        book.cover_url || book.coverImage || book.image || book.thumbnail
+    ),
 });
 
 // ==========================================

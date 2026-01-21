@@ -25,10 +25,11 @@ const SortBar = ({
     onSortChange,
     viewMode = 'grid',
     onViewModeChange,
+    showViewToggle = true,
     className = '',
 }) => {
     return (
-        <div className={`flex items-center justify-between gap-4 ${className}`}>
+        <div className={`flex items-center gap-4 ${className}`}>
             {/* Sort Buttons */}
             <div className="flex items-center gap-2">
                 <span className="text-sm text-text-sub mr-2">Sắp xếp:</span>
@@ -53,37 +54,39 @@ const SortBar = ({
                 </div>
             </div>
 
-            {/* View Mode Toggle */}
-            <div className="flex items-center gap-1 bg-bg-section rounded-lg p-1">
-                <button
-                    type="button"
-                    onClick={() => onViewModeChange?.('grid')}
-                    className={`
-                        p-2 rounded-md transition-all duration-200
-                        ${viewMode === 'grid'
-                            ? 'bg-primary text-white'
-                            : 'text-text-sub hover:text-text-primary hover:bg-bg-card-hover'
-                        }
-                    `}
-                    aria-label="Chế độ lưới"
-                >
-                    <Grid3X3 size={18} />
-                </button>
-                <button
-                    type="button"
-                    onClick={() => onViewModeChange?.('list')}
-                    className={`
-                        p-2 rounded-md transition-all duration-200
-                        ${viewMode === 'list'
-                            ? 'bg-primary text-white'
-                            : 'text-text-sub hover:text-text-primary hover:bg-bg-card-hover'
-                        }
-                    `}
-                    aria-label="Chế độ danh sách"
-                >
-                    <List size={18} />
-                </button>
-            </div>
+            {/* View Mode Toggle - Conditional */}
+            {showViewToggle && (
+                <div className="flex items-center gap-1 bg-bg-section rounded-lg p-1">
+                    <button
+                        type="button"
+                        onClick={() => onViewModeChange?.('grid')}
+                        className={`
+                            p-2 rounded-md transition-all duration-200
+                            ${viewMode === 'grid'
+                                ? 'bg-primary text-white'
+                                : 'text-text-sub hover:text-text-primary hover:bg-bg-card-hover'
+                            }
+                        `}
+                        aria-label="Chế độ lưới"
+                    >
+                        <Grid3X3 size={18} />
+                    </button>
+                    <button
+                        type="button"
+                        onClick={() => onViewModeChange?.('list')}
+                        className={`
+                            p-2 rounded-md transition-all duration-200
+                            ${viewMode === 'list'
+                                ? 'bg-primary text-white'
+                                : 'text-text-sub hover:text-text-primary hover:bg-bg-card-hover'
+                            }
+                        `}
+                        aria-label="Chế độ danh sách"
+                    >
+                        <List size={18} />
+                    </button>
+                </div>
+            )}
         </div>
     );
 };

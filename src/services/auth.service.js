@@ -136,6 +136,10 @@ export const getCurrentUser = async () => {
         // Lấy raw avatar path từ API (field avatar_url chứa path như "avatar/filename.jpg")
         const rawAvatar = data.avatar_url || data.avatar || data.avatarUrl || data.profileImage;
 
+        // DEBUG: Log avatar URL processing
+        console.log('[Auth] Raw avatar path from API:', rawAvatar);
+        console.log('[Auth] Built avatar URL:', buildImageUrl(rawAvatar));
+
         // Normalize user data - đảm bảo các fields cần thiết
         const user = {
             id: data.id || data._id || data.userId,

@@ -53,49 +53,49 @@ export const getMyTickets = async () => {
 
 /**
  * Lấy thông tin chi tiết phiếu mượn theo ID
- * @param {string|number} id - Borrow ticket ID
+ * @param {string|number} book_id - Book ID
  * @returns {Promise<BorrowTicket>} - Chi tiết phiếu mượn
- * @throws {Error} Nếu id không hợp lệ
+ * @throws {Error} Nếu book_id không hợp lệ
  */
-export const getById = async (id) => {
+export const getById = async (book_id) => {
     // Input validation
-    if (!id) {
-        throw new Error('Borrow ticket ID is required');
+    if (!book_id) {
+        throw new Error('Book ID is required');
     }
 
-    const response = await axios.get(`/borrow-ticket/${id}`);
+    const response = await axios.get(`/borrow-ticket/${book_id}`);
     return response.data;
 };
 
 /**
  * Tạo phiếu mượn cho nhiều sách (từ book holds)
- * @param {Array<string|number>} bookHoldIds - Danh sách book hold IDs
+ * @param {Array<string|number>} hold_ids - Danh sách book hold IDs
  * @returns {Promise<BorrowTicket>} - Phiếu mượn được tạo
- * @throws {Error} Nếu bookHoldIds không hợp lệ
+ * @throws {Error} Nếu hold_ids không hợp lệ
  */
-export const createBorrowRequest = async (bookHoldIds) => {
+export const createBorrowRequest = async (hold_ids) => {
     // Input validation - Defensive Programming
-    if (!Array.isArray(bookHoldIds)) {
-        throw new Error('bookHoldIds must be an array');
+    if (!Array.isArray(hold_ids)) {
+        throw new Error('hold_ids must be an array');
     }
 
-    if (bookHoldIds.length === 0) {
-        throw new Error('bookHoldIds cannot be empty');
+    if (hold_ids.length === 0) {
+        throw new Error('hold_ids cannot be empty');
     }
 
     // Filter out any null/undefined values
-    const validIds = bookHoldIds.filter((id) => id != null);
+    const validIds = hold_ids.filter((id) => id != null);
 
     if (validIds.length === 0) {
         throw new Error('No valid book hold IDs provided');
     }
 
     // DEBUG: Log request payload
-    console.log('[createBorrowRequest] 📤 Sending request with payload:', { bookHoldIds: validIds });
+    console.log('[createBorrowRequest] 📤 Sending request with payload:', { hold_ids: validIds });
 
     try {
         const response = await axios.post('/borrow-ticket', {
-            bookHoldIds: validIds
+            hold_ids: validIds
         });
         console.log('[createBorrowRequest] ✅ Success:', response.data);
         return response.data;

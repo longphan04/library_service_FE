@@ -29,6 +29,7 @@ import Logo from '../../assets/icons/logo.png';
 import SearchBar from '../ui/SearchBar';
 import EditProfileModal from '../ui/EditProfileModal';
 import { useAuth } from '../../contexts/AuthContext';
+import { FALLBACK_IMAGES } from '../../utils/imageUrl';
 
 // ==========================================
 // Constants
@@ -56,7 +57,7 @@ const USER_MENU_ITEMS = [
 ];
 
 // Default avatar placeholder
-const DEFAULT_AVATAR = 'https://via.placeholder.com/40/7D5B4F/FFFFFF?text=U';
+const DEFAULT_AVATAR = FALLBACK_IMAGES.avatarPlaceholder;
 
 // ==========================================
 // Header Component

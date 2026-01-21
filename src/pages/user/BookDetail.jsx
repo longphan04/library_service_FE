@@ -15,6 +15,7 @@ import BorrowConfirmationModal from '../../components/ui/BorrowConfirmationModal
 import Toast from '../../components/ui/Toast';
 import useBookHold from '../../hooks/useBookHold';
 import bookService from '../../services/book.service';
+import { FALLBACK_IMAGES } from '../../utils/imageUrl';
 
 // ==========================================
 // Loading Skeleton
@@ -213,9 +214,9 @@ const BookDetail = () => {
                         <span className="text-sm font-medium">Quay lại</span>
                     </button>
                     <BookDetailSkeleton /></main>
-            
-            <Footer />
-</div>
+
+                <Footer />
+            </div>
         );
     }
 
@@ -239,9 +240,9 @@ const BookDetail = () => {
                             </Button>
                         </div>
                     </div></main>
-            
-            <Footer />
-</div>
+
+                <Footer />
+            </div>
         );
     }
 
@@ -293,12 +294,12 @@ const BookDetail = () => {
                         <div className="md:col-span-1">
                             <div className="sticky top-24">
                                 <img
-                                    src={book.coverImage || 'https://via.placeholder.com/300x420/FFF8F0/7D5B4F?text=No+Image'}
+                                    src={book.coverImage || FALLBACK_IMAGES.bookPlaceholder}
                                     alt={book.title}
                                     className="w-full rounded-lg shadow-lg"
                                     onError={(e) => {
                                         e.target.onerror = null;
-                                        e.target.src = 'https://via.placeholder.com/300x420/FFF8F0/7D5B4F?text=No+Image';
+                                        e.target.src = FALLBACK_IMAGES.bookPlaceholder;
                                     }}
                                 />
                             </div>

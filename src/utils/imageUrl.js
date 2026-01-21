@@ -3,6 +3,19 @@
 // Xử lý URL ảnh từ API (relative path → full URL)
 // ==========================================
 
+// ==========================================
+// Fallback Images (No hardcoded placeholders in components)
+// ==========================================
+export const FALLBACK_IMAGES = {
+    book: '/assets/fallback/book-cover.png',
+    category: '/assets/fallback/category.png',
+    avatar: '/assets/fallback/avatar.png',
+    // Legacy placeholder URLs (giữ lại để tương thích)
+    bookPlaceholder: 'https://via.placeholder.com/200x280/FFF8F0/7D5B4F?text=No+Image',
+    categoryPlaceholder: 'https://via.placeholder.com/300x200/7D5B4F/FFF8F0?text=Category',
+    avatarPlaceholder: 'https://via.placeholder.com/100x100/7D5B4F/FFF8F0?text=Avatar',
+};
+
 /**
  * Xây dựng URL đầy đủ cho ảnh từ API
  * 
@@ -40,6 +53,36 @@ export const buildImageUrl = (imagePath) => {
 };
 
 /**
+ * Build URL cho ảnh bìa sách
+ * @param {string} coverUrl - cover_url từ API
+ * @returns {string} - Full URL hoặc fallback
+ */
+export const getBookCoverUrl = (coverUrl) => {
+    const url = buildImageUrl(coverUrl);
+    return url || FALLBACK_IMAGES.bookPlaceholder;
+};
+
+/**
+ * Build URL cho ảnh category
+ * @param {string} imageUrl - image từ API
+ * @returns {string} - Full URL hoặc fallback
+ */
+export const getCategoryImageUrl = (imageUrl) => {
+    const url = buildImageUrl(imageUrl);
+    return url || FALLBACK_IMAGES.categoryPlaceholder;
+};
+
+/**
+ * Build URL cho avatar người dùng
+ * @param {string} avatarUrl - avatar_url từ API
+ * @returns {string} - Full URL hoặc fallback
+ */
+export const getAvatarUrl = (avatarUrl) => {
+    const url = buildImageUrl(avatarUrl);
+    return url || FALLBACK_IMAGES.avatarPlaceholder;
+};
+
+/**
  * Build URL cho static assets
  * @param {string} path - Đường dẫn file
  * @returns {string|null}
@@ -56,4 +99,11 @@ export const buildStaticUrl = (path) => {
     return `${baseUrl}${cleanPath}`;
 };
 
-export default { buildImageUrl, buildStaticUrl };
+export default {
+    buildImageUrl,
+    buildStaticUrl,
+    getBookCoverUrl,
+    getCategoryImageUrl,
+    getAvatarUrl,
+    FALLBACK_IMAGES,
+};

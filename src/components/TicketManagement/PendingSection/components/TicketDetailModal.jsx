@@ -66,14 +66,14 @@ export default function TicketDetailModal({
         borrowedBooks: 5,
         totalFine: 0
       };
-      
+
       // Mock books data (lấy số lượng sách từ ticket.quantity)
       const bookCount = ticket.quantity || 3;
       const initialBooks = MOCK_BOOKS.slice(0, bookCount).map(book => ({
         ...book,
         quantity: Math.min(book.quantity, 2) // Giới hạn số lượng
       }));
-      
+
       setUserInfo(mockUserInfo);
       setBooks(initialBooks);
     } else {
@@ -89,24 +89,24 @@ export default function TicketDetailModal({
   // Xử lý xác nhận toàn bộ ticket
   const handleConfirm = () => {
     console.log("Xác nhận toàn bộ ticket:", ticket.id);
-    
+
     // Gọi callback từ parent
     if (onConfirm) {
       onConfirm(ticket.id, books); // Truyền toàn bộ books
     }
-    
+
     onClose();
   };
 
   // Xử lý từ chối toàn bộ ticket
   const handleReject = () => {
     console.log("Từ chối toàn bộ ticket:", ticket.id);
-    
+
     // Gọi callback từ parent
     if (onReject) {
       onReject(ticket.id);
     }
-    
+
     onClose();
   };
 
@@ -142,7 +142,7 @@ export default function TicketDetailModal({
               )}
             </p>
           </div>
-          
+
           <button
             onClick={onClose}
             className="p-2 hover:bg-gray-200 rounded-full transition"
@@ -246,7 +246,7 @@ export default function TicketDetailModal({
               <span className="mx-2">•</span>
               <span>Tổng số bản: {totalQuantity}</span>
             </div>
-            
+
             <div className="flex gap-4">
               {/* Nếu ticket đã bị từ chối, chỉ hiển thị thông báo */}
               {isRejected ? (

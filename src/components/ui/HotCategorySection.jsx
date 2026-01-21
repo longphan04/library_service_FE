@@ -17,6 +17,7 @@ import { Flame, ArrowRight } from 'lucide-react';
 import Spinner from './Spinner';
 import categoryService from '../../services/category.service';
 import bookService from '../../services/book.service';
+import { FALLBACK_IMAGES, getBookCoverUrl, getCategoryImageUrl } from '../../utils/imageUrl';
 
 // ==========================================
 // Hằng số
@@ -26,7 +27,7 @@ import bookService from '../../services/book.service';
 const BOOKS_LIMIT = 6;
 
 /** Ảnh mặc định khi category không có ảnh */
-const DEFAULT_CATEGORY_IMAGE = 'https://via.placeholder.com/300x200/7D5B4F/FFF8F0?text=Category';
+const DEFAULT_CATEGORY_IMAGE = FALLBACK_IMAGES.categoryPlaceholder;
 
 // ==========================================
 // Component: CategoryCard (Internal)
@@ -347,12 +348,12 @@ const HotCategorySection = ({ className = '' }) => {
                                         {/* Book Cover */}
                                         <div className="aspect-3/4 overflow-hidden rounded-lg mb-2 bg-border">
                                             <img
-                                                src={book.coverImage || 'https://via.placeholder.com/200x280/FFF8F0/7D5B4F?text=No+Image'}
+                                                src={book.coverImage || FALLBACK_IMAGES.bookPlaceholder}
                                                 alt={book.title}
                                                 className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
                                                 onError={(e) => {
                                                     e.target.onerror = null;
-                                                    e.target.src = 'https://via.placeholder.com/200x280/FFF8F0/7D5B4F?text=No+Image';
+                                                    e.target.src = FALLBACK_IMAGES.bookPlaceholder;
                                                 }}
                                             />
                                         </div>

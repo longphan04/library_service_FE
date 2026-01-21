@@ -14,23 +14,14 @@ import Logo from '../../assets/icons/logo.png';
 // Danh sách các liên kết nhanh
 const QUICK_LINKS = [
     { label: 'Thư viện sách', path: '/categories' },
-    { label: 'Sách mới', path: '/categories?filter=new' },
-    { label: 'Về chúng tôi', path: '/about' },
-    { label: 'Liên hệ', path: '/contact' },
+    { label: 'Sách mới', path: '/categories/newest' },
 ];
 
 // Thông tin liên hệ
 const CONTACT_INFO = [
-    { icon: '📍', text: '1212-218 Nguyễn Phước Lan, Quận Hòa Xuân, Cẩm Lệ, Đà Nẵng' },
+    { icon: '📍', text: '212-218 Nguyễn Phước Lan, Quận Hòa Xuân, Cẩm Lệ, Đà Nẵng' },
     { icon: '📞', text: '(028) 1234 5678' },
     { icon: '✉️', text: 'contact@library.vn' },
-];
-
-// Mạng xã hội
-const SOCIAL_LINKS = [
-    { label: 'Facebook', url: '#' },
-    { label: 'Twitter', url: '#' },
-    { label: 'Instagram', url: '#' },
 ];
 
 // ==========================================
@@ -41,7 +32,7 @@ export default function Footer() {
 
     return (
         <footer className="bg-footer-bg text-footer-text mt-auto">
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+            <div className="max-w-7xl mx-auto px-1 sm:px-6 lg:px-8 py-5">
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
 
                     {/* Thương hiệu */}
@@ -82,31 +73,12 @@ export default function Footer() {
                         <h4 className="text-footer-heading font-semibold mb-4">Liên hệ</h4>
                         <ul className="space-y-2 text-footer-text-muted">
                             {CONTACT_INFO.map((info, index) => (
-                                <li key={index} className="flex items-start gap-2">
+                                <li key={index} className="flex items-start gap-1">
                                     <span>{info.icon}</span>
                                     <span>{info.text}</span>
                                 </li>
                             ))}
                         </ul>
-                    </div>
-                </div>
-
-                {/* Chân trang dưới */}
-                <div className="border-t border-footer-border mt-8 pt-8 flex flex-col md:flex-row justify-between items-center gap-4">
-                    <p className="text-footer-text-muted text-sm">
-                        © {currentYear} Library Management System. All rights reserved.
-                    </p>
-                    <div className="flex gap-4">
-                        {SOCIAL_LINKS.map((social) => (
-                            <a
-                                key={social.label}
-                                href={social.url}
-                                className="text-footer-text-muted hover:text-footer-heading transition-colors"
-                                aria-label={social.label}
-                            >
-                                {social.label}
-                            </a>
-                        ))}
                     </div>
                 </div>
             </div>

@@ -7,12 +7,13 @@
 
 import { useState, useEffect, memo, useCallback } from 'react';
 import { Link } from 'react-router-dom';
+import { FALLBACK_IMAGES } from '../../utils/imageUrl';
 
 // ==========================================
 // Constants
 // ==========================================
 
-const FALLBACK_IMAGE = 'https://via.placeholder.com/200x280/FFF8F0/7D5B4F?text=No+Image';
+const FALLBACK_IMAGE = FALLBACK_IMAGES.bookPlaceholder;
 
 // ==========================================
 // BookCard Component
