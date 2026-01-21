@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Plus, Trash2, Search } from 'lucide-react';
 import BookCard from "@/componants/ui/BookCardStaff";
 import Pagination from "@/componants/ui/Pagination";
-import AddBookForm from "@/componants/ui/addBookForm";
+import AddBookForm from "@/componants/ui/AddBookForm/addBookForm";
 import useBookManagement from "@/hooks/useBookManagement";
 
 export default function BookManagement() {
@@ -21,6 +21,7 @@ export default function BookManagement() {
     setPage,
     setSelectedBooks,
     handleDeleteBooks,
+    fetchBooks,
   } = useBookManagement();
 
   // State cho modal - ĐẢM BẢO khởi tạo đúng
@@ -54,7 +55,8 @@ export default function BookManagement() {
   // Xử lý clear search
   const handleClearSearch = () => {
     setLocalSearchTerm('');
-    hookClearSearch();
+    hookSetSearchTerm('');
+    setPage(1);
   };
 
   // Form submit
@@ -84,6 +86,13 @@ export default function BookManagement() {
     setShowAddBookForm(false);
     setEditingBook(null);
   };
+
+  // Lấy tên category
+  const selectedCategoryName =
+    selectedCategory === 'all'
+      ? ''
+      : categories.find((c) => c.id === Number(selectedCategory))?.name || '';
+
 
   // Lưu sách (thêm mới hoặc cập nhật)
   const handleSaveBook = (bookData, bookId) => {
@@ -161,19 +170,18 @@ export default function BookManagement() {
                 <div className="relative">
                   <select
                     value={selectedCategory}
-                    onChange={(e) => setSelectedCategory(e.target.value)}
-                    className="border px-3 py-2 rounded"
+                    onChange={handleCategoryChange}
+                    className="border px-3 py-3 rounded"
                   >
+                    <option value="all">Tất cả thể loại</option>
+
                     {Array.isArray(categories) &&
                       categories.map((cat) => (
-                        <button key={cat}>{cat}</button>
+                        <option key={cat.id} value={cat.id}>
+                          {cat.name}
+                        </option>
                       ))}
                   </select>
-                  <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none">
-                    <svg className="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                    </svg>
-                  </div>
                 </div>
 
                 {/* Ô tìm kiếm */}
@@ -185,7 +193,7 @@ export default function BookManagement() {
                     />
                     <input
                       type="text"
-                      placeholder="Tìm kiếm sách hoặc tác giả..."
+                      placeholder="Tìm kiếm sách..."
                       value={localSearchTerm}
                       onChange={handleSearchChange}
                       className="px-12 py-3 rounded text-white placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-[#9C7A6B]"
@@ -253,23 +261,13 @@ export default function BookManagement() {
                 </h3>
                 <p className="text-gray-600">
                   {hookSearchTerm && selectedCategory !== 'all'
-                    ? `Không tìm thấy sách nào với từ khóa "${hookSearchTerm}" trong thể loại "${selectedCategory === 'fantasy' ? 'Kỳ ảo' : selectedCategory === 'sci-fi' ? 'Khoa học viễn tưởng' : 'Lịch sử'}"`
+                    ? `Không tìm thấy sách nào với từ khóa "${hookSearchTerm}" trong thể loại "${selectedCategoryName}"`
                     : hookSearchTerm
                       ? `Không tìm thấy sách nào với từ khóa "${hookSearchTerm}"`
                       : selectedCategory !== 'all'
-                        ? `Không tìm thấy sách nào trong thể loại "${selectedCategory === 'fantasy' ? 'Kỳ ảo' : selectedCategory === 'sci-fi' ? 'Khoa học viễn tưởng' : 'Lịch sử'}"`
+                        ? `Không tìm thấy sách nào trong thể loại "${selectedCategoryName}"`
                         : 'Hãy thêm sách mới vào thư viện của bạn!'}
                 </p>
-                {!hookSearchTerm && selectedCategory === 'all' && (
-                  <button
-                    onClick={handleOpenAddBook}
-                    className="mt-4 px-8 py-3 text-base rounded text-white font-medium hover:opacity-90 transition-opacity"
-                    style={{ backgroundColor: '#7A4A2E' }}
-                  >
-                    <Plus size={22} className="inline mr-2" />
-                    Thêm sách đầu tiên
-                  </button>
-                )}
               </div>
             )}
           </div>

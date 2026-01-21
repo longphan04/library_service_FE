@@ -1,5 +1,11 @@
 import { Search, Plus, X } from "lucide-react";
 import { useState, useEffect } from "react";
+import {
+  getAuthors,
+  getPublishers,
+  getShelves,
+  createBook,
+} from './addBook.api';
 
 export default function AddBookForm({
   isOpen,
@@ -7,9 +13,15 @@ export default function AddBookForm({
   bookToEdit = null,
   onSave
 }) {
-  const savedPublishers = ["Nxb Kim Đồng", "Nxb Trẻ", "Nxb Giáo dục", "Nxb Phương Nam", "Nxb Phụ Nữ VN"];
-  const savedAuthors = ["Shakespeare", "J.K. Rowling", "George Orwell", "Haruki Murakami"];
-  const savedCategories = ["Tiểu thuyết", "Trinh thám", "Lịch sử", "Khoa học", "Kỳ ảo", "Văn học", "Phiêu lưu", "Kinh dị"];
+
+  const [authors, setAuthors] = useState([]);
+  const [publishers, setPublishers] = useState([]);
+  const [shelves, setShelves] = useState([]);
+  const [categories, setCategories] = useState([]);
+
+  const [selectedShelf, setSelectedShelf] = useState(null);
+  const [imageFile, setImageFile] = useState(null);
+
 
   // Publisher state
   const [publisherInput, setPublisherInput] = useState("");
@@ -31,6 +43,8 @@ export default function AddBookForm({
     { length: 30 },
     (_, i) => String(currentYear - i)
   );
+
+
 
   // Form fields
   const [formData, setFormData] = useState({
@@ -65,6 +79,14 @@ export default function AddBookForm({
     setShowPublisherDropdown(false);
   };
 
+  useEffect(() => {
+    Promise.all([getAuthors(), getPublishers(), getShelves()])
+      .then(([a, p, s]) => {
+        setAuthors(a.data);
+        setPublishers(p.data);
+        setShelves(s.data);
+      });
+  }, []);
   // Load bookToEdit data when it changes
   useEffect(() => {
     if (bookToEdit) {
@@ -106,16 +128,16 @@ export default function AddBookForm({
   }, [bookToEdit, isOpen]);
 
   // Filter authors và categories
-  const filteredAuthors = savedAuthors.filter((a) =>
-    a.toLowerCase().includes(authorInput.toLowerCase())
+  const filteredAuthors = authors.filter(a =>
+    a.name.toLowerCase().includes(authorInput.toLowerCase())
   );
 
-  const filteredPublishers = savedPublishers.filter((p) =>
-    p.toLowerCase().includes(publisherInput.toLowerCase())
+  const filteredPublishers = publishers.filter(p =>
+    p.name.toLowerCase().includes(publisherInput.toLowerCase())
   );
 
-  const filteredCategories = savedCategories.filter((c) =>
-    c.toLowerCase().includes(categoryInput.toLowerCase())
+  const filteredCategories = categories.filter(c =>
+    c.name.toLowerCase().includes(categoryInput.toLowerCase())
   );
 
   // Toggle category selection
@@ -140,7 +162,27 @@ export default function AddBookForm({
     }));
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
+    const fd = new FormData();
+    fd.append("title", formData.title);
+    fd.append("description", formData.description);
+    fd.append("publish_year", formData.year);
+    fd.append("copy_quatity", formData.quantity);
+    fd.append("publisher_id", selectedPublisher.publisher_id);
+    fd.append("shelf_id", selectedShelf.shelf_id);
+
+    selectedAuthors.forEach(a =>
+      fd.append("author_ids[]", a.author_id)
+    );
+
+    selectedCategories.forEach(c =>
+      fd.append("category_ids[]", c.category_id)
+    );
+
+    fd.append("image", imageFile);
+
+    await createBook(fd);
+
     e.preventDefault();
 
     try {
@@ -265,7 +307,7 @@ export default function AddBookForm({
                           <div
                             key={a}
                             onClick={() => {
-                              if (!selectedAuthors.includes(a)) {
+                              if (!selectedAuthors.some(x => x.author_id === a.author_id)) {
                                 setSelectedAuthors(prev => [...prev, a]);
                               }
                               setAuthorInput("");
@@ -301,7 +343,7 @@ export default function AddBookForm({
                       </div>
                     )}
                   </div>
-                  
+
                   {/* Publisher */}
                   <div className="relative">
                     <label className="text-[#7A4A2E]">Nhà xuất bản</label>
@@ -441,7 +483,28 @@ export default function AddBookForm({
                     </div>
                   </div>
 
-                  {/* Quantity + Year */}
+                  {/* Shelf - kệ sách */}
+                  <div className="relative">
+                    <label className="text-[#7A4A2E]">Kệ sách</label>
+                    <select
+                      value={selectedShelf?.shelf_id || ""}
+                      onChange={(e) =>
+                        setSelectedShelf(
+                          shelves.find(s => s.shelf_id === Number(e.target.value))
+                        )
+                      }
+                      className="w-full mt-1 p-2.5 rounded-lg border outline-none focus:border-[#7A4A2E] focus:ring-1 focus:ring-[#7A4A2E]"
+                    >
+                      <option value="">Chọn kệ sách</option>
+                      {shelves.map(s => (
+                        <option key={s.shelf_id} value={s.shelf_id}>
+                          {s.code}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  {/* Quantity + Year - số lượng + năm xuất bản */}
                   <div className="grid grid-cols-2 gap-3">
                     <div>
                       <label className="text-[#7A4A2E]">Số lượng</label>
@@ -458,8 +521,7 @@ export default function AddBookForm({
                       <select
                         value={formData.year}
                         onChange={(e) => handleInputChange("year", e.target.value)}
-                        className="w-full mt-1 p-2 rounded-lg border outline-none
-             focus:border-[#7A4A2E] focus:ring-1 focus:ring-[#7A4A2E]"
+                        className="w-full mt-1 p-2.5 rounded-lg border outline-none focus:border-[#7A4A2E] focus:ring-1 focus:ring-[#7A4A2E]"
                       >
                         {yearOptions.map((year) => (
                           <option key={year} value={year}>
