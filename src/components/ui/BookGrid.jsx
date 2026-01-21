@@ -21,6 +21,7 @@ const BookGrid = ({
     viewMode = 'grid',
     isLoading = false,
     className = '',
+    onBookClick,
 }) => {
     // Loading Skeleton
     if (isLoading) {
@@ -50,6 +51,7 @@ const BookGrid = ({
                         title={book.title}
                         author={book.author}
                         coverImage={book.coverImage}
+                        onClick={onBookClick}
                     />
                 ))}
             </div>
@@ -59,42 +61,88 @@ const BookGrid = ({
     // List View
     return (
         <div className={`flex flex-col gap-4 ${className}`}>
-            {books.map((book) => (
-                <Link
-                    key={book.id}
-                    to={`/books/${book.id}`}
-                    className="group flex gap-4 bg-white rounded-lg shadow-md p-4 hover:shadow-lg transition-shadow duration-300"
-                >
-                    {/* Book Cover */}
-                    <div className="shrink-0 w-24 sm:w-32">
-                        <img
-                            src={book.coverImage}
-                            alt={book.title}
-                            className="w-full aspect-3/4 object-cover rounded-md transition-transform duration-300 group-hover:scale-105"
-                        />
-                    </div>
+            {books.map((book) => {
+                const handleClick = (e) => {
+                    if (onBookClick) {
+                        e.preventDefault();
+                        onBookClick(book.id);
+                    }
+                };
 
-                    {/* Book Info */}
-                    <div className="flex-1 min-w-0">
-                        <h3 className="text-base sm:text-lg font-semibold text-text-primary line-clamp-2 group-hover:text-primary transition-colors">
-                            {book.title}
-                        </h3>
-                        <p className="text-sm text-text-sub mt-1">
-                            {book.author}
-                        </p>
-                        {book.description && (
-                            <p className="text-sm text-text-sub mt-2 line-clamp-2">
-                                {book.description}
-                            </p>
-                        )}
-                        {book.category && (
-                            <span className="inline-block mt-2 px-2 py-1 text-xs bg-primary/10 text-primary rounded">
-                                {book.category}
-                            </span>
-                        )}
-                    </div>
-                </Link>
-            ))}
+                return (
+                    onBookClick ? (
+                        <div
+                            key={book.id}
+                            onClick={handleClick}
+                            className="group flex gap-4 bg-white rounded-lg shadow-md p-4 hover:shadow-lg transition-shadow duration-300 cursor-pointer"
+                        >
+                            {/* Book Cover */}
+                            <div className="shrink-0 w-24 sm:w-32">
+                                <img
+                                    src={book.coverImage}
+                                    alt={book.title}
+                                    className="w-full aspect-3/4 object-cover rounded-md transition-transform duration-300 group-hover:scale-105"
+                                />
+                            </div>
+
+                            {/* Book Info */}
+                            <div className="flex-1 min-w-0">
+                                <h3 className="text-base sm:text-lg font-semibold text-text-primary line-clamp-2 group-hover:text-primary transition-colors">
+                                    {book.title}
+                                </h3>
+                                <p className="text-sm text-text-sub mt-1">
+                                    {book.author}
+                                </p>
+                                {book.description && (
+                                    <p className="text-sm text-text-sub mt-2 line-clamp-2">
+                                        {book.description}
+                                    </p>
+                                )}
+                                {book.category && (
+                                    <span className="inline-block mt-2 px-2 py-1 text-xs bg-primary/10 text-primary rounded">
+                                        {book.category}
+                                    </span>
+                                )}
+                            </div>
+                        </div>
+                    ) : (
+                        <Link
+                            key={book.id}
+                            to={`/books/${book.id}`}
+                            className="group flex gap-4 bg-white rounded-lg shadow-md p-4 hover:shadow-lg transition-shadow duration-300"
+                        >
+                            {/* Book Cover */}
+                            <div className="shrink-0 w-24 sm:w-32">
+                                <img
+                                    src={book.coverImage}
+                                    alt={book.title}
+                                    className="w-full aspect-3/4 object-cover rounded-md transition-transform duration-300 group-hover:scale-105"
+                                />
+                            </div>
+
+                            {/* Book Info */}
+                            <div className="flex-1 min-w-0">
+                                <h3 className="text-base sm:text-lg font-semibold text-text-primary line-clamp-2 group-hover:text-primary transition-colors">
+                                    {book.title}
+                                </h3>
+                                <p className="text-sm text-text-sub mt-1">
+                                    {book.author}
+                                </p>
+                                {book.description && (
+                                    <p className="text-sm text-text-sub mt-2 line-clamp-2">
+                                        {book.description}
+                                    </p>
+                                )}
+                                {book.category && (
+                                    <span className="inline-block mt-2 px-2 py-1 text-xs bg-primary/10 text-primary rounded">
+                                        {book.category}
+                                    </span>
+                                )}
+                            </div>
+                        </Link>
+                    )
+                );
+            })}
         </div>
     );
 };

@@ -19,6 +19,7 @@ const CategoryDropdown = ({
     value = '',
     onChange,
     categories = [],
+    loading = false,
     className = '',
 }) => {
     const [isOpen, setIsOpen] = useState(false);
@@ -36,11 +37,24 @@ const CategoryDropdown = ({
         return () => document.removeEventListener('mousedown', handleClickOutside);
     }, []);
 
-    // Tìm category đang chọn
-    const selectedCategory = categories.find(cat => cat.id === value);
-    const displayText = selectedCategory ? selectedCategory.name : 'Tất cả danh mục';
+    // Tìm category đang chọn - Convert IDs to string for safe comparison
+    const selectedCategory = categories.find(cat => String(cat.id) === String(value));
+
+    // DEBUG: Log category matching
+    console.log('[CategoryDropdown] Props:', { value, categoriesCount: categories.length, loading });
+    console.log('[CategoryDropdown] Selected category:', selectedCategory);
+
+    // Determine display text
+    let displayText = 'Tất cả danh mục';
+    if (loading) {
+        displayText = 'Đang tải...';
+    } else if (selectedCategory) {
+        displayText = selectedCategory.name;
+    }
 
     const handleSelect = (categoryId) => {
+        // DEBUG: Log selection
+        console.log('[CategoryDropdown] handleSelect called with:', categoryId, typeof categoryId);
         onChange?.(categoryId);
         setIsOpen(false);
     };
@@ -50,7 +64,8 @@ const CategoryDropdown = ({
             {/* Trigger Button */}
             <button
                 type="button"
-                onClick={() => setIsOpen(!isOpen)}
+                onClick={() => !loading && setIsOpen(!isOpen)}
+                disabled={loading}
                 className={`
                     flex items-center justify-between gap-3
                     px-4 py-2.5
@@ -59,6 +74,7 @@ const CategoryDropdown = ({
                     hover:bg-bg-card-hover hover:border-primary/30
                     transition-all duration-200
                     min-w-[180px]
+                    ${loading ? 'opacity-70 cursor-not-allowed' : ''}
                 `}
             >
                 <div className="flex items-center gap-2">
@@ -74,7 +90,7 @@ const CategoryDropdown = ({
             </button>
 
             {/* Dropdown Menu */}
-            {isOpen && (
+            {isOpen && !loading && (
                 <div className="absolute z-50 mt-2 w-full min-w-[200px] max-h-64 overflow-y-auto bg-bg-section border border-border rounded-lg shadow-lg">
                     {/* Option: Tất cả danh mục */}
                     <button
@@ -103,7 +119,7 @@ const CategoryDropdown = ({
                                 w-full px-4 py-2.5 text-left text-sm
                                 hover:bg-bg-card-hover
                                 transition-colors duration-150
-                                ${category.id === value
+                                ${String(category.id) === String(value)
                                     ? 'bg-primary/10 text-primary font-medium'
                                     : 'text-text-primary'
                                 }

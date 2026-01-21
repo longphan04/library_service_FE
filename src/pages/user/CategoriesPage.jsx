@@ -24,6 +24,7 @@ import Footer from '../../components/layouts/Footer';
 // ==========================================
 import CategoryCard from '../../components/ui/CategoryCard';
 import BookSection from '../../components/ui/BookSection';
+import BookDetailModal from '../../components/ui/BookDetailModal';
 
 // ==========================================
 // [CHANGE] Import Custom Hooks (Clean Architecture)
@@ -70,7 +71,7 @@ const CategoriesPage = () => {
         selectedCategoryId,
         fetchBooks,
         clearSelection,
-    } = useBooksByCategory(6); // Limit 6 sách
+    } = useBooksByCategory(18); // Limit 18 sách (3 trang slide)
 
     // ==========================================
     // Local State - UI Only
@@ -81,6 +82,10 @@ const CategoriesPage = () => {
 
     /** Category object đang được chọn (để hiển thị tên) */
     const [selectedCategory, setSelectedCategory] = useState(null);
+
+    // State cho Book Detail Modal
+    const [selectedBookId, setSelectedBookId] = useState(null);
+    const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
 
     /** Ref để scroll đến books section */
     const booksRef = useRef(null);
@@ -161,6 +166,15 @@ const CategoriesPage = () => {
     const goToPage = useCallback((pageIndex) => {
         setCurrentPage(pageIndex);
     }, []);
+
+    const handleBookClick = (bookId) => {
+        setSelectedBookId(bookId);
+        setIsDetailModalOpen(true);
+    };
+
+    const handleCloseModal = () => {
+        setIsDetailModalOpen(false);
+    };
 
     // ==========================================
     // Render: Loading State
@@ -287,17 +301,7 @@ const CategoriesPage = () => {
                 {/* ========================================== */}
                 {selectedCategory && (
                     <section ref={booksRef} className="mt-8">
-                        {booksLoading ? (
-                            // Loading Skeleton
-                            <div className="bg-bg-section rounded-2xl p-6 animate-pulse">
-                                <div className="h-6 bg-border rounded w-1/4 mb-6" />
-                                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-4">
-                                    {Array.from({ length: 6 }).map((_, i) => (
-                                        <div key={i} className="aspect-3/4 bg-border rounded-lg" />
-                                    ))}
-                                </div>
-                            </div>
-                        ) : booksError ? (
+                        {booksError ? (
                             // Error State
                             <div className="bg-bg-section rounded-2xl p-6 text-center">
                                 <p className="text-red-500">{booksError}</p>
@@ -309,11 +313,20 @@ const CategoriesPage = () => {
                                 title={`Sách ${selectedCategory.name}`}
                                 books={categoryBooks}
                                 viewAllLink={`/search?category=${selectedCategoryId}`}
+                                onBookClick={handleBookClick}
+                                isLoading={booksLoading}
                             />
                         )}
                     </section>
                 )}
             </main>
+
+            {/* Book Detail Modal */}
+            <BookDetailModal
+                isOpen={isDetailModalOpen}
+                onClose={handleCloseModal}
+                bookId={selectedBookId}
+            />
 
             {/* Footer */}
             <Footer />

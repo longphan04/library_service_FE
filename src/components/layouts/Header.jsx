@@ -14,9 +14,6 @@ import {
     X,
     Clock,
     BookOpen,
-    Globe,
-    LifeBuoy,
-    Bot,
     LogOut,
     ChevronDown,
     Edit2
@@ -51,9 +48,6 @@ const USER_MENU_ITEMS = [
     { id: 'edit-profile', label: 'Chỉnh sửa thông tin cá nhân', icon: Edit2, link: '/profile' },
     { id: 'history', label: 'Lịch sử mượn sách', icon: Clock, link: '/borrow-history' },
     { id: 'bookshelf', label: 'Kệ sách của tôi', icon: BookOpen, link: '/bookshelf' },
-    { id: 'language', label: 'Ngôn ngữ', icon: Globe, link: '/settings/language' },
-    { id: 'support', label: 'Trung tâm hỗ trợ', icon: LifeBuoy, link: '/support' },
-    { id: 'ai-chat', label: 'AI Chat', icon: Bot, link: '/ai-chat' },
 ];
 
 // Default avatar placeholder

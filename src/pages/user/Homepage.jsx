@@ -17,6 +17,7 @@ import Footer from '../../components/layouts/Footer';
 import HeroSection from '../../components/ui/HeroSection';
 import HotCategorySection from '../../components/ui/HotCategorySection';
 import BookSection from '../../components/ui/BookSection';
+import BookDetailModal from '../../components/ui/BookDetailModal';
 import { useAuth } from '../../contexts/AuthContext';
 import bookService from '../../services/book.service';
 
@@ -41,6 +42,10 @@ const Homepage = () => {
     /** Trạng thái loading */
     const [loading, setLoading] = useState(true);
 
+    // State cho Book Detail Modal
+    const [selectedBookId, setSelectedBookId] = useState(null);
+    const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
+
     // ==========================================
     // Fetch dữ liệu khi component mount
     // ==========================================
@@ -49,16 +54,16 @@ const Homepage = () => {
         const fetchData = async () => {
             setLoading(true);
             try {
-                // Fetch sách mới nhất (6 cuốn, sắp xếp theo ngày tạo mới nhất)
+                // Fetch sách mới nhất (18 cuốn - 3 trang slide)
                 const latestRes = await bookService.getAll({
-                    limit: 6,
+                    limit: 18,
                     sort: '-createdAt'
                 });
                 setLatestBooks(Array.isArray(latestRes) ? latestRes : latestRes.data || []);
 
                 // Fetch sách đề xuất (chỉ khi đã đăng nhập)
                 if (isAuthenticated) {
-                    const recommendedRes = await bookService.getAll({ limit: 6 });
+                    const recommendedRes = await bookService.getAll({ limit: 18 });
                     setRecommendedBooks(Array.isArray(recommendedRes)
                         ? recommendedRes
                         : recommendedRes.data || []);
@@ -73,6 +78,21 @@ const Homepage = () => {
 
         fetchData();
     }, [isAuthenticated]);
+
+    // ==========================================
+    // Handlers
+    // ==========================================
+
+    const handleBookClick = (bookId) => {
+        setSelectedBookId(bookId);
+        setIsDetailModalOpen(true);
+    };
+
+    const handleCloseModal = () => {
+        setIsDetailModalOpen(false);
+        // Reset selected book after animation (optional) or immediately
+        // setSelectedBookId(null); 
+    };
 
     // ==========================================
     // Loading Skeleton Component
@@ -147,33 +167,40 @@ const Homepage = () => {
                     {/* Mới nhất Section */}
                     {/* Hiển thị 6 sách mới nhất */}
                     {/* ========================================== */}
-                    {loading ? (
-                        <BookSectionSkeleton title="Mới nhất" />
-                    ) : (
-                        <BookSection
-                            title="Mới nhất"
-                            books={transformBooks(latestBooks)}
-                            viewAllLink="/search?sort=-createdAt"
-                        />
-                    )}
+                    {/* ========================================== */}
+                    {/* Mới nhất Section */}
+                    {/* Hiển thị 6 sách mới nhất */}
+                    {/* ========================================== */}
+                    <BookSection
+                        title="Mới nhất"
+                        books={transformBooks(latestBooks)}
+                        viewAllLink="/search?sort=-createdAt"
+                        onBookClick={handleBookClick}
+                        isLoading={loading}
+                    />
 
                     {/* ========================================== */}
                     {/* Đề xuất Section */}
                     {/* Chỉ hiển thị cho user đã đăng nhập */}
                     {/* ========================================== */}
                     {isAuthenticated && (
-                        loading ? (
-                            <BookSectionSkeleton title="Đề xuất" />
-                        ) : (
-                            <BookSection
-                                title="Đề xuất cho bạn"
-                                books={transformBooks(recommendedBooks)}
-                                viewAllLink="/search"
-                            />
-                        )
+                        <BookSection
+                            title="Đề xuất cho bạn"
+                            books={transformBooks(recommendedBooks)}
+                            viewAllLink="/search"
+                            onBookClick={handleBookClick}
+                            isLoading={loading}
+                        />
                     )}
                 </div>
             </main>
+
+            {/* Book Detail Modal */}
+            <BookDetailModal
+                isOpen={isDetailModalOpen}
+                onClose={handleCloseModal}
+                bookId={selectedBookId}
+            />
 
             {/* Footer - Sticky at bottom */}
             <Footer />

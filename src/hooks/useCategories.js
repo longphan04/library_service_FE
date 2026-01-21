@@ -21,14 +21,32 @@ const useCategories = () => {
 
         try {
             const response = await categoryService.getAll();
+
+            // DEBUG: Log API response thô để xem tên trường dữ liệu
+            console.log('[useCategories] 📥 Raw API response:', response);
+
             const rawCategories = Array.isArray(response) ? response : response.data || [];
-            // Normalize categories to ensure consistent id field
+
+            // DEBUG: Log thử 1 category để xem cấu trúc
+            if (rawCategories.length > 0) {
+                console.log('[useCategories] 📋 Các trường dữ liệu:', Object.keys(rawCategories[0]));
+                console.log('[useCategories] 📋 Dữ liệu mẫu:', rawCategories[0]);
+            }
+
+            // Chuẩn hóa dữ liệu category để đồng nhất id và số lượng sách
+            // Xử lý trường hợp API trả về tên trường khác nhau (ví dụ: bookCount, booksCount...)
             const normalizedCategories = rawCategories.map(cat => ({
                 ...cat,
                 id: cat.id || cat._id || cat.category_id,
+                // Lấy số lượng sách từ các tên biến có thể có
+                bookCount: cat.bookCount || cat.booksCount || cat.books_count || cat.book_count || cat.totalBooks || cat.total_books || 0,
             }));
+
+            console.log('[useCategories] ✅ Dữ liệu sau khi chuẩn hóa:', normalizedCategories);
+
             setCategories(normalizedCategories);
         } catch (err) {
+            console.error('[useCategories] ❌ Error:', err);
             setError(err.message || 'Failed to fetch categories');
             setCategories([]);
         } finally {

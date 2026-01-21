@@ -34,7 +34,7 @@ const normalizeBook = (book) => ({
 // ==========================================
 // Custom Hook: useBooksByCategory
 // ==========================================
-const useBooksByCategory = (limit = 6) => {
+const useBooksByCategory = (limit = 18) => {
     // ==========================================
     // State Management
     // ==========================================

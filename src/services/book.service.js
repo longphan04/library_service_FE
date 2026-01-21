@@ -66,15 +66,35 @@ export const getAll = async (params = {}) => {
         return acc;
     }, {});
 
-    // DEBUG: Log API request params
+    // Nếu có 'category', thêm 'categoryId' để tương thích với API
+    // Một số API yêu cầu 'categoryId' thay vì 'category'
+    // Map 'category' -> 'categoryId' (Standardize parameter)
+    if (cleanParams.category) {
+        cleanParams.categoryId = cleanParams.category;
+        delete cleanParams.category; // Remove original to avoid sending both (ambiguous)
+    }
+
+    // FIX: Map 'keyword' -> 'q' và 'title' để đảm bảo backend nhận diện được filter search
+    // Nhiều backend (như json-server) dùng 'q' cho search params
+    if (cleanParams.keyword) {
+        cleanParams.q = cleanParams.keyword;
+        // Thêm mapping 'title' để support backend lọc theo tên sách cụ thể
+        cleanParams.title = cleanParams.keyword;
+    }
+
+    // DEBUG: Kiểm tra tham số gửi lên API
     console.log('[bookService.getAll] 📤 API Params:', cleanParams);
+    console.log('[bookService.getAll] 📤 Full URL:', '/book?' + new URLSearchParams(cleanParams).toString());
 
     // Gọi API: GET /book?category={id}&limit={n}&page={n}
     // Ví dụ: GET /book?category=5&limit=6
     const response = await axios.get('/book', { params: cleanParams });
 
-    // DEBUG: Log raw response data
+    // DEBUG: Kiểm tra dữ liệu trả về từ API
     console.log('[bookService.getAll] 📥 Response data:', response.data);
+    console.log('[bookService.getAll] 📥 Số lượng sách nhận được:',
+        Array.isArray(response.data) ? response.data.length : (response.data?.data?.length || response.data?.books?.length || 0)
+    );
 
     return response.data;
 };
