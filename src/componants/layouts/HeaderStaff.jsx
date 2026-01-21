@@ -84,9 +84,20 @@ const HeaderStaff = () => {
 
     // Handle logout
     const handleLogout = async () => {
+        console.log('🔴 Logout button clicked');
         setIsUserDropdownOpen(false);
-        await authLogout();
-        navigate('/login');
+        try {
+            console.log('🔴 Calling authLogout...');
+            await authLogout();
+            console.log('🔴 authLogout completed successfully');
+        } catch (error) {
+            console.error('🔴 Logout error:', error);
+        } finally {
+            console.log('🔴 Navigating to /login...');
+            // Always navigate to login after logout (success or error)
+            navigate('/login', { replace: true });
+            console.log('🔴 Navigate called');
+        }
     };
 
     return (

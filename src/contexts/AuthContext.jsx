@@ -90,6 +90,32 @@ export const AuthProvider = ({ children }) => {
         return getRedirectByRole(userRole);
     };
 
+    // ==========================================
+    // Refresh User Data
+    // Fetch latest user data from server and update context
+    // ==========================================
+    const refreshUser = async () => {
+        try {
+            const userData = await authService.getCurrentUser();
+            setUser(userData);
+            return userData;
+        } catch (error) {
+            console.error('Failed to refresh user data:', error);
+            throw error;
+        }
+    };
+
+    // ==========================================
+    // Update User Data Locally
+    // Update user data in context without fetching from server
+    // ==========================================
+    const updateUser = (userData) => {
+        setUser(prevUser => ({
+            ...prevUser,
+            ...userData
+        }));
+    };
+
     // Context value
     const value = {
         user,
@@ -98,6 +124,8 @@ export const AuthProvider = ({ children }) => {
         login,
         logout,
         getRedirectPath,
+        refreshUser,
+        updateUser,
     };
 
     // Hiển thị loading khi đang check auth
