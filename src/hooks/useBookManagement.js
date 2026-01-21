@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import axios from "axios";
 
 const API_URL = "http://10.0.5.101:3000/book";
+const CATEGORY_API_URL = "http://10.0.5.101:3000/category";
 
 export default function useBookManagement() {
     const [books, setBooks] = useState([]);
@@ -10,6 +11,7 @@ export default function useBookManagement() {
         totalPages: 1,
         totalItems: 0,
     });
+    const [categories, setCategories] = useState([]);
     const [searchTerm, setSearchTerm] = useState("");
     const [selectedCategory, setSelectedCategory] = useState("all");
     const [loading, setLoading] = useState(false);
@@ -65,18 +67,45 @@ export default function useBookManagement() {
             .finally(() => setLoading(false));
     }, [searchTerm, selectedCategory, pagination.page]);
 
+    // api lọc sách
+    useEffect(() => {
+        axios
+            .get(CATEGORY_API_URL)
+            .then((res) => {
+                const mapped = res.data.map((c) => ({
+                    id: c.category_id,
+                    name: c.name,
+                    bookCount: c.bookCount,
+                }));
+                setCategories(mapped);
+            })
+            .catch((err) => {
+                console.error("Lỗi khi tải categories:", err);
+            });
+    }, []);
+
     // Reset về trang 1 khi thay đổi search hoặc category
     useEffect(() => {
         setPagination((p) => ({ ...p, page: 1 }));
     }, [searchTerm, selectedCategory]);
 
-    // Tạo danh sách categories từ books
-    const categories = Array.from(new Set(books.flatMap((b) => b.tags || [])));
-
     // Xử lý thay đổi category
-    const handleCategoryChange = (categoryId) => {
-        setSelectedCategory(categoryId);
+    const handleCategoryChange = (e) => {
+        const value = e.target.value;
+        setSelectedCategory(value);
+        setPagination((prev) => ({ ...prev, page: 1 }));
     };
+
+    const fetchBooks = async () => {
+        const res = await getBooks({
+            page,
+            search: searchTerm,
+            category: selectedCategory,
+        });
+        setBooks(res.data);
+        setPagination(res.pagination);
+    };
+
 
     // Xử lý xóa nhiều sách
     const handleDeleteBooks = useCallback(async () => {
@@ -108,6 +137,7 @@ export default function useBookManagement() {
         setPagination,
         setSelectedBooks,
         handleCategoryChange,
+        fetchBooks,
         handleDeleteBooks,
         setBooks,
     };
