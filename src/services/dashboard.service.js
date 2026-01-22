@@ -1,8 +1,3 @@
-// ==========================================
-// Dashboard Service
-// Mô tả: Service xử lý các API liên quan đến dashboard
-// ==========================================
-
 import axios from './axios';
 
 /**
@@ -19,8 +14,44 @@ export const getRecentActivity = async () => {
     }
 };
 
+/**
+ * Lấy thống kê mượn-trả sách theo khoảng thời gian
+ * @param {string} period - 'week' cho 7 ngày gần nhất, 'month' cho 30 ngày gần nhất
+ * @returns {Promise} - { data: { period, days, start_date, end_date, chart: [], summary: {} } }
+ */
+export const getBorrowReturnStats = async (period = 'week') => {
+    try {
+        const response = await axios.get('/dashboard/borrow-return', {
+            params: { period }
+        });
+        return response.data;
+    } catch (error) {
+        console.error('Error fetching borrow-return statistics:', error);
+        throw error;
+    }
+};
+
+/**
+ * Lấy thống kê luồng phiếu (pending, approved, cancelled)
+ * @param {string} period - 'week' cho 7 ngày gần nhất, 'month' cho 30 ngày gần nhất
+ * @returns {Promise} - { data: { period, days, start_date, end_date, chart: [], summary: {} } }
+ */
+export const getTicketFlowStats = async (period = 'week') => {
+    try {
+        const response = await axios.get('/dashboard/ticket-flow', {
+            params: { period }
+        });
+        return response.data;
+    } catch (error) {
+        console.error('Error fetching ticket flow statistics:', error);
+        throw error;
+    }
+};
+
 const dashboardService = {
     getRecentActivity,
+    getBorrowReturnStats,
+    getTicketFlowStats,
 };
 
 export default dashboardService;

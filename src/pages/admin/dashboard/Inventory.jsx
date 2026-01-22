@@ -44,7 +44,7 @@ export default function StockInventory() {
             {/* Using same structure as Statistics/InventoryLog for consistency */}
 
             {/* TITLE */}
-            <h1 className="text-3xl font-semibold pt-6 mb-6 text-center text-[#4A3728]">
+            <h1 className="text-3xl font-semibold pt-3 mb-3 text-center text-[#4A3728]">
                 Tồn kho
             </h1>
 
