@@ -1,7 +1,7 @@
 // ==========================================
 // Component: SortBar
 // Mô tả: Thanh sắp xếp với sort buttons và toggle grid/list
-// Vị trí: src/componants/ui/SortBar.jsx
+// Vị trí: src/components/ui/SortBar.jsx
 // ==========================================
 
 import { Grid3X3, List } from 'lucide-react';

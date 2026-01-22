@@ -10,12 +10,11 @@ import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime";
 import "dayjs/locale/vi";
 
-import AdminPageLayout from "@/componants/layouts/AdminPageLayout";
-import AdminTabs from "@/componants/ui/AdminTabs";
-import AdminSection from "@/componants/layouts/AdminSection";
+import AdminPageLayout from "@/components/layouts/AdminPageLayout";
+import AdminTabs from "@/components/ui/AdminTabs";
+import AdminSection from "@/components/layouts/AdminSection";
 
-import { getRecentBooks } from "@/services/book.service";
-import { getRecentBorrowTickets, getRecentReturnTickets } from "@/services/borrow-ticket.service";
+import { getRecentActivity } from "@/services/dashboard.service";
 
 // Config dayjs
 dayjs.extend(relativeTime);
@@ -33,51 +32,56 @@ export default function InventoryLog() {
     const fetchData = async () => {
         try {
             setLoading(true);
-            const [booksRes, borrowRes, returnRes] = await Promise.all([
-                getRecentBooks(),
-                getRecentBorrowTickets(),
-                getRecentReturnTickets()
-            ]);
+            const response = await getRecentActivity();
 
-            // Helper to get array from response (handle { data: [...] } or [...])
-            const getList = (res) => Array.isArray(res) ? res : (res?.data || []);
+            // Defensive: Check if response and response.data exist before destructuring
+            if (!response || !response.data) {
+                console.warn("API returned empty or invalid response");
+                setActivities([]);
+                return;
+            }
 
-            // Normalize Data
-            const normalizedBooks = getList(booksRes).map(item => ({
-                id: `book-${item.book_id || item.id}`,
-                type: "add",
-                title: "Thêm sách mới",
-                desc: `"${item.title}" được thêm bởi ${item.created_by_name || "Admin"}`,
-                time: item.created_at || item.createdAt,
-                timestamp: new Date(item.created_at || item.createdAt).getTime(),
-                status: null
-            }));
+            const { recent_book, recent_borrow_ticket, recent_return_ticket } = response.data;
 
-            const normalizedBorrow = getList(borrowRes).map(item => ({
-                id: `borrow-${item.ticket_id || item.id}`,
-                type: "borrow",
-                title: "Mượn sách",
-                desc: `${item.member_name || item.user?.fullName || "Khách"} đã mượn sách`,
-                time: item.created_at || item.borrowDate,
-                timestamp: new Date(item.created_at || item.borrowDate).getTime(),
-                status: null
-            }));
+            const activitiesList = [];
 
-            const normalizedReturn = getList(returnRes).map(item => ({
-                id: `return-${item.ticket_id || item.id}`,
-                type: "return",
-                title: "Trả sách",
-                desc: `${item.member_name || item.user?.fullName || "Khách"} đã trả sách`,
-                time: item.returned_at || item.returnDate || item.updatedAt,
-                timestamp: new Date(item.returned_at || item.returnDate || item.updatedAt).getTime(),
-                status: null
-            }));
+            // 1. Recent Book (Add)
+            if (recent_book) {
+                activitiesList.push({
+                    id: `book-${recent_book.book_id}`,
+                    type: "add",
+                    title: "Thêm sách mới",
+                    desc: `"${recent_book.title}" được thêm bởi ${recent_book.created_by_name || "Admin"}`,
+                    timestamp: new Date(recent_book.created_at).getTime(),
+                });
+            }
 
-            // Merge & Sort
-            const allActivities = [...normalizedBooks, ...normalizedBorrow, ...normalizedReturn];
-            allActivities.sort((a, b) => b.timestamp - a.timestamp);
+            // 2. Recent Borrow Ticket
+            if (recent_borrow_ticket) {
+                activitiesList.push({
+                    id: `borrow-${recent_borrow_ticket.ticket_id}`,
+                    type: "borrow",
+                    title: "Mượn sách",
+                    desc: `${recent_borrow_ticket.member_name} đã mượn ${recent_borrow_ticket.item_count} sách`,
+                    timestamp: new Date(recent_borrow_ticket.created_at).getTime(),
+                });
+            }
 
-            setActivities(allActivities);
+            // 3. Recent Return Ticket
+            if (recent_return_ticket) {
+                activitiesList.push({
+                    id: `return-${recent_return_ticket.ticket_id}`,
+                    type: "return",
+                    title: "Trả sách",
+                    desc: `${recent_return_ticket.member_name} đã trả ${recent_return_ticket.item_count} sách`,
+                    timestamp: new Date(recent_return_ticket.returned_at).getTime(),
+                });
+            }
+
+            // Sort by timestamp newly first
+            activitiesList.sort((a, b) => b.timestamp - a.timestamp);
+
+            setActivities(activitiesList);
         } catch (error) {
             console.error("Failed to fetch inventory logs", error);
         } finally {

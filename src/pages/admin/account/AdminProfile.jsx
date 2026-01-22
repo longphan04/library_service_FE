@@ -1,9 +1,9 @@
 import { Pencil } from "lucide-react";
 import { useState, useEffect } from "react";
 
-import Modal from "@/componants/modal/Modal";
-import ActionButton from "@/componants/ui/ActionButton";
-import Toast from "@/componants/ui/Toast";
+import Modal from "@/components/modal/Modal";
+import ActionButton from "@/components/ui/ActionButton";
+import Toast from "@/components/ui/Toast";
 import { useAuth } from "@/contexts/AuthContext";
 import userService from "@/services/user.service";
 import authService from "@/services/auth.service";

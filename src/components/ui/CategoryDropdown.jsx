@@ -1,7 +1,7 @@
 // ==========================================
 // Component: CategoryDropdown
 // Mô tả: Dropdown chọn danh mục sách
-// Vị trí: src/componants/ui/CategoryDropdown.jsx
+// Vị trí: src/components/ui/CategoryDropdown.jsx
 // ==========================================
 
 import { useState, useRef, useEffect } from 'react';

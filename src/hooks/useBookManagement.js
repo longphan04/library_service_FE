@@ -16,55 +16,53 @@ export default function useBookManagement() {
     const [selectedCategory, setSelectedCategory] = useState("all");
     const [loading, setLoading] = useState(false);
     const [selectedBooks, setSelectedBooks] = useState({});
+    const [editingBook, setEditingBook] = useState(null);
+
+    // ✅ đóng form edit
+    const closeEditBook = () => {
+        setEditingBook(null);
+    };
+
+    const openEditBook = async (bookId) => {
+        try {
+            const res = await axios.get(`${API_URL}/${bookId}`);
+            setEditingBook(res.data);
+        } catch (e) {
+            console.error("Lỗi load book:", e);
+        }
+    };
 
     // Fetch books từ API
-    useEffect(() => {
+    const fetchBooks = useCallback(async () => {
         setLoading(true);
-        axios
-            .get(API_URL, {
+        try {
+            const res = await axios.get(API_URL, {
                 params: {
                     q: searchTerm || undefined,
                     categoryId: selectedCategory !== "all" ? selectedCategory : undefined,
                     page: pagination.page,
                     limit: 10,
                 },
-            })
-            .then((res) => {
-                const mappedBooks = res.data.data.map((b) => ({
-                    id: b.book_id,
+            });
 
-                    title: b.title || "Không có tiêu đề",
+            const mappedBooks = res.data.data.map((b) => ({
+                id: b.book_id,
+                title: b.title || "Không có tiêu đề",
+                author: b.authors?.map((a) => a.name).join(", ") || "Chưa rõ tác giả",
+                publisher: b.publisher?.name || "Chưa rõ NXB",
+                availability: `${b.available_copies ?? 0} cuốn`,
+                year: b.publish_year || "—",
+                tags: b.categories?.map((c) => c.name) || [],
+                cover: b.cover_url,
+            }));
 
-                    author:
-                        b.authors && b.authors.length > 0
-                            ? b.authors.map((a) => a.name).join(", ")
-                            : "Chưa rõ tác giả",
-
-                    publisher: b.publisher?.name || "Chưa rõ NXB",
-
-                    availability:
-                        typeof b.available_copies === "number"
-                            ? `${b.available_copies} cuốn`
-                            : "0 cuốn",
-
-                    tags:
-                        b.categories && b.categories.length > 0
-                            ? b.categories.map((c) => c.name)
-                            : ["Chưa phân loại"],
-
-                    cover:
-                        b.cover_url ||
-                        "https://via.placeholder.com/150x220?text=No+Image",
-                }));
-                setBooks(mappedBooks);
-                setPagination(res.data.pagination);
-
-            })
-
-            .catch((error) => {
-                console.error("Lỗi khi tải sách:", error);
-            })
-            .finally(() => setLoading(false));
+            setBooks(mappedBooks);
+            setPagination(res.data.pagination);
+        } catch (err) {
+            console.error("Lỗi tải sách:", err);
+        } finally {
+            setLoading(false);
+        }
     }, [searchTerm, selectedCategory, pagination.page]);
 
     // api lọc sách
@@ -96,16 +94,9 @@ export default function useBookManagement() {
         setPagination((prev) => ({ ...prev, page: 1 }));
     };
 
-    const fetchBooks = async () => {
-        const res = await getBooks({
-            page,
-            search: searchTerm,
-            category: selectedCategory,
-        });
-        setBooks(res.data);
-        setPagination(res.pagination);
-    };
-
+    useEffect(() => {
+        fetchBooks();
+    }, [fetchBooks]);
 
     // Xử lý xóa nhiều sách
     const handleDeleteBooks = useCallback(async () => {
@@ -133,10 +124,13 @@ export default function useBookManagement() {
         selectedCategory,
         selectedBooks,
         categories,
+        editingBook,
         setSearchTerm,
         setPagination,
         setSelectedBooks,
         handleCategoryChange,
+        openEditBook,
+        closeEditBook,
         fetchBooks,
         handleDeleteBooks,
         setBooks,

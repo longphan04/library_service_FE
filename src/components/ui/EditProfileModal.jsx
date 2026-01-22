@@ -1,7 +1,7 @@
 // ==========================================
 // Component: EditProfileModal
 // Mô tả: Modal chỉnh sửa thông tin cá nhân
-// Vị trí: src/componants/ui/EditProfileModal.jsx
+// Vị trí: src/components/ui/EditProfileModal.jsx
 // ==========================================
 
 import { useState } from 'react';

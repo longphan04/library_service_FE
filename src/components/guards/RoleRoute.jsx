@@ -1,7 +1,7 @@
 // ==========================================
 // RoleRoute Guard
 // Mô tả: Route guard kiểm tra role của user
-// Vị trí: src/componants/guards/RoleRoute.jsx
+// Vị trí: src/components/guards/RoleRoute.jsx
 // ==========================================
 
 import { Navigate } from 'react-router-dom';

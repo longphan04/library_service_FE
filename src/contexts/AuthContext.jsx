@@ -74,6 +74,7 @@ export const AuthProvider = ({ children }) => {
         try {
             const data = await authService.loginStaff(credentials);
 
+            // Cập nhật state sau khi login thành công
             if (data.user) {
                 setUser(data.user);
                 setIsAuthenticated(true);

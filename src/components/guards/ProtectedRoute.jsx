@@ -1,7 +1,7 @@
 // ==========================================
 // ProtectedRoute Guard
 // Mô tả: Route guard bảo vệ routes yêu cầu authentication
-// Vị trí: src/componants/guards/ProtectedRoute.jsx
+// Vị trí: src/components/guards/ProtectedRoute.jsx
 // ==========================================
 
 import { Navigate } from 'react-router-dom';

@@ -7,7 +7,7 @@
 //   - Nếu có nhiều hơn 6 sách → Pagination dots ở giữa
 //   - Click pagination để chuyển trang
 //
-// Vị trí: src/componants/ui/BookSection.jsx
+// Vị trí: src/components/ui/BookSection.jsx
 // ==========================================
 
 import { useState, useMemo, useEffect } from 'react';

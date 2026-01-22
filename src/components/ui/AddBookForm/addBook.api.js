@@ -1,11 +1,21 @@
 import axios from 'axios';
 
-const BASE = 'http://10.0.5.101:3000';
+const BASE_URL = 'http://10.0.5.101:3000';
 
-export const getAuthors = () => axios.get(`${BASE}/author`);
-export const getPublishers = () => axios.get(`${BASE}/publisher`);
-export const getShelves = () => axios.get(`${BASE}/shelf`);
+export const getAuthors = () => axios.get(`${BASE_URL}/author`);
+export const getPublishers = () => axios.get(`${BASE_URL}/publisher`);
+export const getShelves = () => axios.get(`${BASE_URL}/shelf`);
+export const getCategories = () => axios.get(`${BASE_URL}/category`);
 export const createBook = (formData) =>
-    axios.post(`${BASE}/book`, formData, {
+    axios.post(`${BASE_URL}/book`, formData, {
         headers: { 'Content-Type': 'multipart/form-data' },
     });
+
+export const getBookDetail = (id) =>
+    axios.get(`${BASE_URL}/book/${id}`);
+
+export const updateBook = (id, data) =>
+    axios.put(`${BASE_URL}/book/${id}`, data);
+
+export const createAuthor = (data) =>
+    axios.post("/author", data);

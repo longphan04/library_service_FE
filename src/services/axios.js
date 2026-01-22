@@ -5,13 +5,13 @@
 
 import axios from 'axios';
 
-// Tạo axios instance với base URL từ environment variable
+// Tạo axios instance
+// Trong môi trường development (Vite), ta sử dụng relative path '/' để Vite proxy bắt được và bypass CORS.
+// Trong production, ta sẽ sử dụng URL đầy đủ từ biến môi trường.
 const instance = axios.create({
-    baseURL: import.meta.env.VITE_API_BASE_URL,
+    baseURL: import.meta.env.DEV ? '/' : (import.meta.env.VITE_API_BASE_URL || '/'),
     headers: {
         'Content-Type': 'application/json',
-        // Header bắt buộc khi sử dụng ngrok để bỏ qua warning page
-        // Nếu không có header này, ngrok sẽ trả về HTML thay vì JSON
         'ngrok-skip-browser-warning': 'true',
     },
 });
@@ -104,9 +104,9 @@ instance.interceptors.response.use(
 
             if (refreshToken) {
                 try {
-                    // Gọi API refresh token
+                    // Gọi API refresh token (sử dụng relative path qua proxy)
                     const response = await axios.post(
-                        `${import.meta.env.VITE_API_BASE_URL}/auth/refresh`,
+                        '/auth/refresh',
                         { refreshToken },
                         { headers: { 'Content-Type': 'application/json' } }
                     );

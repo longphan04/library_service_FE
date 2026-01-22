@@ -1,14 +1,14 @@
 import { useState, useEffect } from "react";
 import { Loader2 } from "lucide-react";
 
-import PageTitle from "@/componants/layouts/PageTitle";
-import PageContainer from "@/componants/layouts/PageContainer";
-import SectionCard from "@/componants/layouts/SectionCard";
-import AdminTabs from "@/componants/ui/AdminTabs";
-import AdminSection from "@/componants/layouts/AdminSection"; // Using AdminSection for consistency
+import PageTitle from "@/components/layouts/PageTitle";
+import PageContainer from "@/components/layouts/PageContainer";
+import SectionCard from "@/components/layouts/SectionCard";
+import AdminTabs from "@/components/ui/AdminTabs";
+import AdminSection from "@/components/layouts/AdminSection"; // Using AdminSection for consistency
 import { useNavigate } from "react-router-dom";
 
-import { getCategoryStats } from "@/services/category.service";
+import { getAll } from "@/services/category.service";
 
 export default function StockInventory() {
     const navigate = useNavigate();
@@ -22,10 +22,18 @@ export default function StockInventory() {
     const fetchData = async () => {
         try {
             setLoading(true);
-            const data = await getCategoryStats();
+            const response = await getAll();
+            // Defensive: Ensure categories is always an array
+            // Handle different response structures: direct array, response.data array, or nested data
+            const data = Array.isArray(response)
+                ? response
+                : Array.isArray(response?.data)
+                    ? response.data
+                    : [];
             setCategories(data);
         } catch (error) {
             console.error("Failed to fetch inventory stats", error);
+            setCategories([]);
         } finally {
             setLoading(false);
         }
@@ -70,23 +78,31 @@ export default function StockInventory() {
                                 <thead className="bg-[#E2C6A6] sticky top-0 z-10">
                                     <tr>
                                         <th className="px-6 py-3 font-semibold text-[#7A4A2E]">Danh mục sách</th>
-                                        <th className="px-6 py-3 font-semibold text-[#7A4A2E] text-center">Tổng số sách</th>
-                                        <th className="px-6 py-3 font-semibold text-[#7A4A2E] text-center">Số sách có sẵn</th>
-                                        <th className="px-6 py-3 font-semibold text-[#7A4A2E] text-center">Số sách đang được mượn</th>
+                                        <th className="px-6 py-3 font-semibold text-[#7A4A2E] text-center">Đầu sách</th>
+                                        <th className="px-6 py-3 font-semibold text-[#7A4A2E] text-center">Tổng sách</th>
+                                        <th className="px-6 py-3 font-semibold text-[#7A4A2E] text-center">Có sẵn</th>
+                                        <th className="px-6 py-3 font-semibold text-[#7A4A2E] text-center">Đang mượn</th>
                                     </tr>
                                 </thead>
                                 <tbody className="bg-white divide-y divide-gray-100">
-                                    {categories.map((cat, index) => (
-                                        <tr key={cat.id || index} className="hover:bg-gray-50 transition-colors">
-                                            <td className="px-6 py-4 font-medium text-gray-800">{cat.name}</td>
-                                            <td className="px-6 py-4 text-center font-semibold text-gray-700">{cat.total}</td>
-                                            <td className="px-6 py-4 text-center text-green-600 font-medium">{cat.available}</td>
-                                            <td className="px-6 py-4 text-center text-orange-600 font-medium">{cat.borrowed}</td>
-                                        </tr>
-                                    ))}
+                                    {categories.map((cat, index) => {
+                                        const bookCopyCount = parseInt(cat.bookCopyCount || 0, 10);
+                                        const borrowedCopy = parseInt(cat.borrowedCopy || 0, 10);
+                                        const available = bookCopyCount - borrowedCopy;
+
+                                        return (
+                                            <tr key={cat.category_id || cat.id || index} className="hover:bg-gray-50 transition-colors">
+                                                <td className="px-6 py-4 font-medium text-gray-800">{cat.name}</td>
+                                                <td className="px-6 py-4 text-center font-semibold text-gray-700">{cat.bookCount || 0}</td>
+                                                <td className="px-6 py-4 text-center font-semibold text-gray-700">{bookCopyCount}</td>
+                                                <td className="px-6 py-4 text-center text-green-600 font-medium">{available}</td>
+                                                <td className="px-6 py-4 text-center text-orange-600 font-medium">{borrowedCopy}</td>
+                                            </tr>
+                                        );
+                                    })}
                                     {categories.length === 0 && (
                                         <tr>
-                                            <td colSpan="4" className="px-6 py-10 text-center text-gray-500">
+                                            <td colSpan="5" className="px-6 py-10 text-center text-gray-500">
                                                 Không có dữ liệu
                                             </td>
                                         </tr>

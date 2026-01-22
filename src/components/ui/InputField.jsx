@@ -1,7 +1,7 @@
 // ==========================================
 // Component: InputField
 // Mô tả: Component input tái sử dụng với icon, label, error message và toggle password
-// Vị trí: src/componants/ui/InputField.jsx
+// Vị trí: src/components/ui/InputField.jsx
 // ==========================================
 
 import { useState } from 'react';

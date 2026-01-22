@@ -8,7 +8,7 @@
 //   - Nút "Xem tất cả" chuyển đến trang danh mục
 //   - Tất cả trong cùng 1 section, không navigate khi chọn category
 //
-// Vị trí: src/componants/ui/HotCategorySection.jsx
+// Vị trí: src/components/ui/HotCategorySection.jsx
 // ==========================================
 
 import { useState, useEffect, useCallback } from 'react';

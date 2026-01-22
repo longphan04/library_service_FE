@@ -16,6 +16,7 @@ export default function BookCard({ book, isChecked, onCheckChange, onEdit }) {
               ? `http://10.0.5.101:3000/${book.cover}`
               : `https://via.placeholder.com/100x140/7A4A2E/FFFFFF?text=No+Image`
           }
+          alt={book.title}
         />
 
 
@@ -42,7 +43,7 @@ export default function BookCard({ book, isChecked, onCheckChange, onEdit }) {
         <button
           className="px-6 py-3 rounded text-white text-sm font-medium hover:opacity-90 transition-opacity whitespace-nowrap"
           style={{ backgroundColor: '#7A4A2E' }}
-          onClick={() => onEdit && onEdit(book)}
+          onClick={() => onEdit && onEdit(book.id)}
         >
           Chỉnh sửa
         </button>

@@ -1,7 +1,7 @@
 // ==========================================
 // GuestRoute Guard
 // Mô tả: Route guard cho pages chỉ dành cho guest (chưa đăng nhập)
-// Vị trí: src/componants/guards/GuestRoute.jsx
+// Vị trí: src/components/guards/GuestRoute.jsx
 // ==========================================
 
 import { Navigate } from 'react-router-dom';

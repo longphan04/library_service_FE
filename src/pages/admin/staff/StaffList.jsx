@@ -1,11 +1,11 @@
 import { Lock, Unlock, Trash2, Pencil } from "lucide-react";
 import { useState, useEffect } from "react";
 
-import ActionButton from "@/componants/ui/ActionButton";
-import StatusBadge from "@/componants/ui/StatusBadge";
-import Toast from "@/componants/ui/Toast";
-import FormModal from "@/componants/modal/FormModal";
-import Modal from "@/componants/modal/Modal";
+import ActionButton from "@/components/ui/ActionButton";
+import StatusBadge from "@/components/ui/StatusBadge";
+import Toast from "@/components/ui/Toast";
+import FormModal from "@/components/modal/FormModal";
+import Modal from "@/components/modal/Modal";
 import staffService from "@/services/staff.service";
 import { useAuth } from "@/hooks/useAuth";
 import { useNavigate } from "react-router-dom";

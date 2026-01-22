@@ -2,7 +2,7 @@
 // Component: BookCard
 // Mô tả: Component hiển thị thông tin sách dạng card
 // Performance: React.memo, optimized image handling
-// Vị trí: src/componants/ui/BookCard.jsx
+// Vị trí: src/components/ui/BookCard.jsx
 // ==========================================
 
 import { useState, useEffect, memo, useCallback } from 'react';

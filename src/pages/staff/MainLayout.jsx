@@ -1,11 +1,6 @@
 import { useState } from "react";
-<<<<<<< HEAD
-import HeaderStaff from "@/componants/layouts/HeaderStaff";
-import Tabs from "@/componants/ui/TabStaff";
-=======
-import Header from "@/components/layouts/Header";
+import HeaderStaff from "@/components/layouts/HeaderStaff";
 import Tabs from "@/components/ui/TabStaff";
->>>>>>> User_brch
 import BookManagement from "./BookManagement";
 import UserManagement from "./UserManagement";
 import TicketManagement from "./TicketManagement";

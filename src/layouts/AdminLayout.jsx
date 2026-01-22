@@ -2,8 +2,8 @@ import { Outlet, useNavigate, useLocation } from "react-router-dom";
 import { LogOut, ArrowLeft } from "lucide-react";
 import { useState, useEffect } from "react";
 import logo from "@/assets/icons/logo.png";
-import Toast from "@/componants/ui/Toast";
-import ActionButton from "@/componants/ui/ActionButton";
+import Toast from "@/components/ui/Toast";
+import ActionButton from "@/components/ui/ActionButton";
 import { useAuth } from "@/contexts/AuthContext";
 
 export default function AdminLayout() {

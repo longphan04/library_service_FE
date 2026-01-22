@@ -7,9 +7,9 @@
 import { createBrowserRouter } from 'react-router-dom';
 
 // Route Guards
-import ProtectedRoute from '../componants/guards/ProtectedRoute';
-import GuestRoute from '../componants/guards/GuestRoute';
-import RoleRoute from '../componants/guards/RoleRoute';
+import ProtectedRoute from '../components/guards/ProtectedRoute';
+import GuestRoute from '../components/guards/GuestRoute';
+import RoleRoute from '../components/guards/RoleRoute';
 
 // Role Constants
 import { ROLES } from '../constants/roles';
@@ -26,7 +26,11 @@ import Bookshelf from '../pages/user/Bookshelf';
 
 // Pages - Auth
 import Login from '../pages/auth/Login';
+import LoginStaff from '../pages/auth/LoginStaff';
 import Register from '../pages/auth/Register';
+
+// Route Guards - Staff Login
+import StaffLoginRoute from '../components/guards/StaffLoginRoute';
 
 // Pages - Staff & Admin
 import MainLayout from '../pages/staff/MainLayout';
@@ -39,7 +43,6 @@ import InventoryLog from '../pages/admin/dashboard/InventoryLog';
 import UserList from '../pages/admin/users/UserList';
 import StaffList from '../pages/admin/staff/StaffList';
 import AdminProfile from '../pages/admin/account/AdminProfile';
-
 // ==========================================
 // Router Configuration
 // ==========================================
@@ -198,5 +201,17 @@ export const router = createBrowserRouter([
             </GuestRoute>
         ),
     },
-]);
 
+    // ==========================================
+    // Staff/Admin Login Route
+    // ==========================================
+
+    {
+        path: '/login-staff',
+        element: (
+            <StaffLoginRoute>
+                <LoginStaff />
+            </StaffLoginRoute>
+        ),
+    },
+]);

@@ -1,7 +1,7 @@
 // ==========================================
 // Component: BookGrid
 // Mô tả: Component hiển thị danh sách sách dạng grid hoặc list
-// Vị trí: src/componants/ui/BookGrid.jsx
+// Vị trí: src/components/ui/BookGrid.jsx
 // ==========================================
 
 import { Link } from 'react-router-dom';

@@ -1,14 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Plus, Trash2, Search } from 'lucide-react';
-<<<<<<< HEAD
-import BookCard from "@/componants/ui/BookCardStaff";
-import Pagination from "@/componants/ui/Pagination";
-import AddBookForm from "@/componants/ui/AddBookForm/addBookForm";
-=======
 import BookCard from "@/components/ui/BookCardStaff";
 import Pagination from "@/components/ui/Pagination";
-import AddBookForm from "@/components/ui/addBookForm";
->>>>>>> User_brch
+import AddBookForm from "@/components/ui/AddBookForm/addBookForm";
 import useBookManagement from "@/hooks/useBookManagement";
 
 export default function BookManagement() {
@@ -20,13 +14,13 @@ export default function BookManagement() {
     categoryOptions,
     handleCategoryChange,
     setPagination,
-    page,
     searchTerm: hookSearchTerm,
     selectedBooks,
     setSearchTerm: hookSetSearchTerm,
-    setPage,
     setSelectedBooks,
     handleDeleteBooks,
+    handleEditBook,
+    closeEditBook,
     fetchBooks,
   } = useBookManagement();
 
@@ -143,14 +137,14 @@ export default function BookManagement() {
   };
 
   // Xử lý click nút "Chỉnh sửa" trong BookCard
-  const handleEditBookCard = (bookId) => {
-    console.log("handleEditBookCard called for bookId:", bookId);
-    const bookToEdit = books.find(book => book.id === bookId);
-    if (bookToEdit) {
-      console.log("Found book to edit:", bookToEdit);
-      handleOpenEditBook(bookToEdit);
-    } else {
-      console.log("Book not found with id:", bookId);
+  const handleEditBookCard = async (bookId) => {
+    try {
+      const res = await axios.get(`http://10.0.5.101:3000/book/${bookId}`);
+      setEditingBook(res.data);   // FULL DATA
+      setShowAddBookForm(true);
+    } catch (err) {
+      console.error("Lỗi load book để edit:", err);
+      alert("Không tải được dữ liệu sách");
     }
   };
 
@@ -255,7 +249,7 @@ export default function BookManagement() {
                     book={book}
                     isChecked={selectedBooks[book.id] || false}
                     onCheckChange={handleCheckChange}
-                    onEdit={() => handleEditBookCard(book.id)}
+                    onEdit={handleEditBookCard}
                   />
                 ))}
               </div>
@@ -285,8 +279,8 @@ export default function BookManagement() {
             {books.length > 0 && (
               <>
                 <div className="text-center mb-4 text-gray-600">
-                  Hiển thị {(page - 1) * 10 + 1}–
-                  {Math.min(page * 10, pagination.totalItems)}
+                  Hiển thị {(pagination.page - 1) * 10 + 1}–
+                  {Math.min(pagination.page * 10, pagination.totalItems)}
                   trong tổng số {pagination.totalItems} sách
                 </div>
 
@@ -306,9 +300,9 @@ export default function BookManagement() {
       {/* Add/Edit Book Form Modal */}
       <AddBookForm
         isOpen={showAddBookForm}
-        onClose={handleCloseForm}
         bookToEdit={editingBook}
-        onSave={handleSaveBook}
+        onClose={handleCloseForm}
+        onSave={fetchBooks}
       />
     </>
   );

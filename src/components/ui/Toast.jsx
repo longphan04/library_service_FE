@@ -5,7 +5,7 @@
 // Vị trí hiển thị: Top-right, dưới header (top-20 = 80px)
 // Z-index: 50 (dưới modal nhưng trên content)
 //
-// Vị trí: src/componants/ui/Toast.jsx
+// Vị trí: src/components/ui/Toast.jsx
 // ==========================================
 
 import { useEffect } from 'react';
