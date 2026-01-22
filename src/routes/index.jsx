@@ -26,7 +26,11 @@ import Bookshelf from '../pages/user/Bookshelf';
 
 // Pages - Auth
 import Login from '../pages/auth/Login';
+import LoginStaff from '../pages/auth/LoginStaff';
 import Register from '../pages/auth/Register';
+
+// Route Guards - Staff Login
+import StaffLoginRoute from '../components/guards/StaffLoginRoute';
 
 // Pages - Staff & Admin
 import MainLayout from '../pages/staff/MainLayout';
@@ -167,6 +171,19 @@ export const router = createBrowserRouter([
             <GuestRoute>
                 <Register />
             </GuestRoute>
+        ),
+    },
+
+    // ==========================================
+    // Staff/Admin Login Route
+    // ==========================================
+
+    {
+        path: '/login-staff',
+        element: (
+            <StaffLoginRoute>
+                <LoginStaff />
+            </StaffLoginRoute>
         ),
     },
 ]);

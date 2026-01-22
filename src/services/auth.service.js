@@ -73,6 +73,48 @@ export const login = async (credentials) => {
 };
 
 /**
+ * Đăng nhập dành cho Admin/Staff
+ * @param {Object} credentials - { email, password }
+ * @returns {Promise} - Response data từ server
+ */
+export const loginStaff = async (credentials) => {
+    try {
+        const response = await axios.post('/auth/login-staff', credentials);
+
+        const accessToken = response.data.accessToken || response.data.token || response.data.access_token;
+        const refreshToken = response.data.refreshToken || response.data.refresh_token;
+        const user = response.data.user;
+
+        if (accessToken) {
+            setTokens(accessToken, refreshToken);
+        }
+
+        if (user) {
+            localStorage.setItem('user', JSON.stringify(user));
+        }
+
+        return response.data;
+    } catch (error) {
+        if (error.response) {
+            const status = error.response.status;
+            const message = error.response.data?.message;
+
+            if (status === 401 || status === 400) {
+                throw new Error(message || 'Email hoặc mật khẩu không đúng');
+            } else if (status === 500) {
+                throw new Error('Lỗi server. Vui lòng thử lại sau');
+            } else {
+                throw new Error(message || 'Đã có lỗi xảy ra');
+            }
+        } else if (error.request) {
+            throw new Error('Không thể kết nối đến server');
+        } else {
+            throw new Error('Đã có lỗi xảy ra');
+        }
+    }
+};
+
+/**
  * Đăng xuất
  * @returns {Promise} - Response từ server
  */
@@ -211,6 +253,7 @@ export const changePassword = async (data) => {
 // Export default object chứa tất cả functions
 const authService = {
     login,
+    loginStaff,
     logout,
     register,
     refreshToken,
