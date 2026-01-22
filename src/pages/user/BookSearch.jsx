@@ -78,7 +78,8 @@ const BookSearch = () => {
                 console.log('[BookSearch] Raw categories from API:', data);
 
                 const transformedCategories = data.map(cat => ({
-                    id: String(cat.id || cat._id),
+                    // API có thể trả về: id, _id, hoặc category_id
+                    id: String(cat.id || cat._id || cat.category_id),
                     name: cat.name,
                 }));
 
@@ -141,7 +142,8 @@ const BookSearch = () => {
                 params.keyword = keywordFromUrl;
             } else if (categoryFromUrl) {
                 // 2. Search by Category (Only if no keyword)
-                params.category = categoryFromUrl;
+                // Backend nhận param "categoryId"
+                params.categoryId = categoryFromUrl;
             }
             // 3. Else fetch all (default params)
 

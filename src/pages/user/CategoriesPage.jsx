@@ -139,8 +139,9 @@ const CategoriesPage = () => {
         console.log('[CategoriesPage] 🖱️ Category clicked - ID:', categoryId);
 
         // Tìm category trong danh sách
+        // API có thể trả về: id, _id, hoặc category_id
         const category = categories?.find(
-            cat => cat.id === categoryId || cat._id === categoryId
+            cat => cat.id === categoryId || cat._id === categoryId || cat.category_id === categoryId
         );
 
         // DEBUG: Log found category
@@ -151,7 +152,8 @@ const CategoriesPage = () => {
             setSelectedCategory(category);
 
             // DEBUG: Log the ID being sent to fetchBooks
-            const catId = category.id || category._id;
+            // API có thể trả về: id, _id, hoặc category_id
+            const catId = category.id || category._id || category.category_id;
             console.log('[CategoriesPage] 🚀 Calling fetchBooks with ID:', catId);
 
             // [CHANGE] Gọi hook để fetch sách
@@ -249,7 +251,8 @@ const CategoriesPage = () => {
                             const category = currentPageCategories[index];
 
                             if (category) {
-                                const categoryId = category.id || category._id;
+                                // API có thể trả về: id, _id, hoặc category_id
+                                const categoryId = category.id || category._id || category.category_id;
                                 return (
                                     <CategoryCard
                                         key={categoryId}

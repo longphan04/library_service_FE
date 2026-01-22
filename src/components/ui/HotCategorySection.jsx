@@ -182,7 +182,7 @@ const HotCategorySection = ({ className = '' }) => {
         setBooksLoading(true);
         try {
             const response = await bookService.getAll({
-                category: categoryId,
+                categoryId: categoryId,  // Backend nhận param "categoryId"
                 limit: BOOKS_LIMIT,
             });
 

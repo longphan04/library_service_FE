@@ -1,3 +1,5 @@
+import { FALLBACK_IMAGES } from '../../utils/imageUrl';
+
 export default function BookCard({ book, isChecked, onCheckChange, onEdit }) {
   return (
     <div className="max-w-full">
@@ -13,8 +15,8 @@ export default function BookCard({ book, isChecked, onCheckChange, onEdit }) {
         <img
           src={
             book.cover
-              ? `http://10.0.5.101:3000/${book.cover}`
-              : `https://via.placeholder.com/100x140/7A4A2E/FFFFFF?text=No+Image`
+              ? `https://bd4328e96c81.ngrok-free.app/book${book.cover}`
+              : FALLBACK_IMAGES.book
           }
           alt={book.title}
         />

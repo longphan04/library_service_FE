@@ -260,9 +260,9 @@ const CategoryBookList = () => {
         try {
             // Gọi API với các params
             const response = await bookService.getAll({
-                category: categoryId,  // Filter theo danh mục
-                page: page,            // Trang hiện tại
-                limit: BOOKS_PER_PAGE, // Số sách mỗi trang
+                categoryId: categoryId,  // Backend nhận param "categoryId"
+                page: page,              // Trang hiện tại
+                limit: BOOKS_PER_PAGE,   // Số sách mỗi trang
             });
 
             // Xử lý response format khác nhau từ API

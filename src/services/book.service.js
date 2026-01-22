@@ -67,8 +67,14 @@ export const getAll = async (params = {}) => {
         return acc;
     }, {});
 
+    // DEBUG: Log the actual params being sent
+    console.log('[bookService.getAll] 📤 Request params:', cleanParams);
+
     // Gọi API GET /book với các query params
     const response = await axios.get('/book', { params: cleanParams });
+
+    // DEBUG: Log response
+    console.log('[bookService.getAll] 📥 Response:', response.data);
 
     // Trả về data từ response
     return response.data;

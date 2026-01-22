@@ -18,7 +18,7 @@ const useBooks = (initialFilters = {}) => {
     // Parse initial filters từ URL
     const getFiltersFromURL = useCallback(() => {
         return {
-            category: searchParams.get('category') || initialFilters.category || '',
+            categoryId: searchParams.get('category') || searchParams.get('categoryId') || initialFilters.categoryId || '',
             keyword: searchParams.get('keyword') || initialFilters.keyword || '',
             sort: searchParams.get('sort') || initialFilters.sort || '',
             page: parseInt(searchParams.get('page')) || initialFilters.page || 1,

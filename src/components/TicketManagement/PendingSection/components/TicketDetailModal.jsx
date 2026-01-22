@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { X } from "lucide-react";
+import { FALLBACK_IMAGES } from '../../../../utils/imageUrl';
 
 // Mock data cho books
 const MOCK_BOOKS = [
@@ -216,7 +217,7 @@ export default function TicketDetailModal({
                     alt={book.name}
                     className="w-14 h-20 object-cover rounded shadow"
                     onError={(e) => {
-                      e.target.src = "https://via.placeholder.com/100x140?text=No+Image";
+                      e.target.src = FALLBACK_IMAGES.book;
                     }}
                   />
 
