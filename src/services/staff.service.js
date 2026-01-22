@@ -133,38 +133,45 @@ export const updateStaffStatus = async (staffId, status) => {
 
         const apiStatus = status === 'banned' ? 'BANNED' : 'ACTIVE';
 
+        console.log(`🔍 [StaffService] Updating staff ${staffId} status to ${apiStatus}`);
+
         // Try multiple endpoint patterns
         const patterns = [
-            { method: 'put', url: `/user/staff/${staffId}/status`, data: { status: apiStatus } },
-            { method: 'put', url: `/user/staff/${staffId}`, data: { status: apiStatus } },
             { method: 'patch', url: `/user/${staffId}`, data: { status: apiStatus } },
-            { method: 'patch', url: `/admin/staff/${staffId}`, data: { status: apiStatus } },
+            { method: 'patch', url: `/user/staff/${staffId}`, data: { status: apiStatus } },
+            { method: 'patch', url: `/staff/${staffId}`, data: { status: apiStatus } },
+            { method: 'put', url: `/user/${staffId}`, data: { status: apiStatus } },
+            { method: 'put', url: `/admin/staff/${staffId}`, data: { status: apiStatus } },
         ];
 
         let lastError = null;
 
         for (const pattern of patterns) {
             try {
+                console.log(`🌐 [StaffService] Try: ${pattern.method.toUpperCase()} ${pattern.url}`);
                 let response;
                 if (pattern.method === 'put') {
                     response = await axios.put(pattern.url, pattern.data);
                 } else {
                     response = await axios.patch(pattern.url, pattern.data);
                 }
+                console.log(`✅ [StaffService] SUCCESS with ${pattern.method.toUpperCase()} ${pattern.url}:`, response.data);
                 return response.data;
             } catch (error) {
+                console.log(`❌ [StaffService] FAILED: ${pattern.method.toUpperCase()} ${pattern.url} - Status: ${error.response?.status}`);
                 lastError = error;
-                // Continue to next pattern if 404
-                if (error.response?.status !== 404) {
+                // Continue to next pattern if 404 or 405
+                if (error.response?.status !== 404 && error.response?.status !== 405) {
                     throw error;
                 }
             }
         }
 
         // If all patterns fail, throw last error
+        console.error(`❌ [StaffService] All patterns failed for staff ${staffId}`);
         throw lastError;
     } catch (error) {
-        console.error('Error updating staff status:', error.response?.data || error.message);
+        console.error(`❌ [StaffService] Error updating staff status:`, error.response?.data || error.message);
         throw error;
     }
 };

@@ -112,46 +112,19 @@ export const updateUserStatus = async (userId, status) => {
         }
 
         // Convert status to API format (ACTIVE/BANNED for API, lowercase for frontend)
-        // 'active' → 'ACTIVE', 'banned' → 'BANNED'
         const apiStatus = status === 'banned' ? 'BANNED' : 'ACTIVE';
 
-        // Try different endpoint patterns that might be used
-        try {
-            // Try pattern 1: PUT /user/{id}/status
-            const response = await axios.put(`/user/${userId}/status`, {
-                status: apiStatus
-            });
-            return response.data;
-        } catch (error) {
-            if (error.response?.status !== 404) {
-                throw error;
-            }
+        console.log(`🔍 [UserService] Updating user ${userId} status to ${apiStatus}`);
+        console.log(`🌐 [UserService] PATCH /user/${userId}`);
 
-            // Try pattern 2: PUT /user/member/{id}/status
-            try {
-                const response = await axios.put(`/user/member/${userId}/status`, {
-                    status: apiStatus
-                });
-                return response.data;
-            } catch (error) {
-                if (error.response?.status !== 404) {
-                    throw error;
-                }
+        const response = await axios.patch(`/user/${userId}`, {
+            status: apiStatus
+        });
 
-                // Try pattern 3: PATCH /user/{id}
-                try {
-                    const response = await axios.patch(`/user/${userId}`, {
-                        status: apiStatus
-                    });
-                    return response.data;
-                } catch (error) {
-                    // If all patterns fail, throw the original error
-                    throw error;
-                }
-            }
-        }
+        console.log(`✅ [UserService] SUCCESS:`, response.data);
+        return response.data;
     } catch (error) {
-        console.error(`Error updating user ${userId} status:`, error.response?.data || error.message);
+        console.error(`❌ [UserService] Error updating user ${userId} status:`, error.response?.data || error.message);
         throw error;
     }
 };

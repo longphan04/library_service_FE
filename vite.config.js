@@ -39,7 +39,47 @@ export default defineConfig(({ mode }) => {
           target: apiTarget,
           changeOrigin: true,
           secure: false,
-        }
+        },
+        '/user': {
+          target: apiTarget,
+          changeOrigin: true,
+          secure: false,
+        },
+        '/category': {
+          target: apiTarget,
+          changeOrigin: true,
+          secure: false,
+        },
+        '/shelves': {
+          target: apiTarget,
+          changeOrigin: true,
+          secure: false,
+        },
+        '/dashboard': {
+          target: apiTarget,
+          changeOrigin: true,
+          secure: false,
+        },
+        '/book': {
+          target: apiTarget,
+          changeOrigin: true,
+          secure: false,
+        },
+        '/author': {
+          target: apiTarget,
+          changeOrigin: true,
+          secure: false,
+        },
+        '/publisher': {
+          target: apiTarget,
+          changeOrigin: true,
+          secure: false,
+        },
+        '/borrow': {
+          target: apiTarget,
+          changeOrigin: true,
+          secure: false,
+        },
       }
     }
   }
