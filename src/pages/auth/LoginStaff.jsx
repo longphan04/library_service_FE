@@ -1,20 +1,15 @@
 // ==========================================
-// Component: Login
-// Mô tả: Trang đăng nhập cho người dùng
-// Vị trí: src/pages/auth/Login.jsx
+// Component: LoginStaff
+// Mô tả: Trang đăng nhập cho Admin và Staff
+// Vị trí: src/pages/auth/LoginStaff.jsx
 // ==========================================
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-<<<<<<< HEAD
-import { Button } from '../../componants/ui/Index';
-import InputField from '../../componants/ui/InputField';
-import Toast from '../../componants/ui/Toast';
-=======
 import { Button } from '../../components/ui/Index';
 import InputField from '../../components/ui/InputField';
->>>>>>> User_brch
 import { useAuth } from '../../contexts/AuthContext';
+import { ROLES } from '../../constants/roles';
 
 // Import icons từ assets
 import { EmailIcon, LockIcon } from '../../assets/icons';
@@ -24,57 +19,109 @@ import Logo from '../../assets/icons/logo.png';
 
 // ==========================================
 // Constants
-// Mô tả: Các hằng số dùng trong validation
 // ==========================================
+
+// Regex validation email
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
+// Allowed roles cho trang login quản trị
+const ALLOWED_ROLES = [ROLES.ADMIN, ROLES.STAFF];
+
+// Routes - tập trung quản lý đường dẫn, tránh hard-code
+const ROUTES = {
+    ADMIN_DASHBOARD: '/admin',
+    STAFF_DASHBOARD: '/staff',
+    FORGOT_PASSWORD: '/forgot-password',
+};
+
 // ==========================================
-// Login Component
+// Helper Functions
 // ==========================================
-const Login = () => {
+
+/**
+ * Lấy role từ response API một cách an toàn
+ * Xử lý nhiều cấu trúc response khác nhau từ API
+ * @param {Object} response - Response từ login API
+ * @returns {string} - User role hoặc null nếu không tìm thấy
+ */
+const extractUserRole = (response) => {
+    // Kiểm tra response tồn tại
+    if (!response || typeof response !== 'object') {
+        return null;
+    }
+
+    // Lấy user object từ response (có thể nằm ở nhiều vị trí khác nhau)
+    const user = response.user || response.data?.user || response;
+
+    // Kiểm tra user tồn tại
+    if (!user || typeof user !== 'object') {
+        return null;
+    }
+
+    // Lấy role từ các field có thể có
+    const role = user.role || user.Role || user.roles?.[0] || user.Roles?.[0] || null;
+
+    // Validate role là string
+    if (typeof role !== 'string') {
+        return null;
+    }
+
+    // Chuẩn hóa role về uppercase
+    return role.toUpperCase();
+};
+
+/**
+ * Kiểm tra role có được phép truy cập không
+ * @param {string} role - Role cần kiểm tra
+ * @returns {boolean}
+ */
+const isRoleAllowed = (role) => {
+    if (!role) return false;
+    return ALLOWED_ROLES.includes(role);
+};
+
+/**
+ * Lấy đường dẫn redirect dựa trên role
+ * @param {string} role - User role
+ * @returns {string|null} - Đường dẫn redirect hoặc null nếu role không hợp lệ
+ */
+const getRedirectPathByRole = (role) => {
+    const routeMap = {
+        [ROLES.ADMIN]: ROUTES.ADMIN_DASHBOARD,
+        [ROLES.STAFF]: ROUTES.STAFF_DASHBOARD,
+    };
+
+    return routeMap[role] || null;
+};
+
+// ==========================================
+// LoginStaff Component
+// ==========================================
+const LoginStaff = () => {
     // Router navigate
     const navigate = useNavigate();
 
     // Auth context
-    const { login: loginFromContext } = useAuth();
+    const { loginStaff: loginFromContext, logout: logoutFromContext } = useAuth();
 
     // ==========================================
     // State Management
-    // Mô tả: Quản lý giá trị các trường trong form đăng nhập
     // ==========================================
     const [formData, setFormData] = useState({
         email: '',
         password: '',
     });
 
-    // State lưu trữ thông báo lỗi cho từng trường
     const [errors, setErrors] = useState({
         email: '',
         password: '',
     });
 
-    // State lưu trữ thông báo lỗi chung (ví dụ: đăng nhập thất bại)
     const [generalError, setGeneralError] = useState('');
-
-    // State quản lý trạng thái loading khi submit form
     const [isLoading, setIsLoading] = useState(false);
-
-    // Toast state
-    const [toast, setToast] = useState({ isOpen: false, type: '', message: '' });
-
-    // Check for logout success message
-    useEffect(() => {
-        const logoutSuccess = sessionStorage.getItem('logoutSuccess');
-        if (logoutSuccess === 'true') {
-            setToast({ isOpen: true, type: 'success', message: 'Đăng xuất thành công!' });
-            sessionStorage.removeItem('logoutSuccess');
-        }
-    }, []);
 
     // ==========================================
     // Computed Values
-    // Mô tả: Kiểm tra xem button có nên bị disabled không
-    // Button disabled khi đang loading hoặc có trường rỗng
     // ==========================================
     const isButtonDisabled =
         isLoading ||
@@ -83,10 +130,8 @@ const Login = () => {
 
     // ==========================================
     // Validation Functions
-    // Mô tả: Các hàm kiểm tra tính hợp lệ của dữ liệu
     // ==========================================
 
-    // Kiểm tra email có đúng định dạng không
     const validateEmail = (email) => {
         if (!email.trim()) {
             return 'Email không được để trống';
@@ -97,7 +142,6 @@ const Login = () => {
         return '';
     };
 
-    // Kiểm tra mật khẩu có hợp lệ không
     const validatePassword = (password) => {
         if (!password.trim()) {
             return 'Mật khẩu không được để trống';
@@ -105,7 +149,6 @@ const Login = () => {
         return '';
     };
 
-    // Validate toàn bộ form trước khi submit
     const validateForm = () => {
         const newErrors = {
             email: validateEmail(formData.email),
@@ -113,26 +156,41 @@ const Login = () => {
         };
 
         setErrors(newErrors);
-
-        // Trả về true nếu không có lỗi nào
         return !Object.values(newErrors).some(error => error !== '');
+    };
+
+    // ==========================================
+    // Navigation Helper
+    // ==========================================
+
+    /**
+     * Xử lý điều hướng sau khi login thành công
+     * @param {string} role - User role
+     * @returns {boolean} - true nếu redirect thành công, false nếu role không hợp lệ
+     */
+    const handleRedirectByRole = (role) => {
+        const redirectPath = getRedirectPathByRole(role);
+
+        if (!redirectPath) {
+            return false;
+        }
+
+        navigate(redirectPath);
+        return true;
     };
 
     // ==========================================
     // Event Handlers
     // ==========================================
 
-    // Xử lý khi người dùng thay đổi giá trị input
     const handleInputChange = (field) => (e) => {
         const value = e.target.value;
 
-        // Cập nhật giá trị trong formData
         setFormData(prev => ({
             ...prev,
             [field]: value
         }));
 
-        // Xóa lỗi của trường đang nhập khi user bắt đầu sửa
         if (errors[field]) {
             setErrors(prev => ({
                 ...prev,
@@ -140,53 +198,54 @@ const Login = () => {
             }));
         }
 
-        // Xóa thông báo lỗi chung khi user bắt đầu nhập lại
         if (generalError) {
             setGeneralError('');
         }
     };
 
-    // Xử lý khi người dùng submit form đăng nhập
     const handleSubmit = async (e) => {
-        // Ngăn chặn hành vi mặc định của form (reload trang)
         e.preventDefault();
-
-        // Xóa thông báo lỗi chung trước khi submit
         setGeneralError('');
 
-        // Validate form trước khi submit
         if (!validateForm()) {
             return;
         }
 
-        // Bật trạng thái loading
         setIsLoading(true);
 
         try {
-            // Gọi login từ AuthContext (sẽ update state và lưu token)
+            // Gọi login từ AuthContext
             const response = await loginFromContext({
                 email: formData.email,
                 password: formData.password,
             });
 
-            // Lấy role từ response để redirect đúng dashboard
-            const userRole = response.user?.role || response.user?.roles?.[0] || 'MEMBER';
+            // Lấy role một cách an toàn từ response
+            const userRole = extractUserRole(response);
 
-            // Import getRedirectByRole inline để tránh circular dependency
-            const { getRedirectByRole } = await import('../../constants/roles');
-            const redirectPath = getRedirectByRole(userRole);
+            // Kiểm tra role có được phép không
+            if (!isRoleAllowed(userRole)) {
+                // QUAN TRỌNG: Logout ngay lập tức nếu role không hợp lệ
+                // Điều này đảm bảo token không được lưu lại cho tài khoản không có quyền
+                await logoutFromContext();
+                setGeneralError('Tài khoản không có quyền truy cập trang quản trị');
+                return;
+            }
 
-            // Lưu thông báo thành công vào sessionStorage
-            sessionStorage.setItem('loginSuccess', 'true');
+            // Role hợp lệ - redirect theo role
+            const redirectSuccess = handleRedirectByRole(userRole);
 
-            // Đăng nhập thành công - chuyển đến dashboard theo role
-            navigate(redirectPath);
+            // Fallback nếu không thể redirect (không nên xảy ra nếu isRoleAllowed đã check)
+            if (!redirectSuccess) {
+                await logoutFromContext();
+                setGeneralError('Không thể xác định trang điều hướng. Vui lòng thử lại.');
+            }
 
         } catch (error) {
-            // Hiển thị thông báo lỗi từ authService
-            setGeneralError(error.message);
+            // Hiển thị lỗi từ API hoặc AuthContext
+            const errorMessage = error?.message || 'Đã có lỗi xảy ra. Vui lòng thử lại.';
+            setGeneralError(errorMessage);
         } finally {
-            // Tắt trạng thái loading
             setIsLoading(false);
         }
     };
@@ -195,35 +254,25 @@ const Login = () => {
     // Render Component
     // ==========================================
     return (
-        // Container chính - background toàn màn hình
         <div className="min-h-screen bg-bg-app flex items-center justify-center p-4">
-            {/* Card đăng nhập - Container form */}
             <div className="w-full max-w-md bg-bg-section rounded-2xl shadow-lg p-8 md:p-10">
 
-                {/* ==========================================
-                    Header Section
-                    Mô tả: Logo và tên ứng dụng
-                ========================================== */}
+                {/* Header Section - Logo và Title */}
                 <div className="flex items-center justify-center gap-3 mb-10">
-                    {/* Logo */}
                     <img
                         src={Logo}
                         alt="Library System Logo"
                         className="w-10 h-10 object-contain"
                     />
-                    {/* Tên ứng dụng */}
                     <h1 className="text-xl font-semibold text-primary">
-                        Library system
+                        Quản trị viên
                     </h1>
                 </div>
 
-                {/* ==========================================
-                    Form Section
-                    Mô tả: Form đăng nhập với email và password
-                ========================================== */}
+                {/* Form Section */}
                 <form onSubmit={handleSubmit} className="space-y-5">
 
-                    {/* Trường nhập email */}
+                    {/* Email Input */}
                     <InputField
                         id="email"
                         label="Email"
@@ -236,7 +285,7 @@ const Login = () => {
                         disabled={isLoading}
                     />
 
-                    {/* Trường nhập password */}
+                    {/* Password Input */}
                     <InputField
                         id="password"
                         label="Mật Khẩu"
@@ -249,23 +298,17 @@ const Login = () => {
                         disabled={isLoading}
                     />
 
-                    {/* ==========================================
-                        Forgot Password Link
-                        Mô tả: Link quên mật khẩu
-                    ========================================== */}
+                    {/* Forgot Password Link */}
                     <div className="text-right">
                         <Link
-                            to="/forgot-password"
+                            to={ROUTES.FORGOT_PASSWORD}
                             className="text-sm text-primary hover:text-primary-hover hover:underline transition-colors"
                         >
                             Quên mật khẩu ?
                         </Link>
                     </div>
 
-                    {/* ==========================================
-                        General Error Message
-                        Mô tả: Hiển thị thông báo lỗi chung (đăng nhập thất bại)
-                    ========================================== */}
+                    {/* General Error Message */}
                     {generalError && (
                         <div className="text-center">
                             <p className="text-sm text-error">
@@ -274,12 +317,7 @@ const Login = () => {
                         </div>
                     )}
 
-                    {/* ==========================================
-                        Submit Button
-                        Mô tả: Nút đăng nhập sử dụng Button component chung
-                        - Disabled khi đang loading hoặc form không hợp lệ
-                        - Hiển thị trạng thái loading khi đang xử lý
-                    ========================================== */}
+                    {/* Submit Button */}
                     <Button
                         type="submit"
                         variant="primary"
@@ -291,33 +329,10 @@ const Login = () => {
                     </Button>
                 </form>
 
-                {/* ==========================================
-                    Register Link Section
-                    Mô tả: Link chuyển đến trang đăng ký
-                ========================================== */}
-                <div className="text-center mt-6">
-                    <span className="text-sm text-text-primary">
-                        Không có tài khoản?{' '}
-                    </span>
-                    <Link
-                        to="/register"
-                        className="text-sm text-primary font-medium hover:text-primary-hover hover:underline transition-colors"
-                    >
-                        Đăng kí
-                    </Link>
-                </div>
+                {/* Không có link đăng ký - chỉ dành cho Admin/Staff */}
             </div>
-
-            {/* Toast Notification */}
-            <Toast
-                isOpen={toast.isOpen}
-                type={toast.type}
-                message={toast.message}
-                onClose={() => setToast((prev) => ({ ...prev, isOpen: false }))}
-                duration={3000}
-            />
         </div>
     );
 };
 
-export default Login;
+export default LoginStaff;

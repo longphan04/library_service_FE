@@ -68,6 +68,24 @@ export const AuthProvider = ({ children }) => {
     };
 
     // ==========================================
+    // Login Staff Function
+    // ==========================================
+    const loginStaff = async (credentials) => {
+        try {
+            const data = await authService.loginStaff(credentials);
+
+            if (data.user) {
+                setUser(data.user);
+                setIsAuthenticated(true);
+            }
+
+            return data;
+        } catch (error) {
+            throw error;
+        }
+    };
+
+    // ==========================================
     // Logout Function
     // ==========================================
     const logout = async () => {
@@ -122,6 +140,7 @@ export const AuthProvider = ({ children }) => {
         isAuthenticated,
         isLoading,
         login,
+        loginStaff,
         logout,
         getRedirectPath,
         refreshUser,

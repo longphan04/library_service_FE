@@ -7,13 +7,15 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, RefreshCw } from 'lucide-react';
-import Header from '../../componants/layouts/Header';
-import Button from '../../componants/ui/Button';
-import VersionSelector from '../../componants/ui/VersionSelector';
-import BorrowConfirmationModal from '../../componants/ui/BorrowConfirmationModal';
-import Toast from '../../componants/ui/Toast';
+import Header from '../../components/layouts/Header';
+import Footer from '../../components/layouts/Footer';
+import Button from '../../components/ui/Button';
+import VersionSelector from '../../components/ui/VersionSelector';
+import BorrowConfirmationModal from '../../components/ui/BorrowConfirmationModal';
+import Toast from '../../components/ui/Toast';
 import useBookHold from '../../hooks/useBookHold';
 import bookService from '../../services/book.service';
+import { FALLBACK_IMAGES } from '../../utils/imageUrl';
 
 // ==========================================
 // Loading Skeleton
@@ -201,7 +203,7 @@ const BookDetail = () => {
     // Loading State
     if (loading) {
         return (
-            <div className="min-h-screen bg-bg-app">
+            <div className="min-h-screen bg-bg-app flex flex-col">
                 <Header />
                 <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
                     <button
@@ -211,8 +213,9 @@ const BookDetail = () => {
                         <ArrowLeft size={20} />
                         <span className="text-sm font-medium">Quay lại</span>
                     </button>
-                    <BookDetailSkeleton />
-                </main>
+                    <BookDetailSkeleton /></main>
+
+                <Footer />
             </div>
         );
     }
@@ -220,7 +223,7 @@ const BookDetail = () => {
     // Error State
     if (error || !book) {
         return (
-            <div className="min-h-screen bg-bg-app">
+            <div className="min-h-screen bg-bg-app flex flex-col">
                 <Header />
                 <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
                     <div className="bg-bg-section rounded-2xl p-8 text-center">
@@ -236,8 +239,9 @@ const BookDetail = () => {
                                 Thử lại
                             </Button>
                         </div>
-                    </div>
-                </main>
+                    </div></main>
+
+                <Footer />
             </div>
         );
     }
@@ -268,7 +272,7 @@ const BookDetail = () => {
     // Main Render
     // ==========================================
     return (
-        <div className="min-h-screen bg-bg-app">
+        <div className="min-h-screen bg-bg-app flex flex-col">
             {/* Header */}
             <Header />
 
@@ -290,12 +294,12 @@ const BookDetail = () => {
                         <div className="md:col-span-1">
                             <div className="sticky top-24">
                                 <img
-                                    src={book.coverImage || 'https://via.placeholder.com/300x420/FFF8F0/7D5B4F?text=No+Image'}
+                                    src={book.coverImage || FALLBACK_IMAGES.bookPlaceholder}
                                     alt={book.title}
                                     className="w-full rounded-lg shadow-lg"
                                     onError={(e) => {
                                         e.target.onerror = null;
-                                        e.target.src = 'https://via.placeholder.com/300x420/FFF8F0/7D5B4F?text=No+Image';
+                                        e.target.src = FALLBACK_IMAGES.bookPlaceholder;
                                     }}
                                 />
                             </div>

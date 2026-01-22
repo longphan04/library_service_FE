@@ -1,7 +1,7 @@
 import { useState } from "react";
-import Pagination from "@/componants/ui/Pagination";
+import Pagination from "@/components/ui/Pagination";
 import useUserManagement from "@/hooks/useUserManagement";
-import UserDetailModal from "@/componants/UserDetailModal/UserDetailModal";
+import UserDetailModal from "@/components/UserDetailModal/UserDetailModal";
 import { Search } from "lucide-react";
 
 const usersData = [

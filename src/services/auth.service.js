@@ -4,6 +4,7 @@
 // ==========================================
 
 import axios, { getToken, getRefreshToken, setTokens, clearTokens } from './axios';
+import { buildImageUrl } from '../utils/imageUrl';
 
 // ==========================================
 // Token Management Functions (re-export)
@@ -133,10 +134,18 @@ export const refreshToken = async () => {
 };
 
 /**
- * Lấy thông tin user hiện tại
- * @returns {Promise} - User data từ server
+ * Lấy thông tin user hiện tại từ API
+ * @returns {Promise<{id: string, email: string, name: string, role: string, avatar: string}>}
+ * @throws {Error} Nếu token không hợp lệ hoặc hết hạn
  */
 export const getCurrentUser = async () => {
+    const token = getToken();
+
+    // Không có token → chưa đăng nhập
+    if (!token) {
+        return null;
+    }
+
     try {
         // Get existing user data from localStorage to preserve roles
         const existingUser = JSON.parse(localStorage.getItem('user') || '{}');
@@ -161,8 +170,13 @@ export const getCurrentUser = async () => {
 
         return user;
     } catch (error) {
-        if (error.response && error.response.status === 401) {
+        // Token hết hạn / không hợp lệ → logout và redirect
+        if (error.response?.status === 401) {
             clearTokens();
+            // Redirect về login nếu không phải đang ở trang login
+            if (!window.location.pathname.includes('/login')) {
+                window.location.href = '/login';
+            }
         }
         throw error;
     }
@@ -213,6 +227,7 @@ export const changePassword = async (data) => {
 // Export default object chứa tất cả functions
 const authService = {
     login,
+    loginStaff,
     logout,
     register,
     refreshToken,

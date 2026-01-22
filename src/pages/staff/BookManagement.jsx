@@ -1,8 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { Plus, Trash2, Search } from 'lucide-react';
+<<<<<<< HEAD
 import BookCard from "@/componants/ui/BookCardStaff";
 import Pagination from "@/componants/ui/Pagination";
 import AddBookForm from "@/componants/ui/AddBookForm/addBookForm";
+=======
+import BookCard from "@/components/ui/BookCardStaff";
+import Pagination from "@/components/ui/Pagination";
+import AddBookForm from "@/components/ui/addBookForm";
+>>>>>>> User_brch
 import useBookManagement from "@/hooks/useBookManagement";
 
 export default function BookManagement() {

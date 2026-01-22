@@ -1,6 +1,6 @@
 import { useState } from "react";
-import Pagination from "@/componants/ui/Pagination";
-import TicketManagement from "@/componants/TicketManagement";
+import Pagination from "@/components/ui/Pagination";
+import TicketManagement from "@/components/TicketManagement";
 
 const ALL_TICKETS = [
   // Tab Duyệt yêu cầu
