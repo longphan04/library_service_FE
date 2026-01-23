@@ -14,8 +14,24 @@ export const createBook = (formData) =>
 export const getBookDetail = (id) =>
     axios.get(`${BASE_URL}/book/${id}`);
 
-export const updateBook = (id, data) =>
-    axios.put(`${BASE_URL}/book/${id}`, data);
+axios.interceptors.request.use(config => {
+    const token = localStorage.getItem("access_token");
+    if (token) {
+        config.headers.Authorization = `Bearer ${token}`;
+    }
+    return config;
+});
+
+export const uploadImage = (file) =>
+    axios.post(`${BASE_URL}/upload`, file, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+    });
+
+
+export const updateBook = (id, formData) =>
+    axios.put(`${BASE_URL}/book/${id}`, formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+    });
 
 export const createAuthor = (data) =>
-    axios.post("/author", data);
+    axios.post(`${BASE_URL}/author`, data);

@@ -1,491 +1,377 @@
-import { Search, Plus, X } from "lucide-react";
-import { useState, useEffect } from "react";
-import {
-    getAuthors,
-    getPublishers,
-    getShelves,
-    createBook,
-} from './addBook.api';
+import { Plus, X, Check, XCircle } from "lucide-react";
+import useAddBookForm from "../../../hooks/useAddBookForm";
+import { useRef, useState } from "react";
 
-export default function AddBookForm({
-    isOpen,
-    onClose,
-    bookToEdit = null,
-    onSave
-}) {
-
-    const [authors, setAuthors] = useState([]);
-    const [publishers, setPublishers] = useState([]);
-    const [shelves, setShelves] = useState([]);
-    const [categories, setCategories] = useState([]);
-
-    const [selectedShelf, setSelectedShelf] = useState(null);
-    const [imageFile, setImageFile] = useState(null);
-
-
-    // Publisher state
-    const [publisherInput, setPublisherInput] = useState("");
-    const [selectedPublisher, setSelectedPublisher] = useState(null);
-    const [showPublisherDropdown, setShowPublisherDropdown] = useState(false);
-    // Author state
-    const [authorInput, setAuthorInput] = useState("");
-    const [selectedAuthors, setSelectedAuthors] = useState([]);
-    const [showAuthorDropdown, setShowAuthorDropdown] = useState(false);
-
-    // Category state
-    const [categoryInput, setCategoryInput] = useState("");
-    const [selectedCategories, setSelectedCategories] = useState([]);
-    const [showCategoryDropdown, setShowCategoryDropdown] = useState(false);
-
-    // Year state
-    const currentYear = new Date().getFullYear();
-    const yearOptions = Array.from(
-        { length: 30 },
-        (_, i) => String(currentYear - i)
-    );
-
-
-
-    // Form fields
-    const [formData, setFormData] = useState({
-        title: "",
-        author: "",
-        publisher: "",
-        categories: [],
-        quantity: "1",
-        year: "2025",
-        description: ""
-    });
-
-    // Reset form function
-    const resetForm = () => {
-        setFormData({
-            title: "",
-            author: "",
-            publisher: "",
-            categories: [],
-            quantity: "1",
-            year: "2025",
-            description: ""
-        });
-        setSelectedAuthors([]);
-        setSelectedCategories([]);
-        setCategoryInput("");
-        setAuthorInput("");
-        setShowAuthorDropdown(false);
-        setShowCategoryDropdown(false);
-        setSelectedPublisher(null);
-        setPublisherInput("");
-        setShowPublisherDropdown(false);
-    };
-
-    useEffect(() => {
-        Promise.all([getAuthors(), getPublishers(), getShelves()])
-            .then(([a, p, s]) => {
-                setAuthors(a.data);
-                setPublishers(p.data);
-                setShelves(s.data);
-            });
-    }, []);
-    // Load bookToEdit data when it changes
-    useEffect(() => {
-        if (bookToEdit) {
-            const bookCategories =
-                Array.isArray(bookToEdit.categories) && bookToEdit.categories.length > 0
-                    ? bookToEdit.categories
-                    : Array.isArray(bookToEdit.tags)
-                        ? bookToEdit.tags
-                        : [];
-
-            setFormData({
-                title: bookToEdit.title || "",
-                author: bookToEdit.author || "",
-                publisher: bookToEdit.publisher || "",
-                categories: bookCategories,
-                quantity: String(bookToEdit.quantity ?? 1),
-                year: String(bookToEdit.year || new Date().getFullYear()),
-                description: bookToEdit.description || ""
-            });
-
-            // đồng bộ UI
-            const authorsFromBook =
-                bookToEdit.author
-                    ? bookToEdit.author.split(",").map(a => a.trim())
-                    : [];
-
-            setSelectedAuthors(authorsFromBook);
-            setAuthorInput("");
-
-            setSelectedPublisher(bookToEdit.publisher || null);
-            setPublisherInput("");
-
-            setSelectedCategories(bookCategories);
-            setCategoryInput("");
-
-        } else if (!isOpen) {
-            resetForm();
-        }
-    }, [bookToEdit, isOpen]);
-
-    // Filter authors và categories
-    const filteredAuthors = authors.filter(a =>
-        a.name.toLowerCase().includes(authorInput.toLowerCase())
-    );
-
-    const filteredPublishers = publishers.filter(p =>
-        p.name.toLowerCase().includes(publisherInput.toLowerCase())
-    );
-
-    const filteredCategories = categories.filter(c =>
-        c.name.toLowerCase().includes(categoryInput.toLowerCase())
-    );
-
-    // Toggle category selection
-    const toggleCategory = (category) => {
-        let newCategories;
-        if (selectedCategories.includes(category)) {
-            newCategories = selectedCategories.filter(cat => cat !== category);
-        } else {
-            newCategories = [...selectedCategories, category];
-        }
-        setSelectedCategories(newCategories);
-        setFormData(prev => ({
-            ...prev,
-            categories: newCategories
-        }));
-    };
-
-    const handleInputChange = (field, value) => {
-        setFormData(prev => ({
-            ...prev,
-            [field]: value
-        }));
-    };
-
-    const handleSubmit = async (e) => {
-        const fd = new FormData();
-        fd.append("title", formData.title);
-        fd.append("description", formData.description);
-        fd.append("publish_year", formData.year);
-        fd.append("copy_quatity", formData.quantity);
-        fd.append("publisher_id", selectedPublisher.publisher_id);
-        fd.append("shelf_id", selectedShelf.shelf_id);
-
-        selectedAuthors.forEach(a =>
-            fd.append("author_ids[]", a.author_id)
-        );
-
-        selectedCategories.forEach(c =>
-            fd.append("category_ids[]", c.category_id)
-        );
-
-        fd.append("image", imageFile);
-
-        await createBook(fd);
-
-        e.preventDefault();
-
-        try {
-            const bookData = {
-                ...formData,
-                author: selectedAuthors.join(", "),
-                publisher: selectedPublisher || formData.publisher,
-                categories: selectedCategories,
-                category: selectedCategories[0] || ""
-            };
-
-            console.log("Saving book data:", bookData);
-
-            if (onSave) {
-                onSave(bookData, bookToEdit?.id);
-            }
-
-            resetForm();
-
-            if (onClose) {
-                onClose();
-            }
-
-        } catch (error) {
-            console.error("Error saving book:", error);
-            alert("Có lỗi xảy ra khi lưu sách!");
-        }
-    };
-
-    const handleClose = () => {
-        resetForm();
-        if (onClose) {
-            onClose();
-        }
-    };
-
+export default function AddBookForm({ isOpen, onClose, bookToEdit, onSave }) {
     if (!isOpen) return null;
+
+    const fileInputRef = useRef(null);
+
+    const yearOptions = Array.from(
+        { length: 50 },
+        (_, i) => new Date().getFullYear() - i
+    );
+
+    const {
+        wrapperRef,
+        // data
+        formData,
+        shelves,
+        authors,
+        categories,
+
+        // selected
+        selectedAuthors,
+        selectedPublisher,
+        selectedCategories,
+        selectedShelf,
+
+        // inputs
+        authorInput,
+        publisherInput,
+        categoryInput,
+        previewImage,
+        handleImageChange,
+
+        // UI state
+        showAuthorDropdown,
+        showPublisherDropdown,
+        showCategoryDropdown,
+
+        // computed
+        filteredAuthors,
+        filteredPublishers,
+        filteredCategories,
+
+        // handlers
+        handleInputChange,
+        toggleCategory,
+        handleAddNewAuthor,
+        handleSubmit,
+
+        // setters
+        setSelectedAuthors,
+        setSelectedPublisher,
+        setSelectedCategories,
+        setSelectedShelf,
+        setAuthorInput,
+        setPublisherInput,
+        setCategoryInput,
+        setShowAuthorDropdown,
+        setShowPublisherDropdown,
+        setShowCategoryDropdown,
+    } = useAddBookForm({ bookToEdit, onClose, onSave });
+
+    const [showAuthorInput, setShowAuthorInput] = useState(false);
+
+    const handleClearAllCategories = () => {
+        setSelectedCategories([]);
+    };
+
+    const handleClearAllAuthors = () => {
+        setSelectedAuthors([]);
+    };
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4">
-            <div className="bg-[#F5EBE0] rounded-2xl w-full max-w-6xl max-h-[90vh] overflow-y-auto">
-                <div className="p-6">
+            <div ref={wrapperRef} className="bg-[#F5EBE0] rounded-2xl w-full max-w-6xl max-h-[95vh] overflow-y-auto">
+                <div className="p-8">
+
                     {/* Header */}
-                    <div className="flex justify-between items-center mb-6">
-                        <h2 className="text-2xl font-bold text-[#7A4A2E]">
+                    <div className="flex justify-between items-center mb-8">
+                        <h2 className="text-3xl font-bold text-[#7A4A2E]">
                             {bookToEdit ? "Chỉnh sửa sách" : "Thêm sách mới"}
                         </h2>
                         <button
-                            onClick={handleClose}
-                            className="p-2 hover:bg-gray-200 rounded-full transition-colors"
+                            onClick={onClose}
                             type="button"
+                            className="p-2 hover:bg-gray-200 rounded-full transition-colors"
                         >
-                            <X size={24} className="text-[#7A4A2E]" />
+                            <X size={28} />
                         </button>
                     </div>
 
-                    <div className="space-y-6">
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-start">
-                            {/* Image upload */}
-                            <div className="flex justify-center">
-                                <div className="w-56 h-72 bg-gray-200 rounded-2xl flex items-center justify-center cursor-pointer hover:bg-gray-300 transition-colors">
-                                    <div className="w-14 h-14 rounded-full border-2 border-[#7A4A2E] flex items-center justify-center">
-                                        <Plus className="text-[#7A4A2E]" />
+                    <div className="flex gap-8">
+                        {/* Image */}
+                        <div className="flex-shrink-0">
+                            <div
+                                className="w-72 h-80 bg-gray-200 rounded-2xl overflow-hidden cursor-pointer"
+                                onClick={() => fileInputRef.current.click()}
+                            >
+                                {previewImage ? (
+                                    <img src={previewImage} className="w-full h-full object-cover" />
+                                ) : bookToEdit?.image ? (
+                                    <img src={bookToEdit.image} className="w-full h-full object-cover" />
+                                ) : (
+                                    <div className="w-full h-full flex flex-col items-center justify-center">
+                                        <Plus size={64} className="text-gray-500 mb-3" />
                                     </div>
-                                </div>
+                                )}
                             </div>
 
-                            {/* Main card */}
-                            <div className="md:col-span-2 bg-white rounded-2xl p-6">
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                    {/* Book name */}
-                                    <div className="md:col-span-1">
-                                        <label className="text-[#7A4A2E]">Tên sách</label>
+                            {/* ✅ INPUT FILE BẮT BUỘC */}
+                            <input
+                                type="file"
+                                ref={fileInputRef}
+                                hidden
+                                accept="image/*"
+                                onChange={handleImageChange}
+                            />
+                        </div>
+
+                        {/* Main Form */}
+                        <div className="flex-1 flex flex-col">
+                            <div className="bg-white rounded-2xl p-8 mb-6">
+                                {/* Dòng 1: Tên sách và Tác giả */}
+                                <div className="grid grid-cols-2 gap-6 mb-6">
+                                    {/* Tên sách */}
+                                    <div>
+                                        <label className="block text-base font-semibold text-gray-800 mb-2">
+                                            Tên sách *
+                                        </label>
                                         <input
                                             value={formData.title}
                                             onChange={(e) => handleInputChange("title", e.target.value)}
-                                            className="w-full mt-1 p-2 rounded-lg border outline-none focus:border-[#7A4A2E] focus:ring-1 focus:ring-[#7A4A2E]"
-                                            required
+                                            placeholder="Nhập tên sách"
+                                            className="w-full border-2 border-gray-300 p-3 rounded-xl focus:ring-3 focus:ring-[#7A4A2E] focus:border-transparent text-base"
                                         />
                                     </div>
 
-                                    {/* Author inline */}
+                                    {/* Tác giả */}
                                     <div className="relative">
-                                        <label className="text-[#7A4A2E]">Tác giả</label>
-
-                                        <div className="mt-1 w-full h-10 px-2 border rounded-lg flex items-center
-    focus-within:border-[#7A4A2E] focus-within:ring-1 focus-within:ring-[#7A4A2E] bg-white">
-
-                                            {/* Authors text */}
-                                            <div className="flex-1 text-sm truncate">
-                                                {selectedAuthors.map((author, index) => (
-                                                    <span key={author}>
-                                                        {author}
-                                                        <button
-                                                            type="button"
-                                                            onClick={() =>
-                                                                setSelectedAuthors(prev => prev.filter(a => a !== author))
-                                                            }
-                                                            className="mx-1 text-gray-500 hover:text-red-500"
-                                                        >
-                                                            <X size={12} />
-                                                        </button>
-                                                        {index < selectedAuthors.length - 1 && ","}
-                                                    </span>
-                                                ))}
-                                            </div>
-
-                                            {/* Add button */}
-                                            <button
-                                                type="button"
-                                                onClick={() => setShowAuthorDropdown(true)}
-                                                className="ml-2 text-[#7A4A2E] hover:opacity-70"
-                                            >
-                                                <Plus size={16} />
-                                            </button>
-                                        </div>
-
-                                        {/* Dropdown */}
-                                        {showAuthorDropdown && (
-                                            <div className="absolute z-10 mt-1 w-full bg-white border rounded-lg shadow max-h-48 overflow-y-auto">
-                                                {filteredAuthors.map((a) => (
-                                                    <div
-                                                        key={a}
-                                                        onClick={() => {
-                                                            if (!selectedAuthors.some(x => x.author_id === a.author_id)) {
-                                                                setSelectedAuthors(prev => [...prev, a]);
-                                                            }
-                                                            setAuthorInput("");
-                                                            setShowAuthorDropdown(false);
-                                                        }}
-                                                        className="px-3 py-2 hover:bg-gray-100 cursor-pointer"
-                                                    >
-                                                        {a}
+                                        <label className="block text-base font-semibold text-gray-800 mb-2">
+                                            Tác giả *
+                                        </label>
+                                        <div className="relative">
+                                            <div className="flex items-center gap-3">
+                                                <div
+                                                    className="flex-1 border-2 border-gray-300 rounded-xl cursor-pointer hover:border-gray-500"
+                                                    onClick={() => {
+                                                        setShowAuthorDropdown(!showAuthorDropdown);
+                                                        setShowAuthorInput(false);
+                                                    }}
+                                                >
+                                                    <div className="p-3">
+                                                        {selectedAuthors.length > 0 ? (
+                                                            <div className="flex items-center justify-between min-w-0">
+                                                                <span className="text-gray-800 text-base truncate block overflow-hidden whitespace-nowrap max-w-full">
+                                                                    {selectedAuthors.map(a => a.name).join(", ")}
+                                                                </span>
+                                                            </div>
+                                                        ) : (
+                                                            <div className="flex justify-between items-center">
+                                                                <span className="text-gray-500 text-base">Chọn tác giả</span>
+                                                                <Plus size={20} className="text-gray-500" />
+                                                            </div>
+                                                        )}
                                                     </div>
-                                                ))}
-
-                                                {/* Add new author */}
-                                                {authorInput && !savedAuthors.includes(authorInput) && (
-                                                    <div
-                                                        onClick={() => {
-                                                            setSelectedAuthors(prev => [...prev, authorInput]);
-                                                            setAuthorInput("");
-                                                            setShowAuthorDropdown(false);
-                                                        }}
-                                                        className="px-3 py-2 text-[#7A4A2E] hover:bg-gray-100 cursor-pointer"
-                                                    >
-                                                        ➕ Thêm tác giả "{authorInput}"
-                                                    </div>
-                                                )}
-
-                                                <input
-                                                    value={authorInput}
-                                                    onChange={(e) => setAuthorInput(e.target.value)}
-                                                    className="w-full px-3 py-2 border-t outline-none text-sm"
-                                                    placeholder="Nhập tên tác giả mới..."
-                                                    autoFocus
-                                                />
-                                            </div>
-                                        )}
-                                    </div>
-
-                                    {/* Publisher */}
-                                    <div className="relative">
-                                        <label className="text-[#7A4A2E]">Nhà xuất bản</label>
-
-                                        <div className="relative mt-1">
-                                            {selectedPublisher ? (
-                                                <div className="flex items-center justify-between h-10 px-3 border rounded-lg bg-gray-50 text-sm leading-none">
-                                                    <span className="text-sm">{selectedPublisher}</span>
-                                                    <button
-                                                        type="button"
-                                                        onClick={() => {
-                                                            setSelectedPublisher(null);
-                                                            handleInputChange("publisher", "");
-                                                        }}
-                                                        className="text-gray-500 hover:text-gray-700"
-                                                    >
-                                                        <X size={16} />
-                                                    </button>
                                                 </div>
-                                            ) : (
-                                                <>
+
+                                                {selectedAuthors.length > 0 && (
+                                                    <button
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            handleClearAllAuthors();
+                                                        }}
+                                                        className="p-3 text-gray-600 hover:text-red-600 transition-colors flex-shrink-0"
+                                                        title="Xóa tất cả tác giả"
+                                                    >
+                                                        <XCircle size={22} />
+                                                    </button>
+                                                )}
+                                            </div>
+
+                                            {showAuthorDropdown && (
+                                                <div className="absolute top-full left-0 right-0 bg-white border-2 border-gray-300 rounded-xl shadow-2xl mt-2 z-20">
+                                                    <div className="max-h-56 overflow-y-auto">
+                                                        {filteredAuthors.slice().map(a => (
+                                                            <div
+                                                                key={a.author_id}
+                                                                onClick={() => {
+                                                                    if (!selectedAuthors.some(x => x.author_id === a.author_id)) {
+                                                                        setSelectedAuthors(prev => [...prev, a]);
+                                                                    }
+                                                                    setShowAuthorDropdown(false);
+                                                                    setAuthorInput("");
+                                                                }}
+                                                                className="p-3 hover:bg-gray-100 cursor-pointer flex justify-between items-center text-base"
+                                                            >
+                                                                <span className="font-medium">{a.name}</span>
+                                                                {selectedAuthors.some(x => x.author_id === a.author_id) && (
+                                                                    <Check size={20} className="text-green-600" />
+                                                                )}
+                                                            </div>
+                                                        ))}
+                                                    </div>
+
+                                                    {/* Phần thêm tác giả mới */}
+                                                    <div className="border-t border-gray-300 p-3 bg-gray-50">
+                                                        <div className="flex items-center gap-3">
+                                                            <input
+                                                                value={authorInput}
+                                                                onChange={(e) => {
+                                                                    setAuthorInput(e.target.value);
+                                                                    setShowAuthorInput(e.target.value.length > 0);
+                                                                }}
+                                                                onClick={(e) => e.stopPropagation()}
+                                                                className="flex-1 p-2 border-2 border-gray-300 rounded-lg text-base"
+                                                                placeholder="Nhập tên tác giả mới..."
+                                                            />
+                                                            {showAuthorInput &&
+                                                                authorInput.trim().length > 0 &&
+                                                                !authors.some(a =>
+                                                                    a.name.toLowerCase() === authorInput.toLowerCase().trim()
+                                                                ) && (
+                                                                    <button
+                                                                        onClick={(e) => {
+                                                                            e.stopPropagation();
+                                                                            handleAddNewAuthor();
+                                                                            setAuthorInput("");
+                                                                            setShowAuthorInput(false);
+                                                                        }}
+                                                                        className="bg-[#7A4A2E] text-white p-2 rounded-lg hover:bg-[#6a3a1e] transition-colors"
+                                                                    >
+                                                                        <Plus size={20} />
+                                                                    </button>
+                                                                )}
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Dòng 2: Nhà xuất bản và Thể loại */}
+                                <div className="grid grid-cols-2 gap-6 mb-6">
+                                    {/* Nhà xuất bản */}
+                                    <div className="relative">
+                                        <label className="block text-base font-semibold text-gray-800 mb-2">
+                                            Nhà xuất bản
+                                        </label>
+                                        <div className="relative">
+                                            <div
+                                                className="border-2 border-gray-300 p-3 rounded-xl flex justify-between items-center cursor-pointer hover:border-gray-500 transition-colors"
+                                                onClick={() => setShowPublisherDropdown(!showPublisherDropdown)}
+                                            >
+                                                <span className={!selectedPublisher ? "text-gray-500 text-base" : "text-gray-800 font-medium text-base"}>
+                                                    {selectedPublisher?.name || "Chọn nhà xuất bản"}
+                                                </span>
+                                                <Plus size={20} className="text-gray-500" />
+                                            </div>
+
+                                            {showPublisherDropdown && (
+                                                <div className="absolute top-full left-0 right-0 bg-white border-2 border-gray-300 rounded-xl shadow-2xl mt-2 z-20">
                                                     <input
                                                         value={publisherInput}
-                                                        onChange={(e) => {
-                                                            setPublisherInput(e.target.value);
-                                                            setShowPublisherDropdown(true);
-                                                            handleInputChange("publisher", e.target.value);
-                                                        }}
-                                                        onFocus={() => setShowPublisherDropdown(true)}
-                                                        onBlur={() => setTimeout(() => setShowPublisherDropdown(false), 200)}
-                                                        className="w-full p-2 pr-10 rounded-lg border outline-none focus:border-[#7A4A2E] focus:ring-1 focus:ring-[#7A4A2E]"
-                                                        placeholder="Nhập hoặc chọn NXB..."
+                                                        onChange={(e) => setPublisherInput(e.target.value)}
+                                                        placeholder="Tìm nhà xuất bản..."
+                                                        className="w-full p-3 border-b-2 border-gray-200 text-base focus:outline-none"
+                                                        onClick={(e) => e.stopPropagation()}
                                                     />
-                                                    <Search size={16} className="absolute right-3 top-3 text-gray-400" />
-                                                </>
-                                            )}
-
-                                            {showPublisherDropdown && publisherInput && !selectedPublisher && (
-                                                <div className="absolute z-10 mt-1 w-full bg-white border rounded-lg shadow max-h-48 overflow-y-auto">
-                                                    {filteredPublishers.length > 0 ? (
-                                                        filteredPublishers.map((p) => (
+                                                    <div className="max-h-56 overflow-y-auto">
+                                                        {filteredPublishers.slice().map(p => (
                                                             <div
-                                                                key={p}
+                                                                key={p.publisher_id}
                                                                 onClick={() => {
                                                                     setSelectedPublisher(p);
-                                                                    setPublisherInput("");
                                                                     setShowPublisherDropdown(false);
-                                                                    handleInputChange("publisher", p);
+                                                                    setPublisherInput("");
                                                                 }}
-                                                                className="px-3 py-2 hover:bg-gray-100 cursor-pointer"
+                                                                className="p-3 hover:bg-gray-100 cursor-pointer flex justify-between items-center text-base"
                                                             >
-                                                                {p}
+                                                                <span className="font-medium">{p.name}</span>
+                                                                {selectedPublisher?.publisher_id === p.publisher_id && (
+                                                                    <Check size={20} className="text-green-600" />
+                                                                )}
                                                             </div>
-                                                        ))
-                                                    ) : (
-                                                        <div className="px-3 py-2 text-gray-500 text-sm">
-                                                            Không tìm thấy NXB
-                                                        </div>
-                                                    )}
+                                                        ))}
+                                                    </div>
                                                 </div>
                                             )}
                                         </div>
                                     </div>
 
-                                    {/* Category dropdown with checkboxes */}
+                                    {/* Thể loại */}
                                     <div className="relative">
-                                        <label className="text-[#7A4A2E]">Thể loại</label>
-                                        <div className="relative mt-1">
-                                            <input
-                                                value={selectedCategories.length > 0 ? selectedCategories.join(", ") : categoryInput}
-                                                onChange={(e) => {
-                                                    if (selectedCategories.length === 0) {
-                                                        setCategoryInput(e.target.value);
-                                                    }
-                                                }}
-                                                onFocus={() => setShowCategoryDropdown(true)}
-                                                onBlur={() => setTimeout(() => setShowCategoryDropdown(false), 200)}
-                                                className="w-full p-2 pr-16 rounded-lg border outline-none focus:border-[#7A4A2E] focus:ring-1 focus:ring-[#7A4A2E]"
-                                                placeholder="Tìm kiếm thể loại..."
-                                                readOnly={selectedCategories.length > 0}
-                                            />
-
-                                            {/* Clear all button */}
-                                            {selectedCategories.length > 0 && (
+                                        <label className="block text-base font-semibold text-gray-800 mb-2">
+                                            Thể loại
+                                        </label>
+                                        <div className="relative">
+                                            <div className="flex items-center gap-3">
                                                 <div
-                                                    type="button"
-                                                    onClick={() => {
-                                                        setSelectedCategories([]);
-                                                        setFormData(prev => ({ ...prev, categories: [] }));
-                                                        setCategoryInput("");
-                                                    }}
-                                                    className="absolute right-9 top-2.5 text-gray-400 hover:text-gray-600"
+                                                    className="flex-1 border-2 border-gray-300 rounded-xl cursor-pointer hover:border-gray-500"
+                                                    onClick={() => setShowCategoryDropdown(!showCategoryDropdown)}
                                                 >
-                                                    <X size={16} />
+                                                    <div className="p-3">
+                                                        {selectedCategories.length > 0 ? (
+                                                            <div className="flex items-center justify-between min-w-0">
+                                                                <span className="text-gray-800 text-base truncate block overflow-hidden whitespace-nowrap max-w-full">
+                                                                    {selectedCategories.map(c => c.name).join(", ")}
+                                                                </span>
+                                                            </div>
+                                                        ) : (
+                                                            <div className="flex justify-between items-center">
+                                                                <span className="text-gray-500 text-base">Chọn thể loại</span>
+                                                                <Plus size={20} className="text-gray-500" />
+                                                            </div>
+                                                        )}
+                                                    </div>
                                                 </div>
-                                            )}
 
-                                            <Search size={16} className="absolute right-3 top-3 text-gray-400 pointer-events-none" />
+                                                {selectedCategories.length > 0 && (
+                                                    <button
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            handleClearAllCategories();
+                                                        }}
+                                                        className="p-3 text-gray-600 hover:text-red-600 transition-colors flex-shrink-0"
+                                                        title="Xóa tất cả thể loại"
+                                                    >
+                                                        <XCircle size={22} />
+                                                    </button>
+                                                )}
+                                            </div>
 
                                             {showCategoryDropdown && (
-                                                <div className="absolute z-10 mt-1 w-full bg-white border rounded-lg shadow max-h-64 overflow-y-auto">
-                                                    {filteredCategories.length > 0 ? (
-                                                        filteredCategories.map((category) => (
+                                                <div className="absolute top-full left-0 right-0 bg-white border-2 border-gray-300 rounded-xl shadow-2xl mt-2 z-20">
+                                                    <input
+                                                        value={categoryInput}
+                                                        onChange={(e) => setCategoryInput(e.target.value)}
+                                                        placeholder="Tìm thể loại..."
+                                                        className="w-full p-3 border-b-2 border-gray-200 text-base focus:outline-none"
+                                                        onClick={(e) => e.stopPropagation()}
+                                                    />
+                                                    <div className="max-h-56 overflow-y-auto">
+                                                        {filteredCategories.slice().map(c => (
                                                             <div
-                                                                key={category}
-                                                                onClick={() => toggleCategory(category)}
-                                                                className="px-3 py-2 hover:bg-gray-100 cursor-pointer flex justify-between items-center"
+                                                                key={c.category_id}
+                                                                onClick={() => toggleCategory(c)}
+                                                                className="p-3 hover:bg-gray-100 cursor-pointer flex justify-between items-center text-base"
                                                             >
-                                                                <span>{category}</span>
-                                                                <div className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-colors ${selectedCategories.includes(category)
-                                                                    ? 'bg-[#7A4A2E] border-[#7A4A2E]'
-                                                                    : 'border-gray-300'
-                                                                    }`}>
-                                                                    {selectedCategories.includes(category) && (
-                                                                        <svg
-                                                                            className="w-3 h-3 text-white"
-                                                                            fill="none"
-                                                                            strokeLinecap="round"
-                                                                            strokeLinejoin="round"
-                                                                            strokeWidth="2"
-                                                                            viewBox="0 0 24 24"
-                                                                            stroke="currentColor"
-                                                                        >
-                                                                            <path d="M5 13l4 4L19 7"></path>
-                                                                        </svg>
-                                                                    )}
-                                                                </div>
+                                                                <span className="font-medium">{c.name}</span>
+                                                                <input
+                                                                    type="checkbox"
+                                                                    checked={selectedCategories.some(x => x.category_id === c.category_id)}
+                                                                    onChange={() => { }}
+                                                                    className="w-5 h-5 text-[#7A4A2E] rounded"
+                                                                />
                                                             </div>
-                                                        ))
-                                                    ) : (
-                                                        <div className="px-3 py-2 text-gray-500 text-sm">
-                                                            Không tìm thấy thể loại
-                                                        </div>
-                                                    )}
+                                                        ))}
+                                                    </div>
                                                 </div>
                                             )}
                                         </div>
                                     </div>
+                                </div>
 
-                                    {/* Shelf - kệ sách */}
-                                    <div className="relative">
-                                        <label className="text-[#7A4A2E]">Kệ sách</label>
+                                {/* Dòng 3: Kệ sách, Số lượng, Năm xuất bản */}
+                                <div className="grid grid-cols-3 gap-6">
+                                    {/* Kệ sách */}
+                                    <div>
+                                        <label className="block text-base font-semibold text-gray-800 mb-2">
+                                            Kệ sách
+                                        </label>
                                         <select
                                             value={selectedShelf?.shelf_id || ""}
                                             onChange={(e) =>
@@ -493,10 +379,10 @@ export default function AddBookForm({
                                                     shelves.find(s => s.shelf_id === Number(e.target.value))
                                                 )
                                             }
-                                            className="w-full mt-1 p-2.5 rounded-lg border outline-none focus:border-[#7A4A2E] focus:ring-1 focus:ring-[#7A4A2E]"
+                                            className="w-full border-2 border-gray-300 p-3 rounded-xl focus:ring-3 focus:ring-[#7A4A2E] focus:border-transparent text-base"
                                         >
-                                            <option value="">Chọn kệ sách</option>
-                                            {shelves.map(s => (
+                                            <option value="">Chọn kệ</option>
+                                            {shelves.slice().map(s => (
                                                 <option key={s.shelf_id} value={s.shelf_id}>
                                                     {s.code}
                                                 </option>
@@ -504,65 +390,73 @@ export default function AddBookForm({
                                         </select>
                                     </div>
 
-                                    {/* Quantity + Year - số lượng + năm xuất bản */}
-                                    <div className="grid grid-cols-2 gap-3">
-                                        <div>
-                                            <label className="text-[#7A4A2E]">Số lượng</label>
-                                            <input
-                                                type="number"
-                                                value={formData.quantity}
-                                                onChange={(e) => handleInputChange("quantity", e.target.value)}
-                                                className="w-full mt-1 p-2 rounded-lg border outline-none focus:border-[#7A4A2E] focus:ring-1 focus:ring-[#7A4A2E]"
-                                                min="1"
-                                            />
-                                        </div>
-                                        <div>
-                                            <label className="text-[#7A4A2E]">Xuất bản</label>
-                                            <select
-                                                value={formData.year}
-                                                onChange={(e) => handleInputChange("year", e.target.value)}
-                                                className="w-full mt-1 p-2.5 rounded-lg border outline-none focus:border-[#7A4A2E] focus:ring-1 focus:ring-[#7A4A2E]"
-                                            >
-                                                {yearOptions.map((year) => (
-                                                    <option key={year} value={year}>
-                                                        {year}
-                                                    </option>
-                                                ))}
-                                            </select>
-                                        </div>
+                                    {/* Số lượng */}
+                                    <div>
+                                        <label className="block text-base font-semibold text-gray-800 mb-2">
+                                            Số lượng
+                                        </label>
+                                        <input
+                                            type="number"
+                                            min="1"
+                                            value={formData.total_copies}
+                                            onChange={(e) =>
+                                                handleInputChange("total_copies", e.target.value)
+                                            }
+                                            className="w-full border-2 border-gray-300 p-3 rounded-xl focus:ring-3 focus:ring-[#7A4A2E] focus:border-transparent text-base"
+                                            placeholder="0"
+                                        />
+                                    </div>
+
+                                    {/* Năm xuất bản */}
+                                    <div>
+                                        <label className="block text-base font-semibold text-gray-800 mb-2">
+                                            Năm xuất bản
+                                        </label>
+                                        <select
+                                            value={formData.publish_year}
+                                            onChange={(e) =>
+                                                handleInputChange("publish_year", e.target.value)
+                                            }
+                                            className="w-full border-2 border-gray-300 p-3 rounded-xl focus:ring-3 focus:ring-[#7A4A2E] focus:border-transparent text-base"
+                                        >
+                                            <option value="">Chọn năm</option>
+                                            {yearOptions.slice(0).map(y => (
+                                                <option key={y} value={y}>{y}</option>
+                                            ))}
+                                        </select>
                                     </div>
                                 </div>
                             </div>
                         </div>
-
-                        {/* Description */}
-                        <div className="bg-white rounded-2xl p-6">
-                            <label className="text-[#7A4A2E]">Mô tả</label>
-                            <textarea
-                                value={formData.description}
-                                onChange={(e) => handleInputChange("description", e.target.value)}
-                                rows={6}
-                                className="w-full mt-2 p-3 rounded-xl border outline-none focus:border-[#7A4A2E] focus:ring-1 focus:ring-[#7A4A2E]"
-                                placeholder="Mô tả về sách..."
-                            />
-                        </div>
-
-                        {/* Actions */}
-                        <div className="flex justify-center gap-4 mt-10">
-                            <button
-                                onClick={handleSubmit}
-                                className="px-8 py-3 bg-[#7A4A2E] text-white rounded-full hover:bg-[#6a3a1e] transition-colors font-medium"
-                            >
-                                {bookToEdit ? "Cập nhật sách" : "Thêm sách"}
-                            </button>
-                            <button
-                                type="button"
-                                onClick={handleClose}
-                                className="px-8 py-3 bg-gray-200 rounded-full hover:bg-gray-300 transition-colors font-medium"
-                            >
-                                Quay lại
-                            </button>
-                        </div>
+                    </div>
+                    <div className="bg-white rounded-2xl p-10">
+                        <label className="block text-base font-semibold text-gray-800 mb-4">
+                            Mô tả
+                        </label>
+                        <textarea
+                            value={formData.description}
+                            onChange={(e) =>
+                                handleInputChange("description", e.target.value)
+                            }
+                            className="w-full flex-1 border-2 border-gray-300 p-4 rounded-xl
+             focus:ring-3 focus:ring-[#7A4A2E] resize-none text-base"
+                            placeholder="Nhập mô tả về sách..."
+                        />
+                    </div>
+                    {/* Actions */}
+                    <div className="flex justify-center gap-6 mt-8">
+                        <button
+                            onClick={handleSubmit}
+                            className="bg-[#7A4A2E] text-white px-12 py-4 rounded-xl font-semibold text-lg hover:bg-[#6a3a1e] transition-colors"
+                        >
+                            {bookToEdit ? "Cập nhật sách" : "Thêm sách"}
+                        </button>
+                        <button
+                            onClick={onClose}
+                            className="px-12 py-4 bg-gray-200 rounded-xl font-semibold text-lg hover:bg-gray-300 transition-colors"
+                        >
+                            Hủy
+                        </button>
                     </div>
                 </div>
             </div>

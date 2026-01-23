@@ -143,6 +143,10 @@
     .card:hover {
         background-color: var(--color-bg-card-hover);
     }
+
+    .scrollbar-hide::-webkit-scrollbar {
+        display: none;
+    }
 }
 
 /* =========================================================

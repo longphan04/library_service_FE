@@ -31,6 +31,25 @@ export default function BookManagement() {
   // Local search term
   const [localSearchTerm, setLocalSearchTerm] = useState(hookSearchTerm);
 
+  const handleEdit = async (bookId) => {
+    const data = await bookService.getById(bookId);
+
+    setEditBook({
+      book_id: data.book_id,
+      title: data.title,
+      description: data.description,
+      publish_year: data.publish_year,
+      language: data.language,
+      cover_url: data.cover_url,
+      authors: data.authors,       // array [{author_id, name}]
+      categories: data.categories, // nếu có
+      shelf_id: data.shelf_id,
+      publisher_id: data.publisher_id,
+    });
+
+    setOpenEditModal(true);
+  };
+
   // Đồng bộ local search term với hook search term
   useEffect(() => {
     setLocalSearchTerm(hookSearchTerm);
@@ -92,61 +111,6 @@ export default function BookManagement() {
     selectedCategory === 'all'
       ? ''
       : categories.find((c) => c.id === Number(selectedCategory))?.name || '';
-
-
-  // Lưu sách (thêm mới hoặc cập nhật)
-  const handleSaveBook = (bookData, bookId) => {
-    console.log("handleSaveBook called with:", bookData, "bookId:", bookId);
-
-    // Đảm bảo tags là array
-    const tags = Array.isArray(bookData.categories) && bookData.categories.length > 0
-      ? bookData.categories
-      : bookData.category
-        ? [bookData.category]
-        : ["Chưa phân loại"];
-
-    if (bookId) {
-      // Cập nhật sách
-      setBooks(prevBooks =>
-        prevBooks.map(book =>
-          book.id === bookId
-            ? {
-              ...book,
-              ...bookData,
-              quantity: Number(bookData.quantity),
-              availability: `${bookData.quantity} cuốn`,
-              tags: tags // Dùng categories làm tags
-            }
-            : book
-        )
-      );
-      console.log("Book updated:", bookId);
-    } else {
-      // Thêm sách mới
-      const newBook = {
-        id: Date.now(),
-        ...bookData,
-        quantity: Number(bookData.quantity),
-        availability: `${bookData.quantity} cuốn`,
-        tags: tags // Dùng categories làm tags
-      };
-
-      setBooks(prevBooks => [newBook, ...prevBooks]);
-      console.log("New book added:", newBook);
-    }
-  };
-
-  // Xử lý click nút "Chỉnh sửa" trong BookCard
-  const handleEditBookCard = async (bookId) => {
-    try {
-      const res = await axios.get(`http://10.0.5.101:3000/book/${bookId}`);
-      setEditingBook(res.data);   // FULL DATA
-      setShowAddBookForm(true);
-    } catch (err) {
-      console.error("Lỗi load book để edit:", err);
-      alert("Không tải được dữ liệu sách");
-    }
-  };
 
   const handleCheckChange = (bookId, checked) => {
     setSelectedBooks(prev => ({
@@ -249,7 +213,7 @@ export default function BookManagement() {
                     book={book}
                     isChecked={selectedBooks[book.id] || false}
                     onCheckChange={handleCheckChange}
-                    onEdit={handleEditBookCard}
+                    onEdit={() => handleOpenEditBook(book)}
                   />
                 ))}
               </div>
@@ -302,7 +266,10 @@ export default function BookManagement() {
         isOpen={showAddBookForm}
         bookToEdit={editingBook}
         onClose={handleCloseForm}
-        onSave={fetchBooks}
+        onSave={() => {
+          fetchBooks();      // 🔥 reload từ DB
+          handleCloseForm(); // đóng modal
+        }}
       />
     </>
   );
