@@ -12,7 +12,7 @@ import BorrowConfirmationModal from './BorrowConfirmationModal';
 import Toast from './Toast';
 import useBookHold from '../../hooks/useBookHold';
 import bookService from '../../services/book.service';
-import { FALLBACK_IMAGES } from '../../utils/imageUrl';
+import { FALLBACK_IMAGES, getBookCoverUrl } from '../../utils/imageUrl';
 
 // ==========================================
 // Loading Skeleton
@@ -92,7 +92,9 @@ const BookDetailModal = ({
                 id: bookData.book_id || bookData.id || bookData._id,
                 title: bookData.title || 'Không rõ',
                 author: bookData.authors?.[0]?.name || bookData.author?.name || bookData.authorName || 'Không rõ',
-                coverImage: bookData.cover_url || bookData.coverImage || bookData.image || bookData.thumbnail,
+                coverImage: getBookCoverUrl(
+                    bookData.cover_url || bookData.coverImage || bookData.image || bookData.thumbnail
+                ),
                 publishYear: bookData.publish_year || bookData.publishYear || bookData.year || 'N/A',
                 categoryId: bookData.categories?.[0]?.category_id || bookData.category?.id || bookData.categoryId,
                 categoryName: bookData.categories?.[0]?.name || bookData.category?.name || bookData.categoryName || 'Không phân loại',
@@ -261,11 +263,11 @@ const BookDetailModal = ({
                     <>
                         {/* LEFT: Book Cover */}
                         <div className="w-full md:w-2/5 bg-gray-100 flex items-center justify-center p-6 h-full">
-                            <div className="relative w-full max-h-full flex justify-center shadow-lg rounded-lg overflow-hidden shrink-0">
+                            <div className="relative w-full h-full flex justify-center items-center shadow-lg rounded-lg overflow-hidden">
                                 <img
                                     src={book.coverImage || FALLBACK_IMAGES.bookPlaceholder}
                                     alt={book.title}
-                                    className="max-h-[60vh] object-contain md:max-h-full w-auto"
+                                    className="w-full h-full object-cover"
                                     onError={(e) => {
                                         e.target.onerror = null;
                                         e.target.src = FALLBACK_IMAGES.bookPlaceholder;

@@ -9,7 +9,7 @@ import { useState, useEffect, useMemo, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { X, BookOpen, Calendar, Clock, CheckCircle, AlertCircle, Loader2 } from 'lucide-react';
 import Button from './Button';
-import { FALLBACK_IMAGES } from '../../utils/imageUrl';
+import { FALLBACK_IMAGES, getBookCoverUrl } from '../../utils/imageUrl';
 
 // ==========================================
 // Constants
@@ -45,7 +45,7 @@ const BookItem = ({ book }) => {
 
     const coverImage = imageError
         ? FALLBACK_IMAGE
-        : (book?.coverImage || book?.cover_url || FALLBACK_IMAGE);
+        : getBookCoverUrl(book?.coverImage || book?.cover_url);
 
     const title = book?.title || 'Không rõ';
     const author = book?.author || 'Không rõ';

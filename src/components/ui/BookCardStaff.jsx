@@ -1,4 +1,4 @@
-import { FALLBACK_IMAGES } from '../../utils/imageUrl';
+import { FALLBACK_IMAGES, getBookCoverUrl } from '../../utils/imageUrl';
 
 export default function BookCard({ book, isChecked, onCheckChange, onEdit }) {
   return (
@@ -13,12 +13,9 @@ export default function BookCard({ book, isChecked, onCheckChange, onEdit }) {
         />
 
         <img
-          src={
-            book.cover
-              ? `https://bd4328e96c81.ngrok-free.app/book${book.cover}`
-              : FALLBACK_IMAGES.book
-          }
+          src={getBookCoverUrl(book.cover || book.cover_url || book.coverImage)}
           alt={book.title}
+          className="w-20 h-28 object-cover rounded-md"
         />
 
 

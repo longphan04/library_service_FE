@@ -15,7 +15,7 @@ import BorrowConfirmationModal from '../../components/ui/BorrowConfirmationModal
 import Toast from '../../components/ui/Toast';
 import useBookHold from '../../hooks/useBookHold';
 import bookService from '../../services/book.service';
-import { FALLBACK_IMAGES } from '../../utils/imageUrl';
+import { FALLBACK_IMAGES, getBookCoverUrl } from '../../utils/imageUrl';
 
 // ==========================================
 // Loading Skeleton
@@ -92,7 +92,9 @@ const BookDetail = () => {
                 id: bookData.book_id || bookData.id || bookData._id,
                 title: bookData.title || 'Không rõ',
                 author: bookData.authors?.[0]?.name || bookData.author?.name || bookData.authorName || 'Không rõ',
-                coverImage: bookData.cover_url || bookData.coverImage || bookData.image || bookData.thumbnail,
+                coverImage: getBookCoverUrl(
+                    bookData.cover_url || bookData.coverImage || bookData.image || bookData.thumbnail
+                ),
                 publishYear: bookData.publish_year || bookData.publishYear || bookData.year || 'N/A',
                 categoryId: bookData.categories?.[0]?.category_id || bookData.category?.id || bookData.categoryId,
                 categoryName: bookData.categories?.[0]?.name || bookData.category?.name || bookData.categoryName || 'Không phân loại',
@@ -293,15 +295,17 @@ const BookDetail = () => {
                         {/* Book Cover - Left Side */}
                         <div className="md:col-span-1">
                             <div className="sticky top-24">
-                                <img
-                                    src={book.coverImage || FALLBACK_IMAGES.bookPlaceholder}
-                                    alt={book.title}
-                                    className="w-full rounded-lg shadow-lg"
-                                    onError={(e) => {
-                                        e.target.onerror = null;
-                                        e.target.src = FALLBACK_IMAGES.bookPlaceholder;
-                                    }}
-                                />
+                                <div className="aspect-3/4 overflow-hidden rounded-lg shadow-lg bg-gray-100">
+                                    <img
+                                        src={book.coverImage || FALLBACK_IMAGES.bookPlaceholder}
+                                        alt={book.title}
+                                        className="w-full h-full object-cover"
+                                        onError={(e) => {
+                                            e.target.onerror = null;
+                                            e.target.src = FALLBACK_IMAGES.bookPlaceholder;
+                                        }}
+                                    />
+                                </div>
                             </div>
                         </div>
 

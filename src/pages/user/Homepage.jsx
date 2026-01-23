@@ -20,6 +20,7 @@ import BookSection from '../../components/ui/BookSection';
 import BookDetailModal from '../../components/ui/BookDetailModal';
 import { useAuth } from '../../contexts/AuthContext';
 import bookService from '../../services/book.service';
+import { getBookCoverUrl } from '../../utils/imageUrl';
 
 // ==========================================
 // Homepage Component
@@ -131,7 +132,9 @@ const Homepage = () => {
             id: book.book_id || book.id || book._id,
             title: book.title,
             author: book.authors?.[0]?.name || book.author?.name || book.authorName || 'Không rõ',
-            coverImage: book.cover_url || book.coverImage || book.image || book.thumbnail,
+            coverImage: getBookCoverUrl(
+                book.cover_url || book.coverImage || book.image || book.thumbnail
+            ),
         }));
     };
 

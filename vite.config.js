@@ -10,7 +10,7 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url))
 export default defineConfig(({ mode }) => {
   // Load env file based on `mode` in the current working directory.
   const env = loadEnv(mode, process.cwd(), '')
-  const apiTarget = env.VITE_API_BASE_URL || 'https://bd4328e96c81.ngrok-free.app'
+  const apiTarget = env.VITE_API_BASE_URL || 'http://10.0.5.101:3000'
 
   return {
     plugins: [

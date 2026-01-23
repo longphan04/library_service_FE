@@ -8,6 +8,7 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import bookHoldService from '../services/book-hold.service';
 import { createBorrowRequest } from '../services/borrow-ticket.service';
+import { getBookCoverUrl } from '../utils/imageUrl';
 
 // ==========================================
 // Data Normalization Helper
@@ -42,10 +43,12 @@ const normalizeHoldData = (hold) => {
             || rawBook.author?.name
             || rawBook.authorName
             || 'Không rõ',
-        coverImage: rawBook.cover_url
+        coverImage: getBookCoverUrl(
+            rawBook.cover_url
             || rawBook.coverImage
             || rawBook.image
-            || null,
+            || rawBook.thumbnail
+        ),
         availableCopies: rawBook.available_copies
             || rawBook.availableCopies
             || rawBook.available
