@@ -6,13 +6,13 @@
 
 import Modal from './Modal';
 import Button from './Button';
-import { Calendar, Clock, RotateCcw, BookOpen } from 'lucide-react';
+import { Calendar, Clock, RotateCcw } from 'lucide-react';
 
 /**
  * BorrowConfirmationModal Component - Popup xác nhận mượn sách
  * @param {boolean} isOpen - Trạng thái mở/đóng modal
  * @param {function} onClose - Handler đóng modal
- * @param {object} bookInfo - Thông tin sách {title, author, coverImage, borrowDate, dueDate, version}
+ * @param {object} bookInfo - Thông tin sách {title, author, coverImage, borrowDate, dueDate, loanPeriod}
  * @param {function} onConfirm - Handler xác nhận mượn sách
  */
 const BorrowConfirmationModal = ({
@@ -97,17 +97,6 @@ const BorrowConfirmationModal = ({
                                 <p className="text-sm text-text-sub">Trả vào:</p>
                                 <p className="text-base font-medium text-text-primary">
                                     {bookInfo.dueDate}
-                                </p>
-                            </div>
-                        </div>
-
-                        {/* Version */}
-                        <div className="flex items-center gap-3">
-                            <BookOpen className="w-5 h-5 text-text-sub shrink-0" />
-                            <div className="flex-1">
-                                <p className="text-sm text-text-sub">Phiên bản:</p>
-                                <p className="text-base font-medium text-text-primary">
-                                    {bookInfo.version}
                                 </p>
                             </div>
                         </div>

@@ -5,6 +5,13 @@
 
 import axios from 'axios';
 
+// ==========================================
+// Header Configuration
+// ==========================================
+const NGROK_HEADERS = {
+    'ngrok-skip-browser-warning': 'true',
+};
+
 // Tạo axios instance
 // Trong môi trường development (Vite), ta sử dụng relative path '/' để Vite proxy bắt được và bypass CORS.
 // Trong production, ta sẽ sử dụng URL đầy đủ từ biến môi trường.
@@ -12,7 +19,7 @@ const instance = axios.create({
     baseURL: import.meta.env.DEV ? '/' : (import.meta.env.VITE_API_BASE_URL || '/'),
     headers: {
         'Content-Type': 'application/json',
-        'ngrok-skip-browser-warning': 'true',
+        ...NGROK_HEADERS, // Quan trọng: Luôn kèm header bypass ngrok cho mọi request qua instance
     },
 });
 
@@ -104,11 +111,16 @@ instance.interceptors.response.use(
 
             if (refreshToken) {
                 try {
-                    // Gọi API refresh token (sử dụng relative path qua proxy)
+                    // Gọi API refresh token (kèm header ngrok bypass vì dùng axios trực tiếp)
                     const response = await axios.post(
                         '/auth/refresh',
                         { refreshToken },
-                        { headers: { 'Content-Type': 'application/json' } }
+                        {
+                            headers: {
+                                'Content-Type': 'application/json',
+                                ...NGROK_HEADERS
+                            },
+                        }
                     );
 
                     const newAccessToken = response.data.token || response.data.access_token;
@@ -145,8 +157,6 @@ instance.interceptors.response.use(
         // Xử lý lỗi 403 (Forbidden - Không có quyền)
         if (error.response && error.response.status === 403) {
             console.error('Access forbidden:', error.response.data?.message || 'Bạn không có quyền truy cập');
-            // Có thể redirect về trang unauthorized hoặc homepage
-            // window.location.href = '/unauthorized';
         }
 
         return Promise.reject(error);

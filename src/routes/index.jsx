@@ -1,10 +1,14 @@
 // ==========================================
 // Routes Configuration
-// Mô tả: Cấu hình routing cho ứng dụng với route guards
+// Mô tả: Cấu hình routing cho ứng dụng với route guards và providers lồng vào router
 // Vị trí: src/routes/index.jsx
 // ==========================================
 
-import { createBrowserRouter } from 'react-router-dom';
+import { createBrowserRouter, Outlet } from 'react-router-dom';
+
+// Providers
+import { AuthProvider } from '@/contexts/AuthContext';
+import { BookDetailProvider } from '@/contexts/BookDetailContext';
 
 // Route Guards
 import ProtectedRoute from '../components/guards/ProtectedRoute';
@@ -43,199 +47,218 @@ import InventoryLog from '../pages/admin/dashboard/InventoryLog';
 import UserList from '../pages/admin/users/UserList';
 import StaffList from '../pages/admin/staff/StaffList';
 import AdminProfile from '../pages/admin/account/AdminProfile';
+
+/**
+ * Root Component - Bao bọc toàn bộ ứng dụng trong các context cần thiết.
+ * Việc đặt Provider bên trong cấu trúc Router giúp giải quyết triệt để các lỗi runtime
+ * liên quan đến việc hook được sử dụng bên ngoài provider khi định tuyến thay đổi.
+ */
+const Root = () => (
+    <AuthProvider>
+        <BookDetailProvider>
+            <Outlet />
+        </BookDetailProvider>
+    </AuthProvider>
+);
+
 // ==========================================
 // Router Configuration
 // ==========================================
 export const router = createBrowserRouter([
-    // ==========================================
-    // Protected User Routes (Authentication Required)
-    // ==========================================
-
-    // Homepage (User)
     {
-        path: '/',
-        element: (
-            <ProtectedRoute>
-                <Homepage />
-            </ProtectedRoute>
-        ),
-    },
-    // Book List with Pagination
-    {
-        path: '/books',
-        element: (
-            <ProtectedRoute>
-                <BookList />
-            </ProtectedRoute>
-        ),
-    },
-    // Book Search
-    {
-        path: '/search',
-        element: (
-            <ProtectedRoute>
-                <BookSearch />
-            </ProtectedRoute>
-        ),
-    },
-    // Categories Page
-    {
-        path: '/categories',
-        element: (
-            <ProtectedRoute>
-                <CategoriesPage />
-            </ProtectedRoute>
-        ),
-    },
-    // Category Book List (Dynamic)
-    {
-        path: '/categories/:categoryId',
-        element: (
-            <ProtectedRoute>
-                <CategoryBookList />
-            </ProtectedRoute>
-        ),
-    },
-    // Book Detail (Dynamic)
-    {
-        path: '/books/:bookId',
-        element: (
-            <ProtectedRoute>
-                <BookDetail />
-            </ProtectedRoute>
-        ),
-    },
-
-    // ==========================================
-    // MEMBER Routes (Role: MEMBER)
-    // ==========================================
-
-    // User Dashboard - MEMBER redirect destination after login
-    {
-        path: '/user',
-        element: (
-            <RoleRoute allowedRoles={[ROLES.MEMBER]}>
-                <Homepage />
-            </RoleRoute>
-        ),
-    },
-    // Bookshelf - Kệ sách cá nhân
-    {
-        path: '/bookshelf',
-        element: (
-            <ProtectedRoute>
-                <Bookshelf />
-            </ProtectedRoute>
-        ),
-    },
-    // Borrow History - Lịch sử mượn sách
-    {
-        path: '/borrow-history',
-        element: (
-            <ProtectedRoute>
-                <BorrowHistory />
-            </ProtectedRoute>
-        ),
-    },
-
-    // ==========================================
-    // STAFF Routes (Role: STAFF)
-    // ==========================================
-
-    {
-        path: '/staff',
-        element: (
-            <RoleRoute allowedRoles={[ROLES.STAFF]}>
-                <MainLayout />
-            </RoleRoute>
-        ),
-    },
-    // Staff catch-all for future nested routes
-    {
-        path: '/staff/*',
-        element: (
-            <RoleRoute allowedRoles={[ROLES.STAFF]}>
-                <MainLayout />
-            </RoleRoute>
-        ),
-    },
-
-    // ==========================================
-    // ADMIN Routes (Role: ADMIN)
-    // ==========================================
-
-    {
-        path: '/admin',
-        element: (
-            <RoleRoute allowedRoles={[ROLES.ADMIN]}>
-                <AdminLayout />
-            </RoleRoute>
-        ),
+        element: <Root />,
         children: [
-            {
-                index: true,
-                element: <div />,
-            },
-            {
-                path: 'statistics',
-                element: <Statistics />,
-            },
-            {
-                path: 'inventory',
-                element: <Inventory />,
-            },
-            {
-                path: 'inventory-log',
-                element: <InventoryLog />,
-            },
-            {
-                path: 'users',
-                element: <UserList />,
-            },
-            {
-                path: 'staff',
-                element: <StaffList />,
-            },
-            {
-                path: 'account',
-                element: <AdminProfile />,
-            },
-        ],
-    },
+            // ==========================================
+            // Protected User Routes (Yêu cầu đăng nhập)
+            // ==========================================
 
-    // ==========================================
-    // Guest Routes (Guest ✅ | Authenticated ❌ → redirect by role)
-    // ==========================================
+            // Homepage (User)
+            {
+                path: '/',
+                element: (
+                    <ProtectedRoute>
+                        <Homepage />
+                    </ProtectedRoute>
+                ),
+            },
+            // Danh sách sách
+            {
+                path: '/books',
+                element: (
+                    <ProtectedRoute>
+                        <BookList />
+                    </ProtectedRoute>
+                ),
+            },
+            // Tìm kiếm sách
+            {
+                path: '/search',
+                element: (
+                    <ProtectedRoute>
+                        <BookSearch />
+                    </ProtectedRoute>
+                ),
+            },
+            // Trang danh mục
+            {
+                path: '/categories',
+                element: (
+                    <ProtectedRoute>
+                        <CategoriesPage />
+                    </ProtectedRoute>
+                ),
+            },
+            // Danh sách sách theo danh mục (Dynamic)
+            {
+                path: '/categories/:categoryId',
+                element: (
+                    <ProtectedRoute>
+                        <CategoryBookList />
+                    </ProtectedRoute>
+                ),
+            },
+            // Chi tiết sách (Dynamic) - Có thể hiển thị dạng trang độc lập hoặc modal
+            {
+                path: '/books/:bookId',
+                element: (
+                    <ProtectedRoute>
+                        <BookDetail />
+                    </ProtectedRoute>
+                ),
+            },
 
-    // Login
-    {
-        path: '/login',
-        element: (
-            <GuestRoute>
-                <Login />
-            </GuestRoute>
-        ),
-    },
-    // Register
-    {
-        path: '/register',
-        element: (
-            <GuestRoute>
-                <Register />
-            </GuestRoute>
-        ),
-    },
+            // ==========================================
+            // MEMBER Routes (Dành cho Member)
+            // ==========================================
 
-    // ==========================================
-    // Staff/Admin Login Route
-    // ==========================================
+            // User Dashboard - Member chuyển hướng đến đây sau khi login
+            {
+                path: '/user',
+                element: (
+                    <RoleRoute allowedRoles={[ROLES.MEMBER]}>
+                        <Homepage />
+                    </RoleRoute>
+                ),
+            },
+            // Bookshelf - Kệ sách cá nhân
+            {
+                path: '/bookshelf',
+                element: (
+                    <ProtectedRoute>
+                        <Bookshelf />
+                    </ProtectedRoute>
+                ),
+            },
+            // Borrow History - Lịch sử mượn sách
+            {
+                path: '/borrow-history',
+                element: (
+                    <ProtectedRoute>
+                        <BorrowHistory />
+                    </ProtectedRoute>
+                ),
+            },
 
-    {
-        path: '/login-staff',
-        element: (
-            <StaffLoginRoute>
-                <LoginStaff />
-            </StaffLoginRoute>
-        ),
-    },
+            // ==========================================
+            // STAFF Routes (Dành cho Nhân viên)
+            // ==========================================
+
+            {
+                path: '/staff',
+                element: (
+                    <RoleRoute allowedRoles={[ROLES.STAFF]}>
+                        <MainLayout />
+                    </RoleRoute>
+                ),
+            },
+            // Staff catch-all cho các route lồng nhau trong tương lai
+            {
+                path: '/staff/*',
+                element: (
+                    <RoleRoute allowedRoles={[ROLES.STAFF]}>
+                        <MainLayout />
+                    </RoleRoute>
+                ),
+            },
+
+            // ==========================================
+            // ADMIN Routes (Dành cho Quản trị viên)
+            // ==========================================
+
+            {
+                path: '/admin',
+                element: (
+                    <RoleRoute allowedRoles={[ROLES.ADMIN]}>
+                        <AdminLayout />
+                    </RoleRoute>
+                ),
+                children: [
+                    {
+                        index: true,
+                        element: <div />,
+                    },
+                    {
+                        path: 'statistics',
+                        element: <Statistics />,
+                    },
+                    {
+                        path: 'inventory',
+                        element: <Inventory />,
+                    },
+                    {
+                        path: 'inventory-log',
+                        element: <InventoryLog />,
+                    },
+                    {
+                        path: 'users',
+                        element: <UserList />,
+                    },
+                    {
+                        path: 'staff',
+                        element: <StaffList />,
+                    },
+                    {
+                        path: 'account',
+                        element: <AdminProfile />,
+                    },
+                ],
+            },
+
+            // ==========================================
+            // Guest Routes (Khách ✅ | Đã đăng nhập ❌ → chuyển hướng theo Role)
+            // ==========================================
+
+            // Đăng nhập người dùng
+            {
+                path: '/login',
+                element: (
+                    <GuestRoute>
+                        <Login />
+                    </GuestRoute>
+                ),
+            },
+            // Đăng ký người dùng
+            {
+                path: '/register',
+                element: (
+                    <GuestRoute>
+                        <Register />
+                    </GuestRoute>
+                ),
+            },
+
+            // ==========================================
+            // Staff/Admin Login Route
+            // ==========================================
+
+            {
+                path: '/login-staff',
+                element: (
+                    <StaffLoginRoute>
+                        <LoginStaff />
+                    </StaffLoginRoute>
+                ),
+            },
+        ]
+    }
 ]);

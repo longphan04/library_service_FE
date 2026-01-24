@@ -1,7 +1,7 @@
 // ==========================================
 // Component: BorrowAllModal
-// Mô tả: Modal xác nhận mượn tất cả sách trong kệ
-// Features: Portal rendering, useMemo optimization
+// Mô tả: Modal xác nhận mượn các sách đã chọn trong kệ
+// Tính năng: Render qua Portal, tối ưu hóa với useMemo
 // Vị trí: src/components/ui/BorrowAllModal.jsx
 // ==========================================
 
@@ -12,14 +12,14 @@ import Button from './Button';
 import { FALLBACK_IMAGES, getBookCoverUrl } from '../../utils/imageUrl';
 
 // ==========================================
-// Constants
+// Hằng số (Constants)
 // ==========================================
 
-const DEFAULT_LOAN_PERIOD = 60; // days
+const DEFAULT_LOAN_PERIOD = 10; // Đổi thành 10 ngày theo yêu cầu mới
 const FALLBACK_IMAGE = FALLBACK_IMAGES.bookPlaceholder;
 
 // ==========================================
-// Date Formatter (Intl.DateTimeFormat)
+// Định dạng ngày tháng (Intl.DateTimeFormat)
 // ==========================================
 
 const dateFormatter = new Intl.DateTimeFormat('vi-VN', {
@@ -37,7 +37,7 @@ const calculateDueDate = (startDate, days) => {
 };
 
 // ==========================================
-// BookItem Component (Separated)
+// Component: BookItem (Tách riêng để tối ưu)
 // ==========================================
 
 const BookItem = ({ book }) => {
@@ -57,7 +57,7 @@ const BookItem = ({ book }) => {
 
     return (
         <div className="flex gap-3 p-3 bg-white rounded-lg border border-border">
-            {/* Cover Image */}
+            {/* Ảnh bìa */}
             <img
                 src={coverImage}
                 alt={title}
@@ -65,7 +65,7 @@ const BookItem = ({ book }) => {
                 onError={handleImageError}
             />
 
-            {/* Book Info */}
+            {/* Thông tin sách */}
             <div className="flex-1 min-w-0">
                 <h4 className="text-sm font-medium text-text-primary line-clamp-2 mb-1">
                     {title}
@@ -82,7 +82,7 @@ const BookItem = ({ book }) => {
 };
 
 // ==========================================
-// BorrowInfo Component
+// Component: BorrowInfo
 // ==========================================
 
 const BorrowInfo = ({ borrowDate, loanPeriod, dueDate }) => (
@@ -123,7 +123,7 @@ const BorrowInfo = ({ borrowDate, loanPeriod, dueDate }) => (
 );
 
 // ==========================================
-// Success State Component
+// Component: SuccessState
 // ==========================================
 
 const SuccessState = () => (
@@ -139,7 +139,7 @@ const SuccessState = () => (
 );
 
 // ==========================================
-// Error Alert Component
+// Component: ErrorAlert
 // ==========================================
 
 const ErrorAlert = ({ message }) => (
@@ -153,7 +153,7 @@ const ErrorAlert = ({ message }) => (
 );
 
 // ==========================================
-// BorrowAllModal Component
+// Component chính: BorrowAllModal
 // ==========================================
 
 const BorrowAllModal = ({
@@ -168,7 +168,7 @@ const BorrowAllModal = ({
     const [errorMessage, setErrorMessage] = useState('');
 
     // ==========================================
-    // Memoized Date Calculations
+    // Tính toán ngày tháng (Memoized)
     // ==========================================
 
     const { borrowDate, dueDate } = useMemo(() => {
@@ -177,16 +177,16 @@ const BorrowAllModal = ({
         return { borrowDate: borrow, dueDate: due };
     }, [loanPeriod]);
 
-    // Check for unavailable books
+    // Kiểm tra xem có sách nào không sẵn sàng không
     const hasUnavailableBooks = useMemo(() => {
         return books.some((hold) => (hold.book?.availableCopies ?? 0) <= 0);
     }, [books]);
 
     // ==========================================
-    // Effects
+    // Side Effects
     // ==========================================
 
-    // Reset status when modal opens
+    // Reset trạng thái khi mở modal
     useEffect(() => {
         if (isOpen) {
             setStatus('idle');
@@ -194,7 +194,7 @@ const BorrowAllModal = ({
         }
     }, [isOpen]);
 
-    // Lock body scroll when modal is open
+    // Khóa cuộn trang khi mở modal
     useEffect(() => {
         if (isOpen) {
             const originalOverflow = document.body.style.overflow;
@@ -206,7 +206,7 @@ const BorrowAllModal = ({
         }
     }, [isOpen]);
 
-    // Escape key to close modal
+    // Đóng modal bằng phím Escape
     useEffect(() => {
         if (!isOpen) return;
 
@@ -221,7 +221,7 @@ const BorrowAllModal = ({
     }, [isOpen, status, onClose]);
 
     // ==========================================
-    // Handlers
+    // Các hàm xử lý (Handlers)
     // ==========================================
 
     const handleConfirm = useCallback(async () => {
@@ -232,7 +232,7 @@ const BorrowAllModal = ({
             await onConfirm();
             setStatus('success');
 
-            // Auto close after success
+            // Tự động đóng sau khi thành công
             setTimeout(onClose, 1500);
         } catch (err) {
             setStatus('error');
@@ -250,7 +250,6 @@ const BorrowAllModal = ({
     // Render
     // ==========================================
 
-    // Don't render if not open
     if (!isOpen) return null;
 
     const isProcessing = status === 'loading';
@@ -264,16 +263,16 @@ const BorrowAllModal = ({
             aria-modal="true"
             aria-labelledby="modal-title"
         >
-            {/* Backdrop */}
+            {/* Lớp nền (Backdrop) */}
             <div
                 className="absolute inset-0 bg-black/50 backdrop-blur-sm"
                 onClick={handleBackdropClick}
                 aria-hidden="true"
             />
 
-            {/* Modal */}
+            {/* Modal chính */}
             <div className="relative w-full max-w-2xl mx-4 bg-bg-section rounded-2xl shadow-xl max-h-[90vh] overflow-hidden flex flex-col">
-                {/* Header */}
+                {/* Tiêu đề (Header) */}
                 <div className="flex items-center justify-between p-6 border-b border-border">
                     <div className="flex items-center gap-3">
                         <div className="p-2 bg-primary/10 rounded-lg">
@@ -284,7 +283,7 @@ const BorrowAllModal = ({
                                 Xác nhận mượn sách
                             </h2>
                             <p className="text-sm text-text-sub">
-                                {books.length} cuốn sách trong kệ
+                                {books.length} cuốn sách được chọn
                             </p>
                         </div>
                     </div>
@@ -298,7 +297,7 @@ const BorrowAllModal = ({
                     </button>
                 </div>
 
-                {/* Content */}
+                {/* Nội dung (Content) */}
                 <div className="flex-1 overflow-y-auto p-6 space-y-6">
                     {status === 'success' && <SuccessState />}
 
@@ -306,17 +305,17 @@ const BorrowAllModal = ({
 
                     {showContent && (
                         <>
-                            {/* Borrow Info */}
+                            {/* Thông tin mượn */}
                             <BorrowInfo
                                 borrowDate={borrowDate}
                                 loanPeriod={loanPeriod}
                                 dueDate={dueDate}
                             />
 
-                            {/* Books Grid */}
+                            {/* Danh sách sách */}
                             <div>
                                 <h3 className="text-sm font-semibold text-text-primary mb-3">
-                                    Danh sách sách ({books.length})
+                                    Danh sách sách chọn mượn ({books.length})
                                 </h3>
                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-h-64 overflow-y-auto">
                                     {books.map((hold, index) => (
@@ -328,7 +327,7 @@ const BorrowAllModal = ({
                                 </div>
                             </div>
 
-                            {/* Warning for unavailable books */}
+                            {/* Cảnh báo nếu sách không sẵn sàng */}
                             {hasUnavailableBooks && (
                                 <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 flex items-start gap-2">
                                     <AlertCircle className="w-4 h-4 text-yellow-600 shrink-0 mt-0.5" />
@@ -341,7 +340,7 @@ const BorrowAllModal = ({
                     )}
                 </div>
 
-                {/* Footer */}
+                {/* Chân trang (Footer) */}
                 {showFooter && (
                     <div className="flex justify-end gap-3 p-6 border-t border-border">
                         <Button
@@ -371,7 +370,7 @@ const BorrowAllModal = ({
         </div>
     );
 
-    // Use Portal to render modal at document.body level
+    // Sử dụng Portal để render modal ở cấp độ document.body
     return createPortal(modalContent, document.body);
 };
 

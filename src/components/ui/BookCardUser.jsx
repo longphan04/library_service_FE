@@ -1,22 +1,16 @@
-// ==========================================
-// Component: BookCard
-// Mô tả: Component hiển thị thông tin sách dạng card
-// Performance: React.memo, optimized image handling
-// Vị trí: src/components/ui/BookCard.jsx
-// ==========================================
-
 import { useState, useEffect, memo, useCallback } from 'react';
-import { Link } from 'react-router-dom';
-import { FALLBACK_IMAGES } from '../../utils/imageUrl';
+import { useBookDetail } from '@/contexts/BookDetailContext';
+import { FALLBACK_IMAGES } from '@/utils/imageUrl';
 
 // ==========================================
-// Constants
+// Hằng số (Constants)
 // ==========================================
 
 const FALLBACK_IMAGE = FALLBACK_IMAGES.bookPlaceholder;
 
 // ==========================================
-// BookCard Component
+// Component: BookCard
+// Mô tả: Card hiển thị thông tin rút gọn của sách
 // ==========================================
 
 /**
@@ -28,7 +22,8 @@ const FALLBACK_IMAGE = FALLBACK_IMAGES.bookPlaceholder;
  * @param {number} availableCopies - Số cuốn còn lại (từ API)
  * @param {boolean} showAvailability - Hiển thị số lượng còn lại
  * @param {string} className - Class tùy chỉnh thêm
- * @param {function} onClick - Hàm xử lý khi click vào card (nếu có sẽ không dùng Link)
+ * @param {function} onClick - Hàm xử lý khi click vào card. Nếu được cung cấp, nó sẽ ghi đè hành động mở Modal mặc định.
+ * @param {React.ReactNode} children - Các component bổ sung (ví dụ: CountdownTimer)
  */
 const BookCard = memo(function BookCard({
     id,
@@ -39,15 +34,21 @@ const BookCard = memo(function BookCard({
     showAvailability = false,
     className = '',
     onClick,
+    children, // Nhận children prop
 }) {
     // ==========================================
-    // Image State
+    // Context & Hooks
+    // ==========================================
+    const { openBookDetail } = useBookDetail();
+
+    // ==========================================
+    // Trạng thái hình ảnh (Image State)
     // ==========================================
 
     const [imgSrc, setImgSrc] = useState(() => coverImage || FALLBACK_IMAGE);
     const [hasError, setHasError] = useState(false);
 
-    // Sync image source when prop changes
+    // Đồng bộ nguồn ảnh khi prop thay đổi
     useEffect(() => {
         if (coverImage && coverImage !== imgSrc && !hasError) {
             setImgSrc(coverImage);
@@ -57,7 +58,7 @@ const BookCard = memo(function BookCard({
         }
     }, [coverImage]);
 
-    // Handle image error - use useCallback for stability
+    // Xử lý lỗi khi tải ảnh - sử dụng useCallback để đảm bảo tính ổn định
     const handleImageError = useCallback(() => {
         if (!hasError) {
             setHasError(true);
@@ -66,29 +67,37 @@ const BookCard = memo(function BookCard({
     }, [hasError]);
 
     // ==========================================
-    // Derived Values
+    // Giá trị phái sinh (Derived Values)
     // ==========================================
 
-    const bookUrl = `/books/${id}`;
     const isAvailable = availableCopies > 0;
 
     // ==========================================
-    // Handlers
+    // Các hàm xử lý (Handlers)
     // ==========================================
     const handleClick = (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+
+        // Nếu có hàm onClick tùy chọn, ưu tiên thực hiện và KHÔNG mở modal
         if (onClick) {
-            e.preventDefault();
             onClick(id);
+            return;
+        }
+
+        // Mở modal chi tiết sách toàn cục (nếu không có hành động ghi đè)
+        if (id && !String(id).includes('placeholder')) {
+            openBookDetail(id);
         }
     };
 
     // ==========================================
-    // Render
+    // Component hiển thị nội dung bên trong card
     // ==========================================
 
     const CardContent = () => (
         <>
-            {/* Book Cover - Fixed Aspect Ratio Container */}
+            {/* Ảnh bìa sách - Container với tỉ lệ khung hình cố định */}
             <div className="relative overflow-hidden bg-gray-100 aspect-3/4 w-full">
                 <img
                     src={imgSrc}
@@ -100,24 +109,27 @@ const BookCard = memo(function BookCard({
                 />
             </div>
 
-            {/* Book Info */}
+            {/* Thông tin sách - Đảm bảo layout không vỡ với space-y-1 */}
             <div className="p-3 space-y-1">
-                {/* Title */}
+                {/* Tiêu đề */}
                 <h3 className="text-sm font-medium text-text-primary line-clamp-2 group-hover:text-primary transition-colors">
                     {title}
                 </h3>
 
-                {/* Author */}
+                {/* Tác giả */}
                 <p className="text-xs text-text-sub line-clamp-1">
                     {author}
                 </p>
 
-                {/* Available Copies */}
+                {/* Số lượng còn lại */}
                 {showAvailability && typeof availableCopies === 'number' && (
                     <p className={`text-xs font-medium ${isAvailable ? 'text-success' : 'text-error'}`}>
                         {isAvailable ? `Còn ${availableCopies} cuốn` : 'Hết sách'}
                     </p>
                 )}
+
+                {/* RENDER CHILDREN: Vị trí ngay dưới phần hiển thị trạng thái */}
+                {children}
             </div>
         </>
     );
@@ -126,25 +138,20 @@ const BookCard = memo(function BookCard({
         <article
             className={`group bg-white rounded-lg shadow-md overflow-hidden transition-all duration-300 hover:shadow-lg ${className}`}
         >
-            {onClick ? (
-                <div
-                    onClick={handleClick}
-                    className="block cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 rounded-lg"
-                    role="button"
-                    tabIndex={0}
-                    aria-label={`Xem chi tiết sách: ${title}`}
-                >
-                    <CardContent />
-                </div>
-            ) : (
-                <Link
-                    to={bookUrl}
-                    className="block focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 rounded-lg"
-                    aria-label={`Xem chi tiết sách: ${title}`}
-                >
-                    <CardContent />
-                </Link>
-            )}
+            <div
+                onClick={handleClick}
+                className="block cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 rounded-lg"
+                role="button"
+                tabIndex={0}
+                aria-label={`Xem chi tiết sách: ${title}`}
+                onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                        handleClick(e);
+                    }
+                }}
+            >
+                <CardContent />
+            </div>
         </article>
     );
 });

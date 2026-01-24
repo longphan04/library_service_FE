@@ -68,11 +68,11 @@ const BookDetail = () => {
     // State quản lý modal xác nhận mượn sách
     const [isBorrowConfirmOpen, setIsBorrowConfirmOpen] = useState(false);
 
-    // State quản lý toast notification
+    // State quản lý toast notification (success, error, warning)
     const [toast, setToast] = useState({ isOpen: false, type: '', message: '' });
 
     // Hook quản lý book holds
-    const { createHold, isBookOnHold, actionLoading } = useBookHold();
+    const { createHold, isBookOnHold, borrowDirectly, actionLoading } = useBookHold();
 
     // ==========================================
     // Fetch Book Data from API
@@ -149,10 +149,14 @@ const BookDetail = () => {
         setIsBorrowConfirmOpen(true);
     };
 
+    /**
+     * Xác nhận mượn sách trực tiếp
+     * Cập nhật: Tạo phiếu mượn thay vì chỉ thêm vào kệ
+     */
     const handleConfirmBorrow = async () => {
         try {
-            // Call API to create book hold
-            await createHold({ bookId: book.id });
+            // Sử dụng borrowDirectly từ useBookHold hook
+            await borrowDirectly(book.id);
 
             setIsBorrowConfirmOpen(false);
             setToast({
@@ -163,11 +167,29 @@ const BookDetail = () => {
 
         } catch (err) {
             setIsBorrowConfirmOpen(false);
-            setToast({
-                isOpen: true,
-                type: 'error',
-                message: err.message || 'Mượn sách thất bại. Vui lòng thử lại'
-            });
+
+            // Xử lý lỗi giới hạn mượn sách (Max 3 phiếu)
+            const status = err.response?.status;
+            const apiMessage = err.response?.data?.message || err.message || '';
+
+            const isLimitError =
+                (status === 400 || status === 403 || status === 409 || status === 404) &&
+                (apiMessage.includes('limit') || apiMessage.includes('3 phiếu') || apiMessage.includes('trả sách'));
+
+            if (isLimitError) {
+                // Thay vì PopUp, sử dụng Toast màu nâu (warning) để đồng nhất
+                setToast({
+                    isOpen: true,
+                    type: 'warning',
+                    message: 'Bạn đã mượn tối đa 3 phiếu. Vui lòng trả sách để có thể mượn thêm!'
+                });
+            } else {
+                setToast({
+                    isOpen: true,
+                    type: 'error',
+                    message: apiMessage || 'Mượn sách thất bại. Vui lòng thử lại'
+                });
+            }
         }
     };
 
@@ -254,7 +276,7 @@ const BookDetail = () => {
     const selectedVersionData = book.versions?.find(v => v.id === selectedVersion);
 
     const borrowDate = new Date();
-    const loanPeriod = 60;
+    const loanPeriod = 10;
     const dueDate = new Date(borrowDate);
     dueDate.setDate(dueDate.getDate() + loanPeriod);
 
@@ -265,7 +287,6 @@ const BookDetail = () => {
         borrowDate: formatDate(borrowDate),
         loanPeriod: loanPeriod,
         dueDate: formatDate(dueDate),
-        version: selectedVersionData?.year || 'N/A',
     };
 
     const isAlreadyOnHold = isBookOnHold(book.id);
@@ -464,6 +485,8 @@ const BookDetail = () => {
                 onClose={() => setToast({ ...toast, isOpen: false })}
                 duration={3000}
             />
+
+            <Footer />
         </div>
     );
 };

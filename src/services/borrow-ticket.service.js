@@ -121,6 +121,26 @@ export const cancelTicket = async (id) => {
 };
 
 /**
+ * Gia hạn phiếu mượn (thêm 10 ngày)
+ * @param {string|number} id - Borrow ticket ID
+ * @returns {Promise<BorrowTicket>} - Phiếu mượn sau khi gia hạn
+ */
+export const extendTicket = async (id) => {
+    if (!id) {
+        throw new Error('Borrow ticket ID is required');
+    }
+
+    try {
+        const response = await axios.post(`/borrow-ticket/${id}/extend`);
+        console.log('[extendTicket] ✅ Success:', response.data);
+        return response.data;
+    } catch (error) {
+        console.error('[extendTicket] ❌ Error:', error.response?.status, error.response?.data);
+        throw error;
+    }
+};
+
+/**
  * Lấy danh sách phiếu mượn mới nhất (PENDING)
  * Endpoint: GET /dashboard/recent-borrow-tickets
  * @returns {Promise<BorrowTicket[]>}

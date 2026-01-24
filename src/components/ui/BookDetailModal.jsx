@@ -7,7 +7,6 @@
 import { useState, useEffect } from 'react';
 import { X, RefreshCw } from 'lucide-react';
 import Button from './Button';
-import VersionSelector from './VersionSelector';
 import BorrowConfirmationModal from './BorrowConfirmationModal';
 import Toast from './Toast';
 import useBookHold from '../../hooks/useBookHold';
@@ -15,16 +14,16 @@ import bookService from '../../services/book.service';
 import { FALLBACK_IMAGES, getBookCoverUrl } from '../../utils/imageUrl';
 
 // ==========================================
-// Loading Skeleton
+// Loading Skeleton (Hiệu ứng khi đang tải)
 // ==========================================
 const BookDetailSkeleton = () => (
     <div className="animate-pulse">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 sm:gap-8">
-            {/* Cover skeleton */}
+            {/* Skeleton ảnh bìa */}
             <div className="md:col-span-1">
                 <div className="aspect-3/4 bg-border rounded-lg"></div>
             </div>
-            {/* Info skeleton */}
+            {/* Skeleton thông tin */}
             <div className="md:col-span-2 space-y-4 sm:space-y-6">
                 <div className="h-6 bg-border rounded w-24"></div>
                 <div className="h-8 sm:h-10 bg-border rounded w-3/4"></div>
@@ -44,36 +43,29 @@ const BookDetailSkeleton = () => (
 );
 
 // ==========================================
-// BookDetailModal Component
+// Component chính: BookDetailModal
 // ==========================================
 const BookDetailModal = ({
     isOpen = false,
     onClose,
     bookId,
 }) => {
-    // Book data state
+    // Trạng thái dữ liệu sách
     const [book, setBook] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
 
-    // State quản lý modal chọn phiên bản
-    const [isVersionSelectorOpen, setIsVersionSelectorOpen] = useState(false);
-    const [selectedVersion, setSelectedVersion] = useState(null);
-
-    // State quản lý mở rộng/thu gọn mô tả
-    const [isDescriptionExpanded, setIsDescriptionExpanded] = useState(false);
-
-    // State quản lý modal xác nhận mượn sách
+    // Trạng thái modal xác nhận mượn sách
     const [isBorrowConfirmOpen, setIsBorrowConfirmOpen] = useState(false);
 
-    // State quản lý toast notification
+    // Trạng thái thông báo Toast
     const [toast, setToast] = useState({ isOpen: false, type: '', message: '' });
 
-    // Hook quản lý book holds
-    const { createHold, isBookOnHold, actionLoading } = useBookHold();
+    // Hook quản lý việc giữ sách (book holds)
+    const { createHold, isBookOnHold, borrowDirectly, actionLoading } = useBookHold();
 
     // ==========================================
-    // Fetch Book Data from API
+    // FetchBook: Lấy dữ liệu sách từ API
     // ==========================================
     const fetchBook = async () => {
         if (!bookId) return;
@@ -84,10 +76,10 @@ const BookDetailModal = ({
         try {
             const response = await bookService.getById(bookId);
 
-            // Handle different API response formats
+            // Xử lý các định dạng phản hồi khác nhau của API
             const bookData = response.data || response;
 
-            // Transform data to match API response format
+            // Chuyển đổi dữ liệu để khớp với định dạng hiển thị
             setBook({
                 id: bookData.book_id || bookData.id || bookData._id,
                 title: bookData.title || 'Không rõ',
@@ -101,62 +93,41 @@ const BookDetailModal = ({
                 availableCopies: bookData.available_copies || bookData.availableCopies || bookData.available || 0,
                 totalCopies: bookData.total_copies || bookData.totalCopies || bookData.total || 0,
                 description: bookData.description || 'Không có mô tả',
-                versions: bookData.versions || [
-                    { id: 'default', year: bookData.publish_year || bookData.publishYear || new Date().getFullYear(), available: true }
-                ],
                 publisher: bookData.publisher?.name || bookData.publisherName,
                 isbn: bookData.isbn,
             });
         } catch (err) {
-            console.error('Error fetching book:', err);
+            console.error('Lỗi khi tải dữ liệu sách:', err);
             setError(err.message || 'Không thể tải thông tin sách');
         } finally {
             setLoading(false);
         }
     };
 
-    // Fetch on open or bookId change
+    // Tải dữ liệu khi mở modal hoặc thay đổi ID sách
     useEffect(() => {
         if (isOpen && bookId) {
+            setBook(null); // Xóa dữ liệu cũ để tránh hiển thị sai lệch khi đang tải
             fetchBook();
-            // Reset states when opening new book
-            setSelectedVersion(null);
-            setIsDescriptionExpanded(false);
             setError(null);
         }
     }, [isOpen, bookId]);
 
     // ==========================================
-    // Handlers
+    // Các hàm xử lý (Handlers)
     // ==========================================
-    const handleOpenVersionSelector = () => {
-        setIsVersionSelectorOpen(true);
-    };
-
-    const handleCloseVersionSelector = () => {
-        setIsVersionSelectorOpen(false);
-    };
-
-    const handleConfirmVersion = (versionId) => {
-        setSelectedVersion(versionId);
-    };
-
     const handleBorrowBook = () => {
-        if (!selectedVersion && book?.versions?.length > 0) {
-            setToast({
-                isOpen: true,
-                type: 'warning',
-                message: 'Vui lòng chọn bản lưu trước khi mượn sách'
-            });
-            return;
-        }
         setIsBorrowConfirmOpen(true);
     };
 
+    /**
+     * Xác nhận mượn sách trực tiếp (Không qua kệ sách)
+     * Thực hiện quy trình: Tạo Hold -> Tạo Phiếu Mượn
+     */
     const handleConfirmBorrow = async () => {
         try {
-            // Call API to create book hold
-            await createHold({ bookId: book.id });
+            // Sử dụng hàm mượn trực tiếp từ hook đã được refactor
+            await borrowDirectly(book.id);
 
             setIsBorrowConfirmOpen(false);
             setToast({
@@ -167,11 +138,29 @@ const BookDetailModal = ({
 
         } catch (err) {
             setIsBorrowConfirmOpen(false);
-            setToast({
-                isOpen: true,
-                type: 'error',
-                message: err.message || 'Mượn sách thất bại. Vui lòng thử lại'
-            });
+
+            // Xử lý lỗi giới hạn mượn sách (Max 3 phiếu)
+            const status = err.response?.status;
+            const apiMessage = err.response?.data?.message || err.message || '';
+
+            const isLimitError =
+                (status === 400 || status === 403 || status === 409 || status === 404) &&
+                (apiMessage.includes('limit') || apiMessage.includes('3 phiếu') || apiMessage.includes('trả sách'));
+
+            if (isLimitError) {
+                // Thay vì PopUp, ta sử dụng Toast màu nâu (warning)
+                setToast({
+                    isOpen: true,
+                    type: 'warning',
+                    message: 'Bạn đã mượn tối đa 3 phiếu. Vui lòng trả sách để có thể mượn thêm!'
+                });
+            } else {
+                setToast({
+                    isOpen: true,
+                    type: 'error',
+                    message: apiMessage || 'Mượn sách thất bại. Vui lòng thử lại'
+                });
+            }
         }
     };
 
@@ -193,7 +182,7 @@ const BookDetailModal = ({
     };
 
     // ==========================================
-    // Helper Functions
+    // Các hàm tiện ích (Helper Functions)
     // ==========================================
     const formatDate = (date) => {
         const day = String(date.getDate()).padStart(2, '0');
@@ -205,12 +194,10 @@ const BookDetailModal = ({
     if (!isOpen) return null;
 
     // ==========================================
-    // Prepare Data for Modals
+    // Chuẩn bị dữ liệu cho các modal khác
     // ==========================================
-    const selectedVersionData = book?.versions?.find(v => v.id === selectedVersion);
-
     const borrowDate = new Date();
-    const loanPeriod = 60;
+    const loanPeriod = 10;
     const dueDate = new Date(borrowDate);
     dueDate.setDate(dueDate.getDate() + loanPeriod);
 
@@ -221,7 +208,6 @@ const BookDetailModal = ({
         borrowDate: formatDate(borrowDate),
         loanPeriod: loanPeriod,
         dueDate: formatDate(dueDate),
-        version: selectedVersionData?.year || 'N/A',
     } : {};
 
     const isAlreadyOnHold = book ? isBookOnHold(book.id) : false;
@@ -231,15 +217,15 @@ const BookDetailModal = ({
     // ==========================================
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-            {/* Overlay */}
+            {/* Lớp nền mờ (Overlay) */}
             <div
                 className="absolute inset-0 bg-black/60 backdrop-blur-sm transition-opacity"
                 onClick={onClose}
             />
 
-            {/* Modal Container - Fixed size, no scroll */}
+            {/* Container của Modal - Kích thước cố định, không cuộn bên ngoài */}
             <div className="relative w-full max-w-4xl bg-bg-section rounded-2xl shadow-2xl overflow-hidden flex flex-col md:flex-row max-h-[85vh]">
-                {/* Close Button */}
+                {/* Nút Đóng */}
                 <button
                     onClick={onClose}
                     className="absolute top-4 right-4 z-10 p-2 rounded-full bg-white/80 hover:bg-white text-text-primary shadow-sm hover:shadow transition-all cursor-pointer"
@@ -248,7 +234,7 @@ const BookDetailModal = ({
                 </button>
 
                 {loading ? (
-                    <div className="p-8 w-full"><BookDetailSkeleton /></div>
+                    <div className="p-8 w-full md:w-2/3 ml-auto"><BookDetailSkeleton /></div>
                 ) : error || !book ? (
                     <div className="text-center py-12 w-full flex flex-col items-center justify-center">
                         <h2 className="text-xl font-bold text-text-primary mb-4">
@@ -261,13 +247,13 @@ const BookDetailModal = ({
                     </div>
                 ) : (
                     <>
-                        {/* LEFT: Book Cover */}
-                        <div className="w-full md:w-2/5 bg-gray-100 flex items-center justify-center p-6 h-full">
-                            <div className="relative w-full h-full flex justify-center items-center shadow-lg rounded-lg overflow-hidden">
+                        {/* BÊN TRÁI: Ảnh bìa sách */}
+                        <div className="w-full md:w-2/5 bg-gray-100 flex items-center justify-center p-6 h-full min-h-[400px]">
+                            <div className="relative w-full aspect-3/4 shadow-lg rounded-lg overflow-hidden bg-white">
                                 <img
                                     src={book.coverImage || FALLBACK_IMAGES.bookPlaceholder}
                                     alt={book.title}
-                                    className="w-full h-full object-cover"
+                                    className="absolute inset-0 w-full h-full object-cover"
                                     onError={(e) => {
                                         e.target.onerror = null;
                                         e.target.src = FALLBACK_IMAGES.bookPlaceholder;
@@ -276,9 +262,9 @@ const BookDetailModal = ({
                             </div>
                         </div>
 
-                        {/* RIGHT: Book Info */}
+                        {/* BÊN PHẢI: Thông tin chi tiết */}
                         <div className="w-full md:w-3/5 p-6 md:p-8 flex flex-col h-full overflow-hidden">
-                            {/* Header Info */}
+                            {/* Phần đầu: Tiêu đề & Tác giả */}
                             <div className="shrink-0 space-y-2 mb-4">
                                 <span className="inline-block px-3 py-1 bg-primary/10 text-primary text-xs font-semibold rounded-full">
                                     {book.categoryName}
@@ -291,7 +277,7 @@ const BookDetailModal = ({
                                 </p>
                             </div>
 
-                            {/* Meta Grid */}
+                            {/* Lưới thông tin bổ sung */}
                             <div className="grid grid-cols-2 gap-x-4 gap-y-3 mb-6 shrink-0 text-sm">
                                 <div>
                                     <p className="text-text-sub text-xs">Năm xuất bản</p>
@@ -303,20 +289,9 @@ const BookDetailModal = ({
                                         {book.availableCopies > 0 ? 'Còn sách' : 'Hết sách'}
                                     </p>
                                 </div>
-                                {book.versions && book.versions.length > 0 && (
-                                    <div className="col-span-2 flex items-center gap-2">
-                                        <span className="text-text-sub text-xs">Bản lưu:</span>
-                                        <button
-                                            onClick={handleOpenVersionSelector}
-                                            className="text-primary text-sm font-medium hover:underline flex items-center gap-1"
-                                        >
-                                            {selectedVersionData ? selectedVersionData.year : 'Chọn phiên bản'}
-                                        </button>
-                                    </div>
-                                )}
                             </div>
 
-                            {/* Description - Flexible height with clamp */}
+                            {/* Mô tả - Chiều cao linh hoạt với giới hạn dòng */}
                             <div className="flex-1 min-h-0 relative mb-6">
                                 <h3 className="text-sm font-semibold text-text-primary mb-2">Mô tả</h3>
                                 <p className="text-sm text-text-sub leading-relaxed line-clamp-6 md:line-clamp-8 text-justify">
@@ -327,7 +302,7 @@ const BookDetailModal = ({
                                 )}
                             </div>
 
-                            {/* Actions - Fixed at bottom */}
+                            {/* Các nút hành động - Cố định ở đáy */}
                             <div className="shrink-0 flex gap-3 mt-auto">
                                 <Button
                                     variant="primary"
@@ -351,17 +326,7 @@ const BookDetailModal = ({
                 )}
             </div>
 
-            {/* Version Selector Modal */}
-            {book?.versions && book.versions.length > 0 && (
-                <VersionSelector
-                    isOpen={isVersionSelectorOpen}
-                    onClose={handleCloseVersionSelector}
-                    versions={book.versions}
-                    onConfirm={handleConfirmVersion}
-                />
-            )}
-
-            {/* Borrow Confirmation Modal */}
+            {/* Modal xác nhận mượn sách */}
             <BorrowConfirmationModal
                 isOpen={isBorrowConfirmOpen}
                 onClose={() => setIsBorrowConfirmOpen(false)}
@@ -369,7 +334,7 @@ const BookDetailModal = ({
                 onConfirm={handleConfirmBorrow}
             />
 
-            {/* Toast Notification */}
+            {/* Thông báo Toast (Dùng cho cả thành công và cảnh báo giới hạn mượn) */}
             <Toast
                 isOpen={toast.isOpen}
                 type={toast.type}

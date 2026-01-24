@@ -27,11 +27,12 @@ export const create = async (data) => {
 
 /**
  * Hủy đặt trước sách
- * @param {string|number} id - Book hold ID
+ * @param {string|number} id - Book hold ID (hold_id)
  * @returns {Promise} - Response
  */
 export const remove = async (id) => {
-    const response = await axios.delete(`/book-hold/me/${id}`);
+    // Theo đặc tả: DELETE /book-hold/:id
+    const response = await axios.delete(`/book-hold/${id}`);
     return response.data;
 };
 

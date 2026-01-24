@@ -14,10 +14,11 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { Flame, ArrowRight } from 'lucide-react';
+import { useBookDetail } from '@/contexts/BookDetailContext';
 import Spinner from './Spinner';
-import categoryService from '../../services/category.service';
-import bookService from '../../services/book.service';
-import { FALLBACK_IMAGES, getBookCoverUrl, getCategoryImageUrl } from '../../utils/imageUrl';
+import categoryService from '@/services/category.service';
+import bookService from '@/services/book.service';
+import { FALLBACK_IMAGES, getBookCoverUrl, getCategoryImageUrl } from '@/utils/imageUrl';
 
 // ==========================================
 // Hằng số
@@ -122,6 +123,11 @@ const HotCategorySkeleton = () => (
 // ==========================================
 
 const HotCategorySection = ({ className = '' }) => {
+    // ==========================================
+    // Context
+    // ==========================================
+    const { openBookDetail } = useBookDetail();
+
     // ==========================================
     // State
     // ==========================================
@@ -340,33 +346,49 @@ const HotCategorySection = ({ className = '' }) => {
 
                             {/* Grid sách - 6 columns trên desktop */}
                             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-4">
-                                {books.map((book) => (
-                                    <Link
-                                        key={book.id}
-                                        to={`/books/${book.id}`}
-                                        className="group"
-                                    >
-                                        {/* Book Cover */}
-                                        <div className="aspect-3/4 overflow-hidden rounded-lg mb-2 bg-border">
-                                            <img
-                                                src={book.coverImage || FALLBACK_IMAGES.bookPlaceholder}
-                                                alt={book.title}
-                                                className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
-                                                onError={(e) => {
-                                                    e.target.onerror = null;
-                                                    e.target.src = FALLBACK_IMAGES.bookPlaceholder;
-                                                }}
-                                            />
+                                {books.map((book) => {
+                                    const bookId = book.id || book.book_id || book._id;
+                                    const handleBookClick = (e) => {
+                                        e.preventDefault();
+                                        e.stopPropagation();
+                                        openBookDetail(bookId);
+                                    };
+
+                                    return (
+                                        <div
+                                            key={bookId}
+                                            onClick={handleBookClick}
+                                            className="group cursor-pointer"
+                                            role="button"
+                                            tabIndex={0}
+                                            onKeyDown={(e) => {
+                                                if (e.key === 'Enter' || e.key === ' ') {
+                                                    handleBookClick(e);
+                                                }
+                                            }}
+                                        >
+                                            {/* Book Cover */}
+                                            <div className="aspect-3/4 overflow-hidden rounded-lg mb-2 bg-border">
+                                                <img
+                                                    src={book.coverImage || FALLBACK_IMAGES.bookPlaceholder}
+                                                    alt={book.title}
+                                                    className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                                                    onError={(e) => {
+                                                        e.target.onerror = null;
+                                                        e.target.src = FALLBACK_IMAGES.bookPlaceholder;
+                                                    }}
+                                                />
+                                            </div>
+                                            {/* Book Info */}
+                                            <h4 className="text-sm font-medium text-text-primary line-clamp-2 group-hover:text-primary transition-colors">
+                                                {book.title}
+                                            </h4>
+                                            <p className="text-xs text-text-sub mt-1 truncate">
+                                                {book.author}
+                                            </p>
                                         </div>
-                                        {/* Book Info */}
-                                        <h4 className="text-sm font-medium text-text-primary line-clamp-2 group-hover:text-primary transition-colors">
-                                            {book.title}
-                                        </h4>
-                                        <p className="text-xs text-text-sub mt-1 truncate">
-                                            {book.author}
-                                        </p>
-                                    </Link>
-                                ))}
+                                    );
+                                })}
                             </div>
                         </div>
                     ) : (
