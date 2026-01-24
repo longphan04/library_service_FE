@@ -48,38 +48,62 @@ import AdminProfile from '../pages/admin/account/AdminProfile';
 // ==========================================
 export const router = createBrowserRouter([
     // ==========================================
-    // Public Routes (Guest ✅ | Authenticated ✅)
+    // Protected User Routes (Authentication Required)
     // ==========================================
 
     // Homepage (User)
     {
         path: '/',
-        element: <Homepage />,
+        element: (
+            <ProtectedRoute>
+                <Homepage />
+            </ProtectedRoute>
+        ),
     },
     // Book List with Pagination
     {
         path: '/books',
-        element: <BookList />,
+        element: (
+            <ProtectedRoute>
+                <BookList />
+            </ProtectedRoute>
+        ),
     },
     // Book Search
     {
         path: '/search',
-        element: <BookSearch />,
+        element: (
+            <ProtectedRoute>
+                <BookSearch />
+            </ProtectedRoute>
+        ),
     },
     // Categories Page
     {
         path: '/categories',
-        element: <CategoriesPage />,
+        element: (
+            <ProtectedRoute>
+                <CategoriesPage />
+            </ProtectedRoute>
+        ),
     },
     // Category Book List (Dynamic)
     {
         path: '/categories/:categoryId',
-        element: <CategoryBookList />,
+        element: (
+            <ProtectedRoute>
+                <CategoryBookList />
+            </ProtectedRoute>
+        ),
     },
     // Book Detail (Dynamic)
     {
         path: '/books/:bookId',
-        element: <BookDetail />,
+        element: (
+            <ProtectedRoute>
+                <BookDetail />
+            </ProtectedRoute>
+        ),
     },
 
     // ==========================================

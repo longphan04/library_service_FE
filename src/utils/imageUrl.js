@@ -44,7 +44,7 @@ export const buildImageUrl = (imagePath) => {
     }
 
     // Nếu là relative path → prefix với API base URL + /public/
-    const baseUrl = import.meta.env.VITE_API_BASE_URL || 'https://bd4328e96c81.ngrok-free.app/book';
+    const baseUrl = import.meta.env.VITE_API_BASE_URL || 'http://10.0.5.101:3000';
 
     // Đảm bảo path không bắt đầu bằng / (tránh double slash)
     const cleanPath = imagePath.startsWith('/') ? imagePath.slice(1) : imagePath;
@@ -94,7 +94,7 @@ export const buildStaticUrl = (path) => {
         return path;
     }
 
-    const baseUrl = import.meta.env.VITE_API_BASE_URL || 'https://bd4328e96c81.ngrok-free.app/book';
+    const baseUrl = import.meta.env.VITE_API_BASE_URL || 'http://10.0.5.101:3000';
     const cleanPath = path.startsWith('/') ? path : `/${path}`;
     return `${baseUrl}${cleanPath}`;
 };
