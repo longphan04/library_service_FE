@@ -26,7 +26,9 @@ const STATUS_CONFIG = {
     APPROVED: { label: 'Đã duyệt', color: 'bg-status-approved-bg text-status-approved-text' },
     CANCELLED: { label: 'Đã hủy', color: 'bg-status-cancelled-bg text-status-cancelled-text' },
     REJECTED: { label: 'Từ chối', color: 'bg-status-overdue-bg text-status-overdue-text' },
+    PICKED_UP: { label: 'Đã mượn', color: 'bg-status-borrowed-bg text-status-borrowed-text' },
     // Lowercase variants for API compatibility
+    picked_up: { label: 'Đã mượn', color: 'bg-status-borrowed-bg text-status-borrowed-text' },
     returned: { label: 'Hoàn thành', color: 'bg-status-returned-bg text-status-returned-text' },
     borrowed: { label: 'Đã mượn', color: 'bg-status-borrowed-bg text-status-borrowed-text' },
     pending: { label: 'Đang chờ', color: 'bg-status-pending-bg text-status-pending-text' },
@@ -223,9 +225,10 @@ const TicketDetailModal = ({ isOpen, onClose, ticketId, onRefreshList }) => {
 
     if (!isOpen) return null;
 
-    // Kiểm tra status có thể gia hạn hay không (thường là BORROWED hoặc APPROVED)
+    // Kiểm tra status có thể gia hạn hay không (thường là BORROWED, APPROVED hoặc PICKED_UP)
     const canExtend = ticketDetail && (
         ticketDetail.status?.toUpperCase() === 'BORROWED' ||
+        ticketDetail.status?.toUpperCase() === 'PICKED_UP' ||
         ticketDetail.status?.toUpperCase() === 'APPROVED' ||
         ticketDetail.status?.toUpperCase() === 'PENDING'
     );
@@ -302,19 +305,19 @@ const TicketDetailModal = ({ isOpen, onClose, ticketId, onRefreshList }) => {
                                     </div>
                                     <div>
                                         <p className="text-xs text-text-sub font-bold tracking-wider mb-1">Ngày tạo</p>
-                                        <p className="font-medium">{formatDate(ticketDetail.created_at || ticketDetail.createdAt)}</p>
+                                        <p className="font-medium">{formatDate(ticketDetail.requested_at || ticketDetail.created_at || ticketDetail.createdAt)}</p>
                                     </div>
                                     <div>
                                         <p className="text-xs text-text-sub font-bold tracking-wider mb-1">Ngày mượn</p>
-                                        <p className="font-medium">{formatDate(ticketDetail.borrowed_at || ticketDetail.borrowDate)}</p>
+                                        <p className="font-medium">{formatDate(ticketDetail.requested_at || ticketDetail.picked_up_at || ticketDetail.approved_at || ticketDetail.borrowed_at)}</p>
                                     </div>
                                     <div>
                                         <p className="text-xs text-text-sub font-bold tracking-wider mb-1">Hạn trả (Dự kiến)</p>
-                                        <p className="font-medium text-primary">{formatDate(ticketDetail.due_at || ticketDetail.dueDate)}</p>
+                                        <p className="font-medium text-primary">{formatDate(ticketDetail.due_date || ticketDetail.due_at || ticketDetail.dueDate)}</p>
                                     </div>
                                     <div>
                                         <p className="text-xs text-text-sub font-bold tracking-wider mb-1">Ngày trả thực tế</p>
-                                        <p className="font-medium">{formatDate(ticketDetail.returned_at || ticketDetail.returnDate)}</p>
+                                        <p className="font-medium">{formatDate(ticketDetail.returned_at || ticketDetail.returnDate || ticketDetail.return_date)}</p>
                                     </div>
                                 </div>
 
@@ -476,9 +479,10 @@ const BorrowHistory = () => {
             const transformedData = data.map(ticket => ({
                 id: ticket.ticket_id || ticket.id,
                 status: ticket.status,
-                borrowDate: ticket.borrowed_at || ticket.borrowDate || ticket.createdAt || ticket.created_at,
-                dueDate: ticket.due_at || ticket.dueDate,
-                returnDate: ticket.returned_at || ticket.returnDate,
+                borrowDate: ticket.requested_at || ticket.picked_up_at || ticket.approved_at || ticket.borrowed_at,
+                pickupDate: ticket.picked_up_at || ticket.approved_at || ticket.borrowed_at,
+                dueDate: ticket.due_date || ticket.due_at || ticket.dueDate,
+                returnDate: ticket.returned_at || ticket.returnDate || ticket.return_date,
             }));
 
             setBorrowHistory(transformedData);
@@ -501,6 +505,12 @@ const BorrowHistory = () => {
             : borrowHistory.filter((item) => {
                 const itemStatus = (item.status || '').toLowerCase();
                 const tabKey = currentTabKey.toLowerCase();
+
+                // Allow PICKED_UP status to appear in 'borrowed' tab
+                if (tabKey === 'borrowed') {
+                    return itemStatus === 'borrowed' || itemStatus === 'picked_up';
+                }
+
                 if (tabKey === 'approved') return itemStatus === 'approved';
                 return itemStatus === tabKey;
             });
@@ -627,7 +637,7 @@ const BorrowHistory = () => {
                                                     <StatusBadge status={record.status} />
                                                 </td>
                                                 <td className="px-4 py-3 text-sm text-text-primary">
-                                                    {calculateBorrowDuration(record.borrowDate, record.dueDate)}
+                                                    {calculateBorrowDuration(record.pickupDate, record.dueDate)}
                                                 </td>
                                                 <td className="px-4 py-3 text-sm text-text-primary">
                                                     {formatDate(record.returnDate)}

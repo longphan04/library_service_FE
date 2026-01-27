@@ -10,7 +10,7 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url))
 export default defineConfig(({ mode }) => {
   // Load env file based on `mode` in the current working directory.
   const env = loadEnv(mode, process.cwd(), '')
-  const apiTarget = env.VITE_API_BASE_URL || 'http://10.0.5.101:3000'
+  const apiTarget = env.VITE_API_BASE_URL || 'https://batteries-diagnosis-yard-attitudes.trycloudflare.com'
 
   // Header để bypass trang cảnh báo của Ngrok
   const ngrokHeaders = {
@@ -39,6 +39,18 @@ export default defineConfig(({ mode }) => {
           headers: ngrokHeaders,
         },
         '/api': {
+          target: apiTarget,
+          changeOrigin: true,
+          secure: false,
+          headers: ngrokHeaders,
+        },
+        '/forgot-password': {
+          target: apiTarget,
+          changeOrigin: true,
+          secure: false,
+          headers: ngrokHeaders,
+        },
+        '/reset-password': {
           target: apiTarget,
           changeOrigin: true,
           secure: false,
@@ -100,6 +112,18 @@ export default defineConfig(({ mode }) => {
         },
         '/borrow-ticket': {
           target: apiTarget,
+          changeOrigin: true,
+          secure: false,
+          headers: ngrokHeaders,
+        },
+        '/notification': {
+          target: apiTarget,
+          changeOrigin: true,
+          secure: false,
+          headers: ngrokHeaders,
+        },
+        '/ai': {
+          target: 'https://unpractised-unmilitant-cherly.ngrok-free.dev',
           changeOrigin: true,
           secure: false,
           headers: ngrokHeaders,

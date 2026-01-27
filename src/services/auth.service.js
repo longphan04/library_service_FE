@@ -276,6 +276,60 @@ export const changePassword = async (data) => {
     }
 };
 
+/**
+ * Quên mật khẩu - Gửi email để lấy lại mật khẩu
+ * Endpoint: POST /forgot-password
+ * @param {Object} data - { email: string }
+ * @returns {Promise} - Response từ server
+ */
+export const forgotPassword = async (data) => {
+    console.log('[forgotPassword] 📤 Calling POST /forgot-password with:', data);
+
+    try {
+        const response = await axios.post('/forgot-password', data);
+        console.log('[forgotPassword] ✅ Success:', response.data);
+        return response.data;
+    } catch (error) {
+        console.error('[forgotPassword] ❌ Error:', error.response?.status, error.response?.data);
+
+        if (error.response) {
+            const message = error.response.data?.message;
+            throw new Error(message || 'Gửi yêu cầu thất bại. Vui lòng thử lại.');
+        } else if (error.request) {
+            throw new Error('Không thể kết nối đến server');
+        } else {
+            throw new Error('Đã có lỗi xảy ra');
+        }
+    }
+};
+
+/**
+ * Reset mật khẩu - Đặt lại mật khẩu với token từ email
+ * Endpoint: POST /reset-password
+ * @param {Object} data - { token: string, password: string }
+ * @returns {Promise} - Response từ server
+ */
+export const resetPassword = async (data) => {
+    console.log('[resetPassword] 📤 Calling POST /reset-password');
+
+    try {
+        const response = await axios.post('/reset-password', data);
+        console.log('[resetPassword] ✅ Success:', response.data);
+        return response.data;
+    } catch (error) {
+        console.error('[resetPassword] ❌ Error:', error.response?.status, error.response?.data);
+
+        if (error.response) {
+            const message = error.response.data?.message;
+            throw new Error(message || 'Đặt lại mật khẩu thất bại. Token có thể đã hết hạn.');
+        } else if (error.request) {
+            throw new Error('Không thể kết nối đến server');
+        } else {
+            throw new Error('Đã có lỗi xảy ra');
+        }
+    }
+};
+
 // Export default object chứa tất cả functions
 const authService = {
     login,
@@ -285,6 +339,8 @@ const authService = {
     refreshToken,
     getCurrentUser,
     changePassword,
+    forgotPassword,
+    resetPassword,
     getToken,
     getRefreshToken,
     setTokens,

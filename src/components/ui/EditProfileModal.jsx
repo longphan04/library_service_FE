@@ -11,10 +11,12 @@ const EditProfileModal = ({ isOpen, onClose, userData, onSave }) => {
     const [formData, setFormData] = useState({
         name: userData?.name || '',
         email: userData?.email || '',
+        currentPassword: '',
         password: '',
         confirmPassword: '',
     });
 
+    const [showCurrentPassword, setShowCurrentPassword] = useState(false);
     const [showPassword, setShowPassword] = useState(false);
     const [showConfirmPassword, setShowConfirmPassword] = useState(false);
     const [errors, setErrors] = useState({});
@@ -41,6 +43,9 @@ const EditProfileModal = ({ isOpen, onClose, userData, onSave }) => {
         }
 
         if (formData.password) {
+            if (!formData.currentPassword) {
+                newErrors.currentPassword = 'Vui lòng nhập mật khẩu hiện tại để thay đổi mật khẩu';
+            }
             if (formData.password.length < 6) {
                 newErrors.password = 'Mật khẩu phải có ít nhất 6 ký tự';
             }
@@ -63,6 +68,7 @@ const EditProfileModal = ({ isOpen, onClose, userData, onSave }) => {
             };
 
             if (formData.password) {
+                updatedData.currentPassword = formData.currentPassword;
                 updatedData.password = formData.password;
             }
 
@@ -76,9 +82,12 @@ const EditProfileModal = ({ isOpen, onClose, userData, onSave }) => {
             name: userData?.name || '',
             email: userData?.email || '',
             password: '',
+            currentPassword: '',
             confirmPassword: '',
         });
         setErrors({});
+        setErrors({});
+        setShowCurrentPassword(false);
         setShowPassword(false);
         setShowConfirmPassword(false);
         onClose();
@@ -166,7 +175,37 @@ const EditProfileModal = ({ isOpen, onClose, userData, onSave }) => {
                         {errors.email && <p className="mt-1 text-xs text-red-500">{errors.email}</p>}
                     </div>
 
-                    {/* Password */}
+                    {/* Password Section Title */}
+                    <div className="pt-2 border-t border-gray-100">
+                        <h3 className="text-sm font-semibold text-gray-500 mb-3">Đổi mật khẩu (Tùy chọn)</h3>
+                    </div>
+
+                    {/* Current Password */}
+                    <div>
+                        <label className="block text-sm font-medium text-text-primary mb-2">
+                            <Lock size={16} className="inline mr-1" />
+                            Mật khẩu hiện tại
+                        </label>
+                        <div className="relative">
+                            <input
+                                type={showCurrentPassword ? 'text' : 'password'}
+                                name="currentPassword"
+                                value={formData.currentPassword}
+                                onChange={handleChange}
+                                placeholder="Nhập mật khẩu hiện tại nếu muốn đổi mật khẩu"
+                                className={`w-full px-4 py-3 pr-12 rounded-lg border ${errors.currentPassword ? 'border-red-500' : 'border-gray-300'
+                                    } focus:outline-none focus:ring-2 focus:ring-primary/50`}
+                            />
+                            <button
+                                type="button"
+                                onClick={() => setShowCurrentPassword(!showCurrentPassword)}
+                                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500"
+                            >
+                                {showCurrentPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                            </button>
+                        </div>
+                        {errors.currentPassword && <p className="mt-1 text-xs text-red-500">{errors.currentPassword}</p>}
+                    </div>
                     <div>
                         <label className="block text-sm font-medium text-text-primary mb-2">
                             <Lock size={16} className="inline mr-1" />

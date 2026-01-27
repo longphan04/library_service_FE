@@ -53,13 +53,13 @@ const Homepage = () => {
                 // Fetch sách mới nhất (18 cuốn - 3 trang slide)
                 const latestRes = await bookService.getAll({
                     limit: 18,
-                    sort: '-createdAt'
+                    sort: 'newest'
                 });
                 setLatestBooks(Array.isArray(latestRes) ? latestRes : latestRes.data || []);
 
                 // Fetch sách đề xuất (chỉ khi đã đăng nhập)
                 if (isAuthenticated) {
-                    const recommendedRes = await bookService.getAll({ limit: 18 });
+                    const recommendedRes = await bookService.getRecommendations(12);
                     setRecommendedBooks(Array.isArray(recommendedRes)
                         ? recommendedRes
                         : recommendedRes.data || []);

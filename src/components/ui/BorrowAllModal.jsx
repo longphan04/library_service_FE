@@ -7,7 +7,7 @@
 
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { createPortal } from 'react-dom';
-import { X, BookOpen, Calendar, Clock, CheckCircle, AlertCircle, Loader2 } from 'lucide-react';
+import { X, BookOpen, Calendar, Clock, CheckCircle, Loader2 } from 'lucide-react';
 import Button from './Button';
 import { FALLBACK_IMAGES, getBookCoverUrl } from '../../utils/imageUrl';
 
@@ -37,10 +37,46 @@ const calculateDueDate = (startDate, days) => {
 };
 
 // ==========================================
+// Component: CountdownTimer (Local)
+// ==========================================
+const CountdownTimer = ({ createdAt }) => {
+    const [timeLeft, setTimeLeft] = useState(null);
+
+    useEffect(() => {
+        if (!createdAt) return;
+        const start = new Date(createdAt).getTime();
+        const interval = setInterval(() => {
+            const now = new Date().getTime();
+            const diff = (10 * 60 * 1000) - (now - start);
+            setTimeLeft(Math.max(0, diff));
+        }, 1000);
+
+        // Init
+        const initialDiff = (10 * 60 * 1000) - (new Date().getTime() - start);
+        setTimeLeft(Math.max(0, initialDiff));
+
+        return () => clearInterval(interval);
+    }, [createdAt]);
+
+    if (timeLeft === null || timeLeft <= 0) return null;
+
+    const minutes = Math.floor(timeLeft / 60000);
+    const seconds = Math.floor((timeLeft % 60000) / 1000);
+
+    return (
+        <div className="flex items-center gap-1 text-error font-medium text-xs mt-1">
+            <Clock size={12} />
+            <span>Còn {minutes}:{seconds.toString().padStart(2, '0')}</span>
+        </div>
+    );
+};
+
+// ==========================================
 // Component: BookItem (Tách riêng để tối ưu)
 // ==========================================
 
-const BookItem = ({ book }) => {
+const BookItem = ({ hold }) => {
+    const book = hold.book || {};
     const [imageError, setImageError] = useState(false);
 
     const coverImage = imageError
@@ -49,7 +85,6 @@ const BookItem = ({ book }) => {
 
     const title = book?.title || 'Không rõ';
     const author = book?.author || 'Không rõ';
-    const availableCopies = book?.availableCopies ?? 0;
 
     const handleImageError = useCallback(() => {
         setImageError(true);
@@ -66,16 +101,21 @@ const BookItem = ({ book }) => {
             />
 
             {/* Thông tin sách */}
-            <div className="flex-1 min-w-0">
+            <div className="flex-1 min-w-0 flex flex-col justify-center">
                 <h4 className="text-sm font-medium text-text-primary line-clamp-2 mb-1">
                     {title}
                 </h4>
-                <p className="text-xs text-text-sub line-clamp-1 mb-2">
+                <p className="text-xs text-text-sub line-clamp-1 mb-1">
                     {author}
                 </p>
-                <span className={`text-xs font-medium ${availableCopies > 0 ? 'text-success' : 'text-error'}`}>
-                    {availableCopies > 0 ? `Còn ${availableCopies} cuốn` : 'Hết sách'}
-                </span>
+                {/* Note */}
+                {book.note && (
+                    <p className="text-xs text-text-sub italic bg-gray-50 p-1 rounded border-l-2 border-primary/30 line-clamp-1 mb-1">
+                        "{book.note}"
+                    </p>
+                )}
+                {/* Countdown */}
+                <CountdownTimer createdAt={hold.createdAt} />
             </div>
         </div>
     );
@@ -177,13 +217,7 @@ const BorrowAllModal = ({
         return { borrowDate: borrow, dueDate: due };
     }, [loanPeriod]);
 
-    // Kiểm tra xem có sách nào không sẵn sàng không
-    const hasUnavailableBooks = useMemo(() => {
-        return books.some((hold) => (hold.book?.availableCopies ?? 0) <= 0);
-    }, [books]);
-
-    // ==========================================
-    // Side Effects
+    // Tính toán ngày tháng (Memoized)
     // ==========================================
 
     // Reset trạng thái khi mở modal
@@ -321,21 +355,13 @@ const BorrowAllModal = ({
                                     {books.map((hold, index) => (
                                         <BookItem
                                             key={hold.id || hold.holdId || index}
-                                            book={hold.book}
+                                            hold={hold}
                                         />
                                     ))}
                                 </div>
                             </div>
 
-                            {/* Cảnh báo nếu sách không sẵn sàng */}
-                            {hasUnavailableBooks && (
-                                <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 flex items-start gap-2">
-                                    <AlertCircle className="w-4 h-4 text-yellow-600 shrink-0 mt-0.5" />
-                                    <p className="text-xs text-yellow-700">
-                                        Một số sách hiện không có sẵn. Bạn sẽ được xếp vào danh sách chờ.
-                                    </p>
-                                </div>
-                            )}
+
                         </>
                     )}
                 </div>

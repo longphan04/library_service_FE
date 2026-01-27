@@ -5,11 +5,13 @@
 // ==========================================
 
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { X, RefreshCw } from 'lucide-react';
 import Button from './Button';
 import BorrowConfirmationModal from './BorrowConfirmationModal';
 import Toast from './Toast';
 import useBookHold from '../../hooks/useBookHold';
+import { useAuth } from '../../contexts/AuthContext';
 import bookService from '../../services/book.service';
 import { FALLBACK_IMAGES, getBookCoverUrl } from '../../utils/imageUrl';
 
@@ -64,6 +66,10 @@ const BookDetailModal = ({
     // Hook quản lý việc giữ sách (book holds)
     const { createHold, isBookOnHold, borrowDirectly, actionLoading } = useBookHold();
 
+    // Hook kiểm tra trạng thái đăng nhập
+    const { isAuthenticated, isLoading: authLoading } = useAuth();
+    const navigate = useNavigate();
+
     // ==========================================
     // FetchBook: Lấy dữ liệu sách từ API
     // ==========================================
@@ -117,6 +123,12 @@ const BookDetailModal = ({
     // Các hàm xử lý (Handlers)
     // ==========================================
     const handleBorrowBook = () => {
+        // Auth guard: Redirect nếu chưa đăng nhập
+        if (!authLoading && !isAuthenticated) {
+            onClose(); // Đóng modal trước
+            navigate('/login');
+            return;
+        }
         setIsBorrowConfirmOpen(true);
     };
 
@@ -165,6 +177,13 @@ const BookDetailModal = ({
     };
 
     const handleAddToBookshelf = async () => {
+        // Auth guard: Redirect nếu chưa đăng nhập
+        if (!authLoading && !isAuthenticated) {
+            onClose(); // Đóng modal trước
+            navigate('/login');
+            return;
+        }
+
         try {
             await createHold({ bookId: book.id });
             setToast({
@@ -202,6 +221,7 @@ const BookDetailModal = ({
     dueDate.setDate(dueDate.getDate() + loanPeriod);
 
     const borrowInfo = book ? {
+        id: book.id,
         title: book.title,
         author: book.author,
         coverImage: book.coverImage,

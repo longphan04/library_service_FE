@@ -7,7 +7,7 @@
 
 import { useState, useCallback, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { BookMarked, Plus, Trash2, RefreshCw, ShoppingCart, AlertTriangle, Clock } from 'lucide-react';
+import { BookMarked, Plus, Trash2, RefreshCw, ShoppingCart, AlertTriangle, Clock, Tag } from 'lucide-react';
 import Header from '../../components/layouts/Header';
 import Footer from '../../components/layouts/Footer';
 import BookCard from '../../components/ui/BookCardUser';
@@ -67,7 +67,7 @@ const CountdownTimer = ({ createdAt, onExpire }) => {
     const seconds = Math.floor((timeLeft % 60000) / 1000);
 
     return (
-        <div className="flex items-center gap-1.5 text-success font-medium text-xs mt-1">
+        <div className="flex items-center gap-1.5 text-error font-medium text-xs mt-1">
             <Clock size={14} />
             <span>
                 Còn {minutes}:{seconds.toString().padStart(2, '0')}
@@ -177,12 +177,28 @@ const BookshelfItem = ({ hold, onRemove, isSelected, onToggleSelect }) => {
                 author={book.author}
                 coverImage={book.coverImage}
                 availableCopies={book.availableCopies}
-                showAvailability={true}
+                showAvailability={false}
                 onClick={() => onToggleSelect(id)}
                 className={`transition-all duration-300 ${isSelected ? 'ring-2 ring-primary ring-offset-2' : ''}`}
             >
-                {/* Bộ đếm ngược hiển thị bên trong card, dưới dòng status */}
-                <CountdownTimer createdAt={createdAt} onExpire={handleExpire} />
+                {/* Thông tin bổ sung */}
+                <div className="mt-2 space-y-1.5 border-t border-gray-100 pt-1.5">
+                    {/* Danh mục */}
+                    <p className="text-xs text-text-sub flex items-center gap-1.5 truncate">
+                        <Tag size={12} className="shrink-0" />
+                        <span>{book.category}</span>
+                    </p>
+
+                    {/* Note */}
+                    {book.note && (
+                        <p className="text-xs text-text-sub italic bg-gray-50 p-1 rounded border-l-2 border-primary/30 line-clamp-2">
+                            "{book.note}"
+                        </p>
+                    )}
+
+                    {/* Bộ đếm ngược hiển thị bên trong card, dưới dòng status */}
+                    <CountdownTimer createdAt={createdAt} onExpire={handleExpire} />
+                </div>
             </BookCard>
 
             {/* Nút xóa nhanh - Overlay ở góc trên phải */}

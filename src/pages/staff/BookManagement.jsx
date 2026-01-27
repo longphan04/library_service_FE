@@ -139,7 +139,7 @@ export default function BookManagement() {
   // Xử lý click nút "Chỉnh sửa" trong BookCard
   const handleEditBookCard = async (bookId) => {
     try {
-      const res = await axios.get(`http://10.0.5.101:3000/book/${bookId}`);
+      const res = await axios.get(`https://batteries-diagnosis-yard-attitudes.trycloudflare.com/book/${bookId}`);
       setEditingBook(res.data);   // FULL DATA
       setShowAddBookForm(true);
     } catch (err) {

@@ -19,7 +19,7 @@
 //   - Tự động xử lý 401 redirect về login
 // ==========================================
 
-import axios from './axios';
+import axios, { getToken } from './axios';
 
 // ==========================================
 // getAll - Lấy danh sách sách
@@ -167,6 +167,33 @@ export const getRecentBooks = async () => {
 };
 
 // ==========================================
+// getRecommendations - Lấy danh sách sách đề xuất
+// ==========================================
+
+/**
+ * Lấy danh sách sách đề xuất cho người dùng
+ * Endpoint: GET /book/recommendation
+ * 
+ * @param {number} [limit] - Số lượng sách cần lấy
+ * @returns {Promise<Array>} Danh sách sách đề xuất
+ */
+export const getRecommendations = async (limit = 12) => {
+    try {
+        const token = getToken();
+        const headers = token ? { Authorization: `Bearer ${token}` } : {};
+
+        const response = await axios.get('/book/recommendation', {
+            params: { limit },
+            headers
+        });
+        return response.data;
+    } catch (error) {
+        console.error('Error fetching recommendations:', error);
+        return [];
+    }
+};
+
+// ==========================================
 // Utility Functions - Các hàm tiện ích
 // ==========================================
 
@@ -241,6 +268,7 @@ const bookService = {
     getById,          // Lấy chi tiết sách
     getBookCopies,    // Lấy danh sách bản sao
     getRecentBooks,   // Lấy sách mới thêm
+    getRecommendations, // Lấy sách đề xuất
     buildQueryString, // Tạo query string
     parseQueryString, // Parse query string
 };

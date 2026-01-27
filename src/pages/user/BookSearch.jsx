@@ -17,6 +17,7 @@ import { AlertCircle, ArrowLeft } from 'lucide-react';
 // Services
 import bookService from '../../services/book.service';
 import categoryService from '../../services/category.service';
+import FloatingChatButton from '../../components/ui/FloatingChatButton';
 
 // ==========================================
 // Hằng số (Constants)
@@ -334,6 +335,8 @@ const BookSearch = () => {
                     </div>
                 )}
             </main>
+
+            <FloatingChatButton />
 
             <Footer />
         </div>

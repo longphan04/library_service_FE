@@ -1,6 +1,6 @@
 import { useState, useEffect, memo, useCallback } from 'react';
 import { useBookDetail } from '@/contexts/BookDetailContext';
-import { FALLBACK_IMAGES } from '@/utils/imageUrl';
+import { FALLBACK_IMAGES, getBookCoverUrl } from '@/utils/imageUrl';
 
 // ==========================================
 // Hằng số (Constants)
@@ -45,15 +45,18 @@ const BookCard = memo(function BookCard({
     // Trạng thái hình ảnh (Image State)
     // ==========================================
 
-    const [imgSrc, setImgSrc] = useState(() => coverImage || FALLBACK_IMAGE);
+    // Sử dụng getBookCoverUrl để đảm bảo URL luôn đúng format (prefix /public/book/ nếu cần)
+    const validCoverUrl = getBookCoverUrl(coverImage);
+    const [imgSrc, setImgSrc] = useState(() => validCoverUrl);
     const [hasError, setHasError] = useState(false);
 
     // Đồng bộ nguồn ảnh khi prop thay đổi
     useEffect(() => {
-        if (coverImage && coverImage !== imgSrc && !hasError) {
-            setImgSrc(coverImage);
+        const newUrl = getBookCoverUrl(coverImage);
+        if (newUrl && newUrl !== imgSrc && !hasError) {
+            setImgSrc(newUrl);
             setHasError(false);
-        } else if (!coverImage && imgSrc !== FALLBACK_IMAGE) {
+        } else if (!newUrl && imgSrc !== FALLBACK_IMAGE) {
             setImgSrc(FALLBACK_IMAGE);
         }
     }, [coverImage]);

@@ -6,6 +6,8 @@
 
 import { useState, useRef, useEffect } from 'react';
 import { Link, NavLink, useNavigate } from 'react-router-dom';
+import userService from '../../services/user.service';
+import authService from '../../services/auth.service';
 import {
     Search,
     User,
@@ -25,6 +27,8 @@ import Logo from '../../assets/icons/logo.png';
 // Import SearchBar component
 import SearchBar from '../ui/SearchBar';
 import EditProfileModal from '../ui/EditProfileModal';
+import NotificationDropdown from '../ui/NotificationDropdown';
+import Toast from '../ui/Toast';
 import { useAuth } from '../../contexts/AuthContext';
 import { FALLBACK_IMAGES } from '../../utils/imageUrl';
 
@@ -60,7 +64,7 @@ const Header = () => {
     const navigate = useNavigate();
 
     // Get user data from AuthContext (fetched from API on mount)
-    const { isAuthenticated, user, isLoading: isAuthLoading, logout: authLogout } = useAuth();
+    const { isAuthenticated, user, isLoading: isAuthLoading, logout: authLogout, updateUser } = useAuth();
 
     // State quản lý mobile menu mở/đóng
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -78,10 +82,13 @@ const Header = () => {
     // State quản lý edit profile modal
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 
+    // State quản lý toast
+    const [toast, setToast] = useState({ isOpen: false, type: '', message: '' });
+
     // ==========================================
     // User Display Data (from AuthContext)
     // ==========================================
-    const userDisplayName = user?.fullName || user?.name || user?.email?.split('@')[0] || 'User';
+    const userDisplayName = user?.full_name || user?.fullName || user?.name || user?.email?.split('@')[0] || 'User';
     const userEmail = user?.email || '';
     const userAvatar = user?.avatar || user?.avatarUrl || DEFAULT_AVATAR;
 
@@ -137,10 +144,52 @@ const Header = () => {
     };
 
     // Handle save profile
-    const handleSaveProfile = (updatedData) => {
-        console.log('Updating profile:', updatedData);
-        // TODO: Call userService.updateMe() to update profile
-        alert('Cập nhật thông tin thành công!');
+    const handleSaveProfile = async (updatedData) => {
+        try {
+            console.log('Updating profile:', updatedData);
+
+            // 1. Update Profile Info (Name/Email)
+            if (updatedData.name || updatedData.email) {
+                const profileUpdatePayload = {
+                    full_name: updatedData.name, // Map name to full_name for backend
+                    email: updatedData.email
+                };
+
+                await userService.updateMe(profileUpdatePayload);
+
+                // Update local context
+                // Note: We update both fullName and full_name to ensure Headers display correctly
+                updateUser({
+                    full_name: updatedData.name,
+                    fullName: updatedData.name,
+                    email: updatedData.email
+                });
+            }
+
+            // 2. Change Password (if provided)
+            if (updatedData.password) {
+                // Backend requires currentPassword for security
+                await authService.changePassword({
+                    currentPassword: updatedData.currentPassword,
+                    newPassword: updatedData.password
+                });
+            }
+
+            setToast({
+                isOpen: true,
+                type: 'success',
+                message: 'Cập nhật thông tin thành công!'
+            });
+            setIsUserDropdownOpen(false);
+
+        } catch (error) {
+            console.error('Update profile failed:', error);
+            setToast({
+                isOpen: true,
+                type: 'error',
+                message: error.message || 'Cập nhật thất bại'
+            });
+        }
     };
 
     // Handle logout
@@ -213,14 +262,11 @@ const Header = () => {
                             {isAuthenticated ? (
                                 // Authenticated User UI
                                 <>
-                                    {/* Notification Button */}
-                                    <button
-                                        type="button"
-                                        className="p-2 rounded-full text-primary hover:bg-primary/10 transition-colors"
-                                        aria-label="Thông báo"
-                                    >
-                                        <Bell size={ICON_SIZE} strokeWidth={ICON_STROKE_WIDTH} />
-                                    </button>
+                                    {/* Notification Dropdown */}
+                                    <NotificationDropdown
+                                        iconSize={ICON_SIZE}
+                                        iconStrokeWidth={ICON_STROKE_WIDTH}
+                                    />
 
                                     {/* User Dropdown */}
                                     <div className="relative" ref={userDropdownRef}>
@@ -403,12 +449,20 @@ const Header = () => {
                 </nav>
             )}
 
-            {/* Edit Profile Modal */}
             <EditProfileModal
                 isOpen={isEditModalOpen}
                 onClose={() => setIsEditModalOpen(false)}
                 userData={user}
                 onSave={handleSaveProfile}
+            />
+
+            {/* Toast Notification */}
+            <Toast
+                isOpen={toast.isOpen}
+                type={toast.type}
+                message={toast.message}
+                onClose={() => setToast({ ...toast, isOpen: false })}
+                duration={3000}
             />
         </header>
     );

@@ -14,6 +14,7 @@ import VersionSelector from '../../components/ui/VersionSelector';
 import BorrowConfirmationModal from '../../components/ui/BorrowConfirmationModal';
 import Toast from '../../components/ui/Toast';
 import useBookHold from '../../hooks/useBookHold';
+import { useAuth } from '../../contexts/AuthContext';
 import bookService from '../../services/book.service';
 import { FALLBACK_IMAGES, getBookCoverUrl } from '../../utils/imageUrl';
 
@@ -73,6 +74,9 @@ const BookDetail = () => {
 
     // Hook quản lý book holds
     const { createHold, isBookOnHold, borrowDirectly, actionLoading } = useBookHold();
+
+    // Hook kiểm tra trạng thái đăng nhập
+    const { isAuthenticated, isLoading: authLoading } = useAuth();
 
     // ==========================================
     // Fetch Book Data from API
@@ -138,6 +142,12 @@ const BookDetail = () => {
     };
 
     const handleBorrowBook = () => {
+        // Auth guard: Redirect nếu chưa đăng nhập
+        if (!authLoading && !isAuthenticated) {
+            navigate('/login');
+            return;
+        }
+
         if (!selectedVersion && book?.versions?.length > 0) {
             setToast({
                 isOpen: true,
@@ -194,6 +204,12 @@ const BookDetail = () => {
     };
 
     const handleAddToBookshelf = async () => {
+        // Auth guard: Redirect nếu chưa đăng nhập
+        if (!authLoading && !isAuthenticated) {
+            navigate('/login');
+            return;
+        }
+
         try {
             await createHold({ bookId: book.id });
             setToast({
@@ -281,6 +297,8 @@ const BookDetail = () => {
     dueDate.setDate(dueDate.getDate() + loanPeriod);
 
     const borrowInfo = {
+        id: book.id,
+        availableCopies: book.availableCopies,
         title: book.title,
         author: book.author,
         coverImage: book.coverImage,

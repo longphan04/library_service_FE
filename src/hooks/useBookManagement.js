@@ -1,8 +1,8 @@
 import { useState, useEffect, useCallback } from "react";
 import axios from "axios";
 
-const API_URL = "http://10.0.5.101:3000/book";
-const CATEGORY_API_URL = "http://10.0.5.101:3000/category";
+const API_URL = "https://batteries-diagnosis-yard-attitudes.trycloudflare.com/book";
+const CATEGORY_API_URL = "https://batteries-diagnosis-yard-attitudes.trycloudflare.com/category";
 
 export default function useBookManagement() {
     const [books, setBooks] = useState([]);

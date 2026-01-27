@@ -21,7 +21,7 @@ export const FALLBACK_IMAGES = {
  * 
  * API trả về relative path (ví dụ: "avatar/image.jpg")
  * FE cần prefix với base URL + /public/
- * Kết quả: http://10.0.5.101:3000/public/avatar/image.jpg
+ * Kết quả: https://batteries-diagnosis-yard-attitudes.trycloudflare.com/public/avatar/image.jpg
  * 
  * @param {string} imagePath - Path ảnh từ API (có thể là full URL hoặc relative)
  * @returns {string|null} - Full URL hoặc null nếu không có path
@@ -29,7 +29,7 @@ export const FALLBACK_IMAGES = {
  * @example
  * // API trả về: avatar_url: "avatar/user123.jpg"
  * buildImageUrl('avatar/user123.jpg')
- * // → 'http://10.0.5.101:3000/public/avatar/user123.jpg'
+ * // → 'https://batteries-diagnosis-yard-attitudes.trycloudflare.com/public/avatar/user123.jpg'
  * 
  * // Full URL → return nguyên
  * buildImageUrl('https://example.com/img.jpg') 
@@ -44,7 +44,7 @@ export const buildImageUrl = (imagePath) => {
     }
 
     // Nếu là relative path → prefix với API base URL + /public/
-    const baseUrl = import.meta.env.VITE_API_BASE_URL || 'http://10.0.5.101:3000';
+    const baseUrl = import.meta.env.VITE_API_BASE_URL || 'https://batteries-diagnosis-yard-attitudes.trycloudflare.com';
 
     // Đảm bảo path không bắt đầu bằng / (tránh double slash)
     const cleanPath = imagePath.startsWith('/') ? imagePath.slice(1) : imagePath;
@@ -54,12 +54,27 @@ export const buildImageUrl = (imagePath) => {
 
 /**
  * Build URL cho ảnh bìa sách
- * @param {string} coverUrl - cover_url từ API
+ * Cố định path: /public/book/
+ * @param {string} coverUrl - cover_url từ API (filename hoặc relative path)
  * @returns {string} - Full URL hoặc fallback
  */
 export const getBookCoverUrl = (coverUrl) => {
-    const url = buildImageUrl(coverUrl);
-    return url || FALLBACK_IMAGES.bookPlaceholder;
+    if (!coverUrl) return FALLBACK_IMAGES.bookPlaceholder;
+
+    // Nếu là full URL thì giữ nguyên
+    if (coverUrl.startsWith('http')) return coverUrl;
+
+    const baseUrl = import.meta.env.VITE_API_BASE_URL || 'https://batteries-diagnosis-yard-attitudes.trycloudflare.com';
+
+    // Clean path: xóa dấu / ở đầu nếu có
+    let cleanPath = coverUrl.startsWith('/') ? coverUrl.slice(1) : coverUrl;
+
+    // Nếu path chưa có 'book/', thêm vào
+    if (!cleanPath.startsWith('book/')) {
+        cleanPath = `book/${cleanPath}`;
+    }
+
+    return `${baseUrl}/public/${cleanPath}`;
 };
 
 /**
@@ -94,9 +109,9 @@ export const buildStaticUrl = (path) => {
         return path;
     }
 
-    const baseUrl = import.meta.env.VITE_API_BASE_URL || 'http://10.0.5.101:3000';
+    const baseUrl = import.meta.env.VITE_API_BASE_URL || 'https://batteries-diagnosis-yard-attitudes.trycloudflare.com';
     const cleanPath = path.startsWith('/') ? path : `/${path}`;
-    return `${baseUrl}${cleanPath}`;
+    return `${baseUrl}/public/${cleanPath}`;
 };
 
 export default {

@@ -106,7 +106,9 @@ export const createBorrowRequest = async (hold_ids) => {
 };
 
 /**
- * Hủy phiếu mượn (nếu backend hỗ trợ)
+ * Hủy phiếu mượn (Member chỉ được hủy khi trạng thái PENDING)
+ * Endpoint: PUT /borrow-ticket/:id/member
+ * Body: 'cancelled'
  * @param {string|number} id - Borrow ticket ID
  * @returns {Promise<void>}
  * @throws {Error} Nếu id không hợp lệ
@@ -116,12 +118,25 @@ export const cancelTicket = async (id) => {
         throw new Error('Borrow ticket ID is required');
     }
 
-    const response = await axios.delete(`/borrow-ticket/${id}`);
-    return response.data;
+    console.log('[cancelTicket] 📤 Calling PUT /borrow-ticket/' + id + '/member with action: cancel');
+
+    try {
+        // API spec: PUT /borrow-ticket/:id/member với action: 'cancel' hoặc 'renew'
+        const response = await axios.put(`/borrow-ticket/${id}/member`, {
+            action: 'cancel'
+        });
+        console.log('[cancelTicket] ✅ Success:', response.data);
+        return response.data;
+    } catch (error) {
+        console.error('[cancelTicket] ❌ Error:', error.response?.status, error.response?.data);
+        throw error;
+    }
 };
 
 /**
  * Gia hạn phiếu mượn (thêm 10 ngày)
+ * Endpoint: PUT /borrow-ticket/:id/member
+ * Body: { action: 'renew' }
  * @param {string|number} id - Borrow ticket ID
  * @returns {Promise<BorrowTicket>} - Phiếu mượn sau khi gia hạn
  */
@@ -130,8 +145,13 @@ export const extendTicket = async (id) => {
         throw new Error('Borrow ticket ID is required');
     }
 
+    console.log('[extendTicket] 📤 Calling PUT /borrow-ticket/' + id + '/member with action: renew');
+
     try {
-        const response = await axios.post(`/borrow-ticket/${id}/extend`);
+        // API spec: PUT /borrow-ticket/:id/member với action: 'renew'
+        const response = await axios.put(`/borrow-ticket/${id}/member`, {
+            action: 'renew'
+        });
         console.log('[extendTicket] ✅ Success:', response.data);
         return response.data;
     } catch (error) {

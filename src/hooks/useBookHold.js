@@ -6,6 +6,8 @@
 // ==========================================
 
 import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../contexts/AuthContext';
 import bookHoldService from '../services/book-hold.service';
 import { createBorrowRequest } from '../services/borrow-ticket.service';
 import { getBookCoverUrl } from '../utils/imageUrl';
@@ -50,11 +52,17 @@ const normalizeHoldData = (hold) => {
             || rawBook.image
             || rawBook.thumbnail
         ),
-        // Số lượng bản sao có sẵn
+        // Số lượng bản sao có sẵn - GIỮ NGUYÊN GIÁ TRỊ TỪ API, KHÔNG DEFAULT VỀ 0
+        // Nếu undefined, BookCard sẽ không hiển thị "Hết sách"
         availableCopies: rawBook.available_copies
-            || rawBook.availableCopies
-            || rawBook.available
-            || 0,
+            ?? rawBook.availableCopies
+            ?? rawBook.available,
+        category: rawBook.categories?.[0]?.name
+            || rawBook.category?.name
+            || rawBook.category
+            || rawBook.categories
+            || 'Chưa phân loại',
+        note: hold.note || rawBook.note || null,
     };
 
     return {
@@ -88,6 +96,23 @@ const useBookHold = () => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [actionLoading, setActionLoading] = useState(false);
+
+    // Auth state và navigation
+    const { isAuthenticated, isLoading: authLoading } = useAuth();
+    const navigate = useNavigate();
+
+    // ==========================================
+    // Auth Guard: Kiểm tra đăng nhập trước khi thực hiện action
+    // Nếu chưa đăng nhập → redirect /login, không gọi API, không hiển thị lỗi
+    // ==========================================
+    const checkAuthAndRedirect = useCallback(() => {
+        if (authLoading) return false; // Đợi auth state khởi tạo xong
+        if (!isAuthenticated) {
+            navigate('/login');
+            return false;
+        }
+        return true;
+    }, [isAuthenticated, authLoading, navigate]);
 
     // ==========================================
     // Hiệu năng: Sử dụng Map/Set để truy cập dữ liệu O(1)
@@ -138,7 +163,12 @@ const useBookHold = () => {
 
     // Tự động tải dữ liệu khi sử dụng hook
     useEffect(() => {
-        fetchHolds();
+        const token = bookHoldService.getToken ? bookHoldService.getToken() : localStorage.getItem('access_token');
+        if (token) {
+            fetchHolds();
+        } else {
+            setLoading(false);
+        }
     }, [fetchHolds]);
 
     // ==========================================
@@ -146,6 +176,9 @@ const useBookHold = () => {
     // ==========================================
 
     const createHold = useCallback(async (data) => {
+        // Auth guard: Redirect nếu chưa đăng nhập
+        if (!checkAuthAndRedirect()) return null;
+
         setActionLoading(true);
         setError(null);
 
@@ -168,13 +201,16 @@ const useBookHold = () => {
         } finally {
             setActionLoading(false);
         }
-    }, []);
+    }, [checkAuthAndRedirect]);
 
     // ==========================================
     // Remove Hold: Hủy giữ sách (DELETE /book-hold/:id)
     // ==========================================
 
-    const removeHold = useCallback(async (id) => {
+    const removeHold = useCallback(async (holdId) => {
+        // Debug: Log the holdId being removed
+        console.log('[useBookHold] removeHold called with holdId:', holdId);
+
         setActionLoading(true);
         setError(null);
 
@@ -182,14 +218,17 @@ const useBookHold = () => {
         const previousHolds = holds;
 
         // Xóa tạm thời khỏi giao diện để UX mượt mà
+        // Kiểm tra cả hold.id và hold.holdId vì có thể khác nhau
         setHolds((prev) => prev.filter((hold) =>
-            hold.id !== id && hold.holdId !== id
+            hold.id !== holdId && hold.holdId !== holdId
         ));
 
         try {
-            await bookHoldService.remove(id);
+            await bookHoldService.remove(holdId);
+            console.log('[useBookHold] Remove success for holdId:', holdId);
         } catch (err) {
             console.error('[useBookHold] Remove Error:', err);
+            console.error('[useBookHold] Error response:', err.response?.data);
             // Phục hồi lại danh sách nếu server không xử lý thành công
             setHolds(previousHolds);
             setError(err.message || 'Không thể xóa sách khỏi kệ');
@@ -197,13 +236,16 @@ const useBookHold = () => {
         } finally {
             setActionLoading(false);
         }
-    }, [holds]);
+    }, [holds, checkAuthAndRedirect]);
 
     // ==========================================
     // Borrow: Tiến hành mượn sách đã chọn (tạo phiếu mượn)
     // ==========================================
 
     const borrowAllHolds = useCallback(async (selectedIds = null) => {
+        // Auth guard: Redirect nếu chưa đăng nhập
+        if (!checkAuthAndRedirect()) return null;
+
         // Lọc ra các bản ghi hold người dùng đã chọn (tối đa 5)
         const targetHolds = selectedIds
             ? holds.filter(h => selectedIds.includes(h.id) || selectedIds.includes(h.holdId))
@@ -230,7 +272,7 @@ const useBookHold = () => {
         } finally {
             setActionLoading(false);
         }
-    }, [holds]);
+    }, [holds, checkAuthAndRedirect]);
 
     // ==========================================
     // Borrow Directly: Mượn ngay không qua Kệ sách
@@ -238,6 +280,9 @@ const useBookHold = () => {
     // ==========================================
 
     const borrowDirectly = useCallback(async (bookId) => {
+        // Auth guard: Redirect nếu chưa đăng nhập
+        if (!checkAuthAndRedirect()) return null;
+
         setActionLoading(true);
         setError(null);
 
@@ -267,7 +312,7 @@ const useBookHold = () => {
         } finally {
             setActionLoading(false);
         }
-    }, [holdsByBookId]);
+    }, [holdsByBookId, checkAuthAndRedirect]);
 
     // ==========================================
     // Các hàm tra cứu nhanh và thao tác local

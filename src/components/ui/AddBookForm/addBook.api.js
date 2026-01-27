@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const BASE_URL = 'http://10.0.5.101:3000';
+const BASE_URL = 'https://batteries-diagnosis-yard-attitudes.trycloudflare.com';
 
 export const getAuthors = () => axios.get(`${BASE_URL}/author`);
 export const getPublishers = () => axios.get(`${BASE_URL}/publisher`);

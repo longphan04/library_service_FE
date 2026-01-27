@@ -32,6 +32,8 @@ import Bookshelf from '../pages/user/Bookshelf';
 import Login from '../pages/auth/Login';
 import LoginStaff from '../pages/auth/LoginStaff';
 import Register from '../pages/auth/Register';
+import ForgotPassword from '../pages/auth/ForgotPassword';
+import ResetPassword from '../pages/auth/ResetPassword';
 
 // Route Guards - Staff Login
 import StaffLoginRoute from '../components/guards/StaffLoginRoute';
@@ -72,59 +74,35 @@ export const router = createBrowserRouter([
             // Protected User Routes (Yêu cầu đăng nhập)
             // ==========================================
 
-            // Homepage (User)
+            // Homepage (Public)
             {
                 path: '/',
-                element: (
-                    <ProtectedRoute>
-                        <Homepage />
-                    </ProtectedRoute>
-                ),
+                element: <Homepage />,
             },
-            // Danh sách sách
+            // Danh sách sách (Public - Read only)
             {
                 path: '/books',
-                element: (
-                    <ProtectedRoute>
-                        <BookList />
-                    </ProtectedRoute>
-                ),
+                element: <BookList />,
             },
-            // Tìm kiếm sách
+            // Tìm kiếm sách (Public)
             {
                 path: '/search',
-                element: (
-                    <ProtectedRoute>
-                        <BookSearch />
-                    </ProtectedRoute>
-                ),
+                element: <BookSearch />,
             },
-            // Trang danh mục
+            // Trang danh mục (Public)
             {
                 path: '/categories',
-                element: (
-                    <ProtectedRoute>
-                        <CategoriesPage />
-                    </ProtectedRoute>
-                ),
+                element: <CategoriesPage />,
             },
-            // Danh sách sách theo danh mục (Dynamic)
+            // Danh sách sách theo danh mục (Public)
             {
                 path: '/categories/:categoryId',
-                element: (
-                    <ProtectedRoute>
-                        <CategoryBookList />
-                    </ProtectedRoute>
-                ),
+                element: <CategoryBookList />,
             },
-            // Chi tiết sách (Dynamic) - Có thể hiển thị dạng trang độc lập hoặc modal
+            // Chi tiết sách (Public)
             {
                 path: '/books/:bookId',
-                element: (
-                    <ProtectedRoute>
-                        <BookDetail />
-                    </ProtectedRoute>
-                ),
+                element: <BookDetail />,
             },
 
             // ==========================================
@@ -243,6 +221,24 @@ export const router = createBrowserRouter([
                 element: (
                     <GuestRoute>
                         <Register />
+                    </GuestRoute>
+                ),
+            },
+            // Quên mật khẩu
+            {
+                path: '/forgot-password',
+                element: (
+                    <GuestRoute>
+                        <ForgotPassword />
+                    </GuestRoute>
+                ),
+            },
+            // Đặt lại mật khẩu (với token từ email)
+            {
+                path: '/reset-password',
+                element: (
+                    <GuestRoute>
+                        <ResetPassword />
                     </GuestRoute>
                 ),
             },
