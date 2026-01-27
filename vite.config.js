@@ -10,10 +10,47 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url))
 export default defineConfig(({ mode }) => {
   // Load env file based on `mode` in the current working directory.
   const env = loadEnv(mode, process.cwd(), '')
-  const apiTarget = env.VITE_API_BASE_URL || 'https://place-potentially-downloaded-lyrics.trycloudflare.com'
+  const apiTarget = env.VITE_API_BASE_URL || 'https://work-garage-sufficient-pgp.trycloudflare.com'
+
+  // Header để bypass trang cảnh báo của Ngrok
   const ngrokHeaders = {
-    'ngrok-skip-browser-warning': 'true'
+    'ngrok-skip-browser-warning': 'true',
   }
+
+  // Bypass proxy for HTML requests (SPA navigation) - fix 404 on refresh
+  const bypassHtml = (req) => {
+    if (req.headers.accept && req.headers.accept.includes('text/html')) {
+      return req.url;
+    }
+  };
+
+  // List of API paths to proxy
+  const proxyPaths = [
+    '/auth', '/api', '/forgot-password', '/reset-password', '/profile', '/user',
+    '/category', '/shelves', '/dashboard', '/book-hold', '/book', '/author',
+    '/publisher', '/borrow-ticket', '/notification'
+  ];
+
+  // Generate proxy config
+  const proxyConfig = proxyPaths.reduce((config, path) => {
+    config[path] = {
+      target: apiTarget,
+      changeOrigin: true,
+      secure: false,
+      headers: ngrokHeaders,
+      bypass: bypassHtml,
+    };
+    return config;
+  }, {});
+
+  // Add custom AI proxy
+  proxyConfig['/ai'] = {
+    target: 'https://unpractised-unmilitant-cherly.ngrok-free.dev',
+    changeOrigin: true,
+    secure: false,
+    headers: ngrokHeaders,
+    bypass: bypassHtml,
+  };
 
   return {
     plugins: [
@@ -26,107 +63,9 @@ export default defineConfig(({ mode }) => {
       },
     },
     server: {
-      proxy: {
-        // Proxy requests to the backend server to bypass CORS and ngrok browser warning
-        // NOTE: Đã xóa /borrow vì nó conflict với route FE /borrow-history
-        // Sử dụng /borrow-ticket cho các API mượn/trả sách
-        '/auth': {
-          target: apiTarget,
-          changeOrigin: true,
-          secure: false,
-          headers: ngrokHeaders,
-        },
-        '/api': {
-          target: apiTarget,
-          changeOrigin: true,
-          secure: false,
-          headers: ngrokHeaders,
-        },
-        '/forgot-password': {
-          target: apiTarget,
-          changeOrigin: true,
-          secure: false,
-          headers: ngrokHeaders,
-        },
-        '/reset-password': {
-          target: apiTarget,
-          changeOrigin: true,
-          secure: false,
-          headers: ngrokHeaders,
-        },
-        '/profile': {
-          target: apiTarget,
-          changeOrigin: true,
-          secure: false,
-          headers: ngrokHeaders,
-        },
-        '/user': {
-          target: apiTarget,
-          changeOrigin: true,
-          secure: false,
-          headers: ngrokHeaders,
-        },
-        '/category': {
-          target: apiTarget,
-          changeOrigin: true,
-          secure: false,
-          headers: ngrokHeaders,
-        },
-        '/shelves': {
-          target: apiTarget,
-          changeOrigin: true,
-          secure: false,
-          headers: ngrokHeaders,
-        },
-        '/dashboard': {
-          target: apiTarget,
-          changeOrigin: true,
-          secure: false,
-          headers: ngrokHeaders,
-        },
-        '/book-hold': {
-          target: apiTarget,
-          changeOrigin: true,
-          secure: false,
-          headers: ngrokHeaders,
-        },
-        '/book': {
-          target: apiTarget,
-          changeOrigin: true,
-          secure: false,
-          headers: ngrokHeaders,
-        },
-        '/author': {
-          target: apiTarget,
-          changeOrigin: true,
-          secure: false,
-          headers: ngrokHeaders,
-        },
-        '/publisher': {
-          target: apiTarget,
-          changeOrigin: true,
-          secure: false,
-          headers: ngrokHeaders,
-        },
-        '/borrow-ticket': {
-          target: apiTarget,
-          changeOrigin: true,
-          secure: false,
-          headers: ngrokHeaders,
-        },
-        '/notification': {
-          target: apiTarget,
-          changeOrigin: true,
-          secure: false,
-          headers: ngrokHeaders,
-        },
-        '/ai': {
-          target: 'https://unpractised-unmilitant-cherly.ngrok-free.dev',
-          changeOrigin: true,
-          secure: false,
-          headers: ngrokHeaders,
-        },
-      }
+      port: 5173,
+      historyApiFallback: true, // Ensure fallback to index.html
+      proxy: proxyConfig
     }
   }
 })

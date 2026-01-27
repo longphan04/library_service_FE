@@ -14,6 +14,7 @@ import useBookHold from '../../hooks/useBookHold';
 import { useAuth } from '../../contexts/AuthContext';
 import bookService from '../../services/book.service';
 import { FALLBACK_IMAGES, getBookCoverUrl } from '../../utils/imageUrl';
+import ExpandableText from './ExpandableText';
 
 // ==========================================
 // Loading Skeleton (Hiệu ứng khi đang tải)
@@ -289,7 +290,7 @@ const BookDetailModal = ({
                                 <span className="inline-block px-3 py-1 bg-primary/10 text-primary text-xs font-semibold rounded-full">
                                     {book.categoryName}
                                 </span>
-                                <h1 className="text-2xl md:text-3xl font-bold text-text-primary leading-tight line-clamp-2" title={book.title}>
+                                <h1 className="text-2xl md:text-3xl font-bold text-text-primary leading-tight" title={book.title}>
                                     {book.title}
                                 </h1>
                                 <p className="text-lg text-text-sub font-medium truncate">
@@ -314,12 +315,11 @@ const BookDetailModal = ({
                             {/* Mô tả - Chiều cao linh hoạt với giới hạn dòng */}
                             <div className="flex-1 min-h-0 relative mb-6">
                                 <h3 className="text-sm font-semibold text-text-primary mb-2">Mô tả</h3>
-                                <p className="text-sm text-text-sub leading-relaxed line-clamp-6 md:line-clamp-8 text-justify">
-                                    {book.description}
-                                </p>
-                                {book.description && book.description.length > 300 && (
-                                    <div className="absolute bottom-0 left-0 right-0 h-8 bg-linear-to-t from-bg-section to-transparent pointer-events-none" />
-                                )}
+                                <ExpandableText
+                                    content={book.description}
+                                    maxLength={420}
+                                    className="text-sm text-text-sub leading-relaxed"
+                                />
                             </div>
 
                             {/* Các nút hành động - Cố định ở đáy */}
@@ -327,10 +327,13 @@ const BookDetailModal = ({
                                 <Button
                                     variant="primary"
                                     className="flex-1"
-                                    onClick={handleBorrowBook}
-                                    disabled={actionLoading || isAlreadyOnHold || book.availableCopies === 0}
+                                    onClick={() => {
+                                        onClose();
+                                        navigate(`/books/${book.id}`);
+                                    }}
+                                    disabled={actionLoading}
                                 >
-                                    {isAlreadyOnHold ? 'Đã giữ' : book.availableCopies === 0 ? 'Hết sách' : 'Mượn ngay'}
+                                    Xem chi tiết sách
                                 </Button>
                                 <Button
                                     variant="outline"

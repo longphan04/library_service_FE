@@ -108,6 +108,26 @@
         background-color: var(--color-bg-app);
         color: var(--color-text-primary);
     }
+
+    button:not(:disabled),
+    [role="button"]:not([aria-disabled="true"]),
+    input[type="checkbox"]:not(:disabled),
+    input[type="radio"]:not(:disabled),
+    select:not(:disabled),
+    a:not([disabled]),
+    summary {
+        cursor: pointer;
+    }
+
+    /* Đảm bảo disabled luôn là not-allowed */
+    button:disabled,
+    [role="button"][aria-disabled="true"],
+    input:disabled,
+    select:disabled,
+    textarea:disabled,
+    a[disabled] {
+        cursor: not-allowed;
+    }
 }
 
 /* =========================================================

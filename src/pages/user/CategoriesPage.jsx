@@ -84,10 +84,6 @@ const CategoriesPage = () => {
     /** Category object đang được chọn (để hiển thị tên) */
     const [selectedCategory, setSelectedCategory] = useState(null);
 
-    // State cho Book Detail Modal
-    const [selectedBookId, setSelectedBookId] = useState(null);
-    const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
-
     /** Ref để scroll đến books section */
     const booksRef = useRef(null);
 
@@ -169,15 +165,6 @@ const CategoriesPage = () => {
     const goToPage = useCallback((pageIndex) => {
         setCurrentPage(pageIndex);
     }, []);
-
-    const handleBookClick = (bookId) => {
-        setSelectedBookId(bookId);
-        setIsDetailModalOpen(true);
-    };
-
-    const handleCloseModal = () => {
-        setIsDetailModalOpen(false);
-    };
 
     // ==========================================
     // Render: Loading State
@@ -304,6 +291,10 @@ const CategoriesPage = () => {
                 {/* Quick View Books Section */}
                 {/* [CHANGE] Sử dụng data từ useBooksByCategory hook */}
                 {/* ========================================== */}
+                {/* ========================================== */}
+                {/* Quick View Books Section */}
+                {/* [CHANGE] Sử dụng data từ useBooksByCategory hook */}
+                {/* ========================================== */}
                 {selectedCategory && (
                     <section ref={booksRef} className="mt-8">
                         {booksError ? (
@@ -313,12 +304,12 @@ const CategoriesPage = () => {
                             </div>
                         ) : (
                             // [CHANGE] BookSection với data đã được normalize từ hook
+                            // Không truyền onBookClick để sử dụng mặc định navigate của BookCard
                             <BookSection
                                 key={selectedCategoryId}
                                 title={`Sách ${selectedCategory.name}`}
                                 books={categoryBooks}
                                 viewAllLink={`/search?category=${selectedCategoryId}`}
-                                onBookClick={handleBookClick}
                                 isLoading={booksLoading}
                             />
                         )}
@@ -326,12 +317,8 @@ const CategoriesPage = () => {
                 )}
             </main>
 
-            {/* Book Detail Modal */}
-            <BookDetailModal
-                isOpen={isDetailModalOpen}
-                onClose={handleCloseModal}
-                bookId={selectedBookId}
-            />
+            {/* Chat Button Component */}
+            <FloatingChatButton />
 
             {/* Chat Button Component */}
             <FloatingChatButton />

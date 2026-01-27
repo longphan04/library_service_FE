@@ -27,22 +27,17 @@ const FloatingChatButton = () => {
                 openBookAuth={openBookDetail}
             />
 
-            {/* Toggle Button */}
-            <button
-                type="button"
-                onClick={toggleChat}
-                className={`
-                    fixed bottom-6 right-6 z-50 p-4 rounded-full shadow-lg transition-all duration-300
-                    ${isOpen
-                        ? 'bg-red-500 hover:bg-red-600 rotate-90'
-                        : 'bg-primary hover:bg-primary-hover hover:scale-110'
-                    }
-                    text-white
-                `}
-                aria-label={isOpen ? "Đóng chat" : "Mở chat hỗ trợ"}
-            >
-                {isOpen ? <X size={24} /> : <MessageCircle size={24} />}
-            </button>
+            {/* Toggle Button - Only show when chat is closed */}
+            {!isOpen && (
+                <button
+                    type="button"
+                    onClick={toggleChat}
+                    className="fixed bottom-6 right-6 z-50 p-4 rounded-full shadow-lg transition-all duration-300 bg-primary hover:bg-primary-hover hover:scale-110 text-white"
+                    aria-label="Mở chat hỗ trợ"
+                >
+                    <MessageCircle size={24} />
+                </button>
+            )}
         </>
     );
 };
