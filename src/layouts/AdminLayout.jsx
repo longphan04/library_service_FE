@@ -42,7 +42,7 @@ export default function AdminLayout() {
     const isAdminHome = location.pathname === "/admin";
 
     return (
-        <div className="min-h-screen bg-[#F6EFE7] relative">
+        <div className="h-screen bg-[#F6EFE7] relative flex flex-col">
 
             {/* OVERLAY – chỉ dùng cho trang chủ */}
             {openDashboardMenu && isAdminHome && (
@@ -53,7 +53,7 @@ export default function AdminLayout() {
             )}
 
             {/* NAVBAR */}
-            <header className="h-15 bg-white flex items-center px-10 shadow-sm relative z-10">
+            <header className="h-15 bg-white flex items-center px-10 shadow-sm sticky top-0 z-40 flex-shrink-0">
 
                 {/* LEFT: BACK (chỉ hiện khi KHÔNG ở trang chủ) */}
                 <div className="flex-1">
@@ -89,7 +89,7 @@ export default function AdminLayout() {
             </header>
 
             {/* MAIN */}
-            <main className="relative z-10 min-h-[calc(100vh-60px)]">
+            <main className="flex-1 overflow-y-auto z-10">
 
                 {/* ===== TRANG CHỦ ADMIN (GIỮ NGUYÊN GIAO DIỆN CŨ) ===== */}
                 {isAdminHome && (

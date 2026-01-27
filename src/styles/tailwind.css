@@ -108,6 +108,25 @@
         background-color: var(--color-bg-app);
         color: var(--color-text-primary);
     }
+
+    /* Interactive Elements Cursor */
+    button,
+    a,
+    [role="button"],
+    [role="link"],
+    [role="tab"],
+    [role="menuitem"],
+    input[type="button"],
+    input[type="submit"],
+    input[type="reset"],
+    input[type="checkbox"],
+    input[type="radio"],
+    select,
+    textarea,
+    .cursor-pointer,
+    .clickable {
+        cursor: pointer;
+    }
 }
 
 /* =========================================================

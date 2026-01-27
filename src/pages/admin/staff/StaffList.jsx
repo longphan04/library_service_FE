@@ -457,10 +457,14 @@ export default function StaffManagement() {
                     </p>
                 )}
 
-                <div className="flex gap-4">
+                <div className="flex gap-6">
                     <ActionButton
-                        variant="success"
-                        className="flex-1 justify-center"
+                        variant={
+                            pendingAction === "delete" || pendingAction === "toggle"
+                                ? "danger"
+                                : "success"
+                        }
+                        className="flex-1 justify-center text-lg"
                         onClick={handleConfirmStatusUpdate}
                         disabled={isSubmitting}
                     >
@@ -468,7 +472,7 @@ export default function StaffManagement() {
                     </ActionButton>
 
                     <ActionButton
-                        className="flex-1 justify-center"
+                        className="flex-1 justify-center text-lg"
                         onClick={() => setOpenConfirmModal(false)}
                         disabled={isSubmitting}
                     >

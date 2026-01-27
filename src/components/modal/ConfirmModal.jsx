@@ -11,8 +11,8 @@ export default function ConfirmModal({
             <div className="flex gap-6 mt-6">
                 <button
                     onClick={onConfirm}
-                    className="flex-1 h-10 bg-green-500 text-white
-          rounded-full font-medium hover:bg-green-600"
+                    className="flex-1 h-10 bg-red-500 text-white
+          rounded-full font-medium hover:bg-red-600"
                 >
                     Xác nhận
                 </button>

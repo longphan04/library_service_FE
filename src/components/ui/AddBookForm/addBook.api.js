@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const BASE_URL = 'https://batteries-diagnosis-yard-attitudes.trycloudflare.com';
+const BASE_URL = 'https://place-potentially-downloaded-lyrics.trycloudflare.com';
 
 export const getAuthors = () => axios.get(`${BASE_URL}/author`);
 export const getPublishers = () => axios.get(`${BASE_URL}/publisher`);

@@ -330,7 +330,7 @@ export default function UserList() {
 
                 <div className="flex gap-6">
                     <ActionButton
-                        variant="success"
+                        variant="danger"
                         className="flex-1 justify-center text-lg"
                         onClick={handleConfirmStatusUpdate}
                         disabled={isUpdating}

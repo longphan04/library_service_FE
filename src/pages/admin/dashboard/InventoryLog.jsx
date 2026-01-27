@@ -99,22 +99,7 @@ export default function InventoryLog() {
         <AdminPageLayout title="Biến động kho">
 
             {/* TAB NAVIGATION */}
-            <AdminTabs
-                tabs={[
-                    {
-                        label: "Thống kê",
-                        onClick: () => navigate("/admin/statistics"),
-                    },
-                    {
-                        label: "Tồn kho",
-                        onClick: () => navigate("/admin/inventory"),
-                    },
-                    {
-                        label: "Biến động kho",
-                        active: true,
-                    },
-                ]}
-            />
+            <AdminTabs active="inventory-log" />
 
             {/* ACTIVITY LIST */}
             <AdminSection>
