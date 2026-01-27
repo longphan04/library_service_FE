@@ -26,7 +26,7 @@ const ChatBookCard = ({ book, onClick }) => {
             className="flex flex-col bg-white rounded-lg border border-border hover:border-primary cursor-pointer transition-colors w-[120px] min-w-[120px] shrink-0 overflow-hidden shadow-sm hover:shadow-md snap-start"
         >
             {/* Cover Image */}
-            <div className="aspect-[2/3] w-full bg-gray-100 relative overflow-hidden group">
+            <div className="aspect-ratio: 2/3 w-full bg-gray-100 relative overflow-hidden group">
                 <img
                     src={coverUrl}
                     alt={book.title}

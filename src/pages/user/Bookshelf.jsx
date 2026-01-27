@@ -101,7 +101,7 @@ const ConfirmDeleteModal = ({ isOpen, onClose, onConfirm, bookTitle, loading }) 
         <div className="fixed inset-0 z-50 flex items-center justify-center">
             {/* Lớp nền mờ (Backdrop) */}
             <div
-                className="absolute inset-0 bg-black/50 backdrop-blur-sm"
+                className="absolute inset-0 bg-black/50 backdrop-blur-sm cursor-pointer"
                 onClick={!loading ? onClose : undefined}
             />
 
@@ -183,21 +183,21 @@ const BookshelfItem = ({ hold, onRemove, isSelected, onToggleSelect }) => {
             >
                 {/* Thông tin bổ sung */}
                 <div className="mt-2 space-y-1.5 border-t border-gray-100 pt-1.5">
-                    {/* Danh mục */}
-                    <p className="text-xs text-text-sub flex items-center gap-1.5 truncate">
-                        <Tag size={12} className="shrink-0" />
-                        <span>{book.category}</span>
+                    {/* Danh mục - Cho phép xuống dòng nếu tên dài */}
+                    <p className="text-xs text-text-sub flex items-start gap-1.5">
+                        <Tag size={12} className="shrink-0 mt-0.5" />
+                        <span className="line-clamp-2 break-words">{book.category}</span>
                     </p>
 
-                    {/* Note */}
+                    {/* Bộ đếm ngược hiển thị ngay dưới danh mục - theo yêu cầu */}
+                    <CountdownTimer createdAt={createdAt} onExpire={handleExpire} />
+
+                    {/* Note - Cho phép hiển thị nhiều dòng hơn (tự động kéo dài card) */}
                     {book.note && (
-                        <p className="text-xs text-text-sub italic bg-gray-50 p-1 rounded border-l-2 border-primary/30 line-clamp-2">
+                        <p className="text-xs text-text-sub italic bg-gray-50 p-1 rounded border-l-2 border-primary/30 break-words mt-1">
                             "{book.note}"
                         </p>
                     )}
-
-                    {/* Bộ đếm ngược hiển thị bên trong card, dưới dòng status */}
-                    <CountdownTimer createdAt={createdAt} onExpire={handleExpire} />
                 </div>
             </BookCard>
 

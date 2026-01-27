@@ -10,13 +10,13 @@ import { ArrowLeft, RefreshCw } from 'lucide-react';
 import Header from '../../components/layouts/Header';
 import Footer from '../../components/layouts/Footer';
 import Button from '../../components/ui/Button';
-import VersionSelector from '../../components/ui/VersionSelector';
 import BorrowConfirmationModal from '../../components/ui/BorrowConfirmationModal';
 import Toast from '../../components/ui/Toast';
 import useBookHold from '../../hooks/useBookHold';
 import { useAuth } from '../../contexts/AuthContext';
 import bookService from '../../services/book.service';
 import { FALLBACK_IMAGES, getBookCoverUrl } from '../../utils/imageUrl';
+import ExpandableText from '../../components/ui/ExpandableText';
 
 // ==========================================
 // Loading Skeleton
@@ -26,7 +26,7 @@ const BookDetailSkeleton = () => (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             {/* Cover skeleton */}
             <div className="md:col-span-1">
-                <div className="aspect-[3/4] bg-border rounded-lg"></div>
+                <div className="aspect-ratio: 3/4 bg-border rounded-lg"></div>
             </div>
             {/* Info skeleton */}
             <div className="md:col-span-2 space-y-6">
@@ -59,17 +59,13 @@ const BookDetail = () => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
 
-    // State quản lý modal chọn phiên bản
-    const [isVersionSelectorOpen, setIsVersionSelectorOpen] = useState(false);
-    const [selectedVersion, setSelectedVersion] = useState(null);
-
     // State quản lý mở rộng/thu gọn mô tả
     const [isDescriptionExpanded, setIsDescriptionExpanded] = useState(false);
 
     // State quản lý modal xác nhận mượn sách
     const [isBorrowConfirmOpen, setIsBorrowConfirmOpen] = useState(false);
 
-    // State quản lý toast notification (success, error, warning)
+    // State quản lý toast notification
     const [toast, setToast] = useState({ isOpen: false, type: '', message: '' });
 
     // Hook quản lý book holds
@@ -129,17 +125,6 @@ const BookDetail = () => {
     // ==========================================
     // Handlers
     // ==========================================
-    const handleOpenVersionSelector = () => {
-        setIsVersionSelectorOpen(true);
-    };
-
-    const handleCloseVersionSelector = () => {
-        setIsVersionSelectorOpen(false);
-    };
-
-    const handleConfirmVersion = (versionId) => {
-        setSelectedVersion(versionId);
-    };
 
     const handleBorrowBook = () => {
         // Auth guard: Redirect nếu chưa đăng nhập
@@ -148,24 +133,14 @@ const BookDetail = () => {
             return;
         }
 
-        if (!selectedVersion && book?.versions?.length > 0) {
-            setToast({
-                isOpen: true,
-                type: 'warning',
-                message: 'Vui lòng chọn bản lưu trước khi mượn sách'
-            });
-            return;
-        }
         setIsBorrowConfirmOpen(true);
     };
 
     /**
      * Xác nhận mượn sách trực tiếp
-     * Cập nhật: Tạo phiếu mượn thay vì chỉ thêm vào kệ
      */
     const handleConfirmBorrow = async () => {
         try {
-            // Sử dụng borrowDirectly từ useBookHold hook
             await borrowDirectly(book.id);
 
             setIsBorrowConfirmOpen(false);
@@ -178,7 +153,7 @@ const BookDetail = () => {
         } catch (err) {
             setIsBorrowConfirmOpen(false);
 
-            // Xử lý lỗi giới hạn mượn sách (Max 3 phiếu)
+            // Xử lý lỗi giới hạn mượn sách
             const status = err.response?.status;
             const apiMessage = err.response?.data?.message || err.message || '';
 
@@ -187,7 +162,6 @@ const BookDetail = () => {
                 (apiMessage.includes('limit') || apiMessage.includes('3 phiếu') || apiMessage.includes('trả sách'));
 
             if (isLimitError) {
-                // Thay vì PopUp, sử dụng Toast màu nâu (warning) để đồng nhất
                 setToast({
                     isOpen: true,
                     type: 'warning',
@@ -253,8 +227,8 @@ const BookDetail = () => {
                         <ArrowLeft size={20} />
                         <span className="text-sm font-medium">Quay lại</span>
                     </button>
-                    <BookDetailSkeleton /></main>
-
+                    <BookDetailSkeleton />
+                </main>
                 <Footer />
             </div>
         );
@@ -279,8 +253,8 @@ const BookDetail = () => {
                                 Thử lại
                             </Button>
                         </div>
-                    </div></main>
-
+                    </div>
+                </main>
                 <Footer />
             </div>
         );
@@ -289,8 +263,6 @@ const BookDetail = () => {
     // ==========================================
     // Prepare Data for Modals
     // ==========================================
-    const selectedVersionData = book.versions?.find(v => v.id === selectedVersion);
-
     const borrowDate = new Date();
     const loanPeriod = 10;
     const dueDate = new Date(borrowDate);
@@ -349,143 +321,101 @@ const BookDetail = () => {
                         </div>
 
                         {/* Book Info - Right Side */}
-                        <div className="md:col-span-2 space-y-6">
+                        <div className="md:col-span-2 flex flex-col h-full">
                             {/* Category Badge */}
-                            <div>
-                                <span className="inline-block px-3 py-1 bg-primary text-text-on-primary text-xs font-semibold rounded">
+                            <div className="mb-2">
+                                <span className="inline-block px-3 py-1 bg-primary/10 text-primary text-xs font-semibold rounded-full">
                                     {book.categoryName}
                                 </span>
                             </div>
 
-                            {/* Title */}
-                            <h1 className="text-3xl sm:text-4xl font-bold text-text-primary">
+                            {/* Title - Full display */}
+                            <h1 className="text-2xl sm:text-3xl md:text-3xl font-bold text-text-primary mb-2 leading-tight">
                                 {book.title}
                             </h1>
 
-                            {/* Book Meta Info */}
-                            <div className="space-y-3">
-                                {/* Author */}
-                                <div className="flex items-center gap-3">
-                                    <svg className="w-5 h-5 text-text-sub" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                                    </svg>
-                                    <div>
-                                        <p className="text-sm text-text-sub">Tác giả</p>
-                                        <p className="text-base font-medium text-text-primary">{book.author}</p>
-                                    </div>
+                            {/* Author & Year - Compact row */}
+                            <div className="flex flex-wrap items-center gap-4 text-sm text-text-sub mb-6">
+                                <span className="font-medium text-text-primary">{book.author}</span>
+                                <span className="w-1 h-1 rounded-full bg-text-sub/50"></span>
+                                <span>{book.publishYear}</span>
+                                <span className="w-1 h-1 rounded-full bg-text-sub/50"></span>
+                                <span className={`${book.availableCopies > 0 ? 'text-success' : 'text-error'} font-medium`}>
+                                    {book.availableCopies > 0 ? `Còn ${book.availableCopies} cuốn` : 'Hết sách'}
+                                </span>
+                            </div>
+
+                            {/* Main Content Area */}
+                            <div className="flex-1 min-h-0 space-y-6">
+                                {/* Description using ExpandableText */}
+                                <div>
+                                    <h2 className="text-sm font-semibold text-text-primary mb-2 uppercase tracking-wide opacity-80">
+                                        Giới thiệu nội dung
+                                    </h2>
+                                    <ExpandableText content={book.description} maxLength={420} />
                                 </div>
 
-                                {/* Publish Year */}
-                                <div className="flex items-center gap-3">
-                                    <svg className="w-5 h-5 text-text-sub" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                                    </svg>
-                                    <div>
-                                        <p className="text-sm text-text-sub">Năm xuất bản</p>
-                                        <p className="text-base font-medium text-text-primary">{book.publishYear}</p>
-                                    </div>
-                                </div>
-
-                                {/* Version Selector */}
-                                {book.versions && book.versions.length > 0 && (
+                                {/* Meta Info Grid */}
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 bg-gray-50 p-4 rounded-xl border border-gray-100">
+                                    {/* Publisher info */}
                                     <div className="flex items-center gap-3">
-                                        <svg className="w-5 h-5 text-text-sub" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
-                                        </svg>
-                                        <div className="flex-1">
-                                            <p className="text-sm text-text-sub">Bản lưu</p>
-                                            <button
-                                                onClick={handleOpenVersionSelector}
-                                                className="mt-1 px-4 py-1.5 bg-secondary text-text-on-secondary text-sm font-medium rounded hover:bg-secondary-hover transition-colors"
-                                            >
-                                                {selectedVersionData
-                                                    ? `${selectedVersionData.year}`
-                                                    : 'Chọn bản'
-                                                }
-                                            </button>
+                                        <div className="p-2 bg-white rounded-lg shadow-sm text-primary">
+                                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                                            </svg>
+                                        </div>
+                                        <div>
+                                            <p className="text-xs text-text-sub mb-0.5">Nhà xuất bản</p>
+                                            <p className="font-medium text-text-primary truncate" title={book.publisher}>
+                                                {book.publisher || 'Đang cập nhật'}
+                                            </p>
                                         </div>
                                     </div>
-                                )}
 
-                                {/* Availability Status */}
-                                <div className="flex items-center gap-3">
-                                    <svg className="w-5 h-5 text-text-sub" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                    </svg>
-                                    <div>
-                                        <p className="text-sm text-text-sub">Tình trạng</p>
-                                        <p className="text-base font-medium text-text-primary">
-                                            <span className="text-success">{book.availableCopies} có sẵn</span>
-                                            {' / '}
-                                            <span className="text-text-sub">{book.totalCopies} tổng</span>
-                                        </p>
+                                    {/* Availability Status */}
+                                    <div className="flex items-center gap-3">
+                                        <div className="p-2 bg-white rounded-lg shadow-sm text-primary">
+                                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                            </svg>
+                                        </div>
+                                        <div>
+                                            <p className="text-xs text-text-sub mb-0.5">Tình trạng</p>
+                                            <p className="font-medium text-text-primary">
+                                                <span className={`${book.availableCopies > 0 ? 'text-success' : 'text-error'} font-semibold`}>
+                                                    {book.availableCopies > 0 ? 'Còn sách' : 'Hết sách'}
+                                                </span>
+                                            </p>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
 
-                            {/* Description */}
-                            <div className="pt-4 border-t border-border">
-                                <h2 className="text-lg font-semibold text-text-primary mb-3">
-                                    Mô tả sách
-                                </h2>
-                                <div className="relative">
-                                    <p
-                                        className={`text-sm text-text-primary leading-relaxed whitespace-pre-line transition-all duration-300 ${isDescriptionExpanded ? '' : 'line-clamp-4'
-                                            }`}
-                                    >
-                                        {book.description}
-                                    </p>
-
-                                    {/* Gradient fade when collapsed */}
-                                    {!isDescriptionExpanded && (
-                                        <div className="absolute bottom-0 left-0 right-0 h-12 bg-linear-to-t from-bg-section to-transparent pointer-events-none" />
-                                    )}
-                                </div>
-
-                                {/* Read More/Less Button */}
-                                <button
-                                    onClick={() => setIsDescriptionExpanded(!isDescriptionExpanded)}
-                                    className="mt-3 text-sm font-medium text-primary hover:text-primary-hover transition-colors"
-                                >
-                                    {isDescriptionExpanded ? 'Thu gọn' : 'Xem thêm'}
-                                </button>
-                            </div>
-
-                            {/* Action Buttons */}
-                            <div className="flex flex-col sm:flex-row gap-4 pt-6">
+                            {/* Actions */}
+                            <div className="mt-8 flex flex-col sm:flex-row gap-4 pt-6 border-t border-gray-100">
                                 <Button
                                     variant="primary"
                                     size="lg"
                                     onClick={handleBorrowBook}
                                     disabled={actionLoading || isAlreadyOnHold}
-                                    className="flex-1"
+                                    className="flex-1 shadow-lg shadow-primary/20 py-3 text-base"
                                 >
-                                    {isAlreadyOnHold ? 'ĐÃ GIỮ SÁCH' : 'MƯỢN SÁCH'}
+                                    {isAlreadyOnHold ? 'ĐÃ GIỮ CHỖ' : 'MƯỢN SÁCH NGAY'}
                                 </Button>
                                 <Button
                                     variant="outline"
                                     size="lg"
                                     onClick={handleAddToBookshelf}
                                     disabled={actionLoading || isAlreadyOnHold}
-                                    className="flex-1"
+                                    className="flex-1 py-3 text-base"
                                 >
-                                    {isAlreadyOnHold ? 'ĐÃ TRONG KỆ' : 'THÊM VÀO KỆ SÁCH'}
+                                    {isAlreadyOnHold ? 'ĐÃ CÓ TRONG KỆ' : 'THÊM VÀO KỆ'}
                                 </Button>
                             </div>
                         </div>
                     </div>
                 </div>
             </main>
-
-            {/* Version Selector Modal */}
-            {book.versions && book.versions.length > 0 && (
-                <VersionSelector
-                    isOpen={isVersionSelectorOpen}
-                    onClose={handleCloseVersionSelector}
-                    versions={book.versions}
-                    onConfirm={handleConfirmVersion}
-                />
-            )}
 
             {/* Borrow Confirmation Modal */}
             <BorrowConfirmationModal

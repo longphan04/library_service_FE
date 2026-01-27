@@ -20,7 +20,7 @@ export default function ActionButton({
         <button
             type={type}
             onClick={onClick}
-            className={`${base} ${variants[variant]} ${className}`}
+            className={`${base} ${variants[variant]} ${className} cursor-pointer`}
         >
             {children}
         </button>

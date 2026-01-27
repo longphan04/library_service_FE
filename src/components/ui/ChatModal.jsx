@@ -1,6 +1,6 @@
 import { useRef, useEffect, useState } from 'react';
 import { X, Send, Bot, User, Loader2, Minus } from 'lucide-react';
-import ChatBookCard from './Chat/ChatBookCard';
+import ChatBookCard from './ChatBookCard';
 
 const ChatModal = ({ isOpen, onClose, messages = [], isLoading = false, onSendMessage, openBookAuth }) => {
     const [inputText, setInputText] = useState('');
@@ -36,7 +36,7 @@ const ChatModal = ({ isOpen, onClose, messages = [], isLoading = false, onSendMe
     if (!isOpen) return null;
 
     return (
-        <div className="fixed bottom-24 right-6 w-[350px] sm:w-[400px] h-[500px] bg-white rounded-2xl shadow-2xl border border-border flex flex-col z-50 animate-in fade-in slide-in-from-bottom-10 duration-300">
+        <div className="fixed bottom-6 right-6 w-[350px] sm:w-[400px] h-[600px] bg-white rounded-2xl shadow-2xl border border-border flex flex-col z-50 animate-in fade-in slide-in-from-bottom-10 duration-300">
             {/* Header */}
             <div className="flex items-center justify-between p-4 border-b border-border bg-primary/5 rounded-t-2xl">
                 <div className="flex items-center gap-3">
@@ -114,7 +114,7 @@ const ChatModal = ({ isOpen, onClose, messages = [], isLoading = false, onSendMe
                             </div>
 
                             {/* Book Sources */}
-                            {msg.sources && msg.sources.length > 0 && (
+                            {msg.sources && msg.sources.length > 0 && !msg.isError && (
                                 <div className="mt-2 space-y-2 w-full">
                                     <p className="text-[10px] font-semibold text-text-sub uppercase tracking-wider pl-1">
                                         Sách được đề xuất

@@ -19,8 +19,8 @@ const QUICK_LINKS = [
 
 // Thông tin liên hệ
 const CONTACT_INFO = [
-    { icon: '📍', text: '212-218 Nguyễn Phước Lan, Quận Hòa Xuân, Cẩm Lệ, Đà Nẵng' },
-    { icon: '📞', text: '(028) 1234 5678' },
+    { icon: '📍', text: '212-218 Nguyễn Phước Lan, Phường Hòa Xuân, Đà Nẵng' },
+    { icon: '📞', text: '0236 6253 000' },
     { icon: '✉️', text: 'contact@library.vn' },
 ];
 
@@ -41,9 +41,9 @@ export default function Footer() {
                             <img
                                 src={Logo}
                                 alt="Library System Logo"
-                                className="w-8 h-8 object-contain"
+                                className="w-8 h-8 object-contain brightness-0 invert"
                             />
-                            <span className="text-xl font-bold text-footer-heading">Library System</span>
+                            <span className="text-xl font-bold text-white">Library System</span>
                         </div>
                         <p className="text-footer-text-muted max-w-md">
                             Hệ thống quản lý thư viện hiện đại, giúp bạn dễ dàng tìm kiếm,

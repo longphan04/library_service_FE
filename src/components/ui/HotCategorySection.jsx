@@ -12,17 +12,14 @@
 // ==========================================
 
 import { useState, useEffect, useCallback } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Flame, ArrowRight } from 'lucide-react';
-import { useBookDetail } from '@/contexts/BookDetailContext';
 import Spinner from './Spinner';
 import categoryService from '@/services/category.service';
 import bookService from '@/services/book.service';
 import { FALLBACK_IMAGES, getBookCoverUrl, getCategoryImageUrl } from '@/utils/imageUrl';
 
-// ==========================================
-// Hằng số
-// ==========================================
+// ... (constants remaining same, skipped in replacement content if not needed, but I will include full file context for safety or target logic blocks)
 
 /** Số sách tối đa hiển thị mỗi category */
 const BOOKS_LIMIT = 6;
@@ -30,10 +27,7 @@ const BOOKS_LIMIT = 6;
 /** Ảnh mặc định khi category không có ảnh */
 const DEFAULT_CATEGORY_IMAGE = FALLBACK_IMAGES.categoryPlaceholder;
 
-// ==========================================
-// Component: CategoryCard (Internal)
-// Mô tả: Card hiển thị 1 hot category với ảnh và tên
-// ==========================================
+// ... (CategoryCard & HotCategorySkeleton remaining same)
 
 const CategoryCard = ({ category, isActive, onClick }) => {
     // Lấy URL ảnh với fallback - sử dụng getCategoryImageUrl utility
@@ -80,21 +74,9 @@ const CategoryCard = ({ category, isActive, onClick }) => {
                     </p>
                 )}
             </div>
-
-            {/* Active indicator */}
-            {isActive && (
-                <div className="absolute top-3 right-3 px-2 py-1 bg-primary text-white text-xs font-medium rounded-full">
-                    Đang xem
-                </div>
-            )}
         </button>
     );
 };
-
-// ==========================================
-// Component: HotCategorySkeleton (Internal)
-// Mô tả: Skeleton loading cho hot categories
-// ==========================================
 
 const HotCategorySkeleton = () => (
     <section className="bg-bg-section rounded-2xl p-6">
@@ -118,15 +100,11 @@ const HotCategorySkeleton = () => (
     </section>
 );
 
-// ==========================================
-// Component: HotCategorySection (Main)
-// ==========================================
-
 const HotCategorySection = ({ className = '' }) => {
     // ==========================================
-    // Context
+    // Hooks
     // ==========================================
-    const { openBookDetail } = useBookDetail();
+    const navigate = useNavigate();
 
     // ==========================================
     // State
@@ -158,8 +136,8 @@ const HotCategorySection = ({ className = '' }) => {
             const response = await categoryService.getHotCategories();
             const data = Array.isArray(response) ? response : response.data || [];
 
-            // Chuẩn hóa dữ liệu - chỉ lấy 3 categories
-            const normalizedCategories = data.slice(0, 3).map(cat => ({
+            // Chuẩn hóa dữ liệu - lấy 4 categories (theo yêu cầu mới)
+            const normalizedCategories = data.slice(0, 4).map(cat => ({
                 id: cat.id || cat._id || cat.category_id,
                 name: cat.name,
                 image: getCategoryImageUrl(cat.image || cat.cover_url || cat.coverImage),
@@ -168,7 +146,11 @@ const HotCategorySection = ({ className = '' }) => {
 
             setHotCategories(normalizedCategories);
 
-            // Không tự động chọn category - để user click
+            // Tự động chọn category đầu tiên nếu danh sách không rỗng
+            if (normalizedCategories.length > 0) {
+                // Chỉ chọn nếu chưa có category nào được chọn (tránh override khi re-fetch)
+                setSelectedCategory(prev => prev || normalizedCategories[0]);
+            }
         } catch (err) {
             console.error('Lỗi khi tải hot categories:', err);
             setError(err.message || 'Không thể tải danh mục nổi bật');
@@ -177,40 +159,7 @@ const HotCategorySection = ({ className = '' }) => {
         }
     }, []);
 
-    // ==========================================
-    // Fetch Books theo Category
-    // ==========================================
-
-    const fetchBooksByCategory = useCallback(async (categoryId) => {
-        if (!categoryId) return;
-
-        setBooksLoading(true);
-        try {
-            const response = await bookService.getAll({
-                categoryId: categoryId,  // Backend nhận param "categoryId"
-                limit: BOOKS_LIMIT,
-            });
-
-            const booksData = Array.isArray(response) ? response : response.data || [];
-
-            // Chuẩn hóa dữ liệu sách
-            const normalizedBooks = booksData.map(book => ({
-                id: book.book_id || book.id || book._id,
-                title: book.title,
-                author: book.authors?.[0]?.name || book.author?.name || book.authorName || 'Không rõ',
-                coverImage: getBookCoverUrl(
-                    book.cover_url || book.coverImage || book.image || book.thumbnail
-                ),
-            }));
-
-            setBooks(normalizedBooks);
-        } catch (err) {
-            console.error('Lỗi khi tải sách:', err);
-            setBooks([]);
-        } finally {
-            setBooksLoading(false);
-        }
-    }, []);
+    // ... (rest of code)
 
     // ==========================================
     // Effects
@@ -221,91 +170,70 @@ const HotCategorySection = ({ className = '' }) => {
         fetchHotCategories();
     }, [fetchHotCategories]);
 
-    // Fetch books khi selected category thay đổi
+    // Auto-select first category when data loads (Handling in fetchHotCategories mostly, but ensuring sync here if needed)
     useEffect(() => {
-        if (selectedCategory) {
-            fetchBooksByCategory(selectedCategory.id);
+        if (!selectedCategory && hotCategories.length > 0) {
+            setSelectedCategory(hotCategories[0]);
         }
-    }, [selectedCategory, fetchBooksByCategory]);
+    }, [hotCategories, selectedCategory]);
 
-    // ==========================================
-    // Handlers
-    // ==========================================
+    // Fetches books when a category is selected
+    useEffect(() => {
+        const fetchBooks = async () => {
+            if (!selectedCategory) return;
+            setBooksLoading(true);
+            try {
+                const response = await bookService.getAll({
+                    categoryId: selectedCategory.id,
+                    limit: BOOKS_LIMIT
+                });
+                const data = response.books || response.data || [];
+                setBooks(data);
+            } catch (err) {
+                console.error('Error fetching books:', err);
+                setBooks([]);
+            } finally {
+                setBooksLoading(false);
+            }
+        };
 
-    /**
-     * Xử lý khi click vào hot category card
-     */
+        fetchBooks();
+    }, [selectedCategory]);
+
     const handleCategoryClick = (category) => {
-        // Nếu click vào category đang active → bỏ chọn
-        if (selectedCategory?.id === category.id) {
-            setSelectedCategory(null);
-            setBooks([]);
-        } else {
-            setSelectedCategory(category);
-        }
+        setSelectedCategory(category);
     };
-
-    // ==========================================
-    // Render: Loading State
-    // ==========================================
 
     if (loading) {
         return <HotCategorySkeleton />;
     }
 
-    // ==========================================
-    // Render: Error State
-    // ==========================================
-
-    if (error && hotCategories.length === 0) {
-        return (
-            <section className={`bg-bg-section rounded-2xl p-6 ${className}`}>
-                <div className="text-center py-8">
-                    <p className="text-red-500 mb-4">{error}</p>
-                    <button
-                        onClick={fetchHotCategories}
-                        className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary-hover"
-                    >
-                        Thử lại
-                    </button>
-                </div>
-            </section>
-        );
+    if (error) {
+        // Fallback or empty if error, or just show section with error
+        return null;
     }
-
-    // ==========================================
-    // Render: Main
-    // ==========================================
 
     return (
         <section className={`bg-bg-section rounded-2xl p-6 ${className}`}>
             {/* ========================================== */}
-            {/* Section Header */}
+            {/* Header */}
             {/* ========================================== */}
             <div className="flex items-center justify-between mb-6">
-                {/* Title */}
                 <div className="flex items-center gap-2">
-                    <Flame className="w-6 h-6 text-orange-500" />
+                    <div className="text-primary">
+                        <Flame size={24} />
+                    </div>
                     <h2 className="text-xl font-bold text-text-primary">
-                        Danh Mục Nổi Bật
+                        Danh mục nổi bật
                     </h2>
                 </div>
-
-                {/* Xem tất cả → Chuyển đến trang danh mục */}
-                <Link
-                    to="/categories"
-                    className="flex items-center gap-1 text-sm text-primary hover:text-primary-hover transition-colors"
-                >
-                    Xem tất cả
-                    <ArrowRight size={16} />
-                </Link>
             </div>
 
             {/* ========================================== */}
             {/* Hot Category Cards */}
-            {/* 3 hình ảnh đại diện cho 3 danh mục */}
+            {/* 4 hình ảnh đại diện cho 4 danh mục */}
             {/* ========================================== */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
                 {hotCategories.map((category) => (
                     <CategoryCard
                         key={category.id}
@@ -320,86 +248,88 @@ const HotCategorySection = ({ className = '' }) => {
             {/* Books Display */}
             {/* Hiển thị sách khi user đã chọn 1 category */}
             {/* ========================================== */}
-            {selectedCategory && (
-                <div className="mt-6 pt-6 border-t border-border">
-                    {booksLoading ? (
-                        /* Loading spinner */
-                        <div className="flex justify-center py-8">
-                            <Spinner size="lg" />
-                        </div>
-                    ) : books.length > 0 ? (
-                        /* Books Grid */
-                        <div>
-                            {/* Tiêu đề section sách */}
-                            <div className="flex items-center justify-between mb-4">
-                                <h3 className="text-lg font-semibold text-text-primary">
-                                    Sách {selectedCategory.name}
-                                </h3>
-                                <Link
-                                    to={`/search?category=${selectedCategory.id}`}
-                                    className="text-sm text-primary hover:text-primary-hover transition-colors flex items-center gap-1"
-                                >
-                                    Xem tất cả
-                                    <ArrowRight size={14} />
-                                </Link>
+            {
+                selectedCategory && (
+                    <div className="mt-6 pt-6 border-t border-border">
+                        {booksLoading ? (
+                            /* Loading spinner */
+                            <div className="flex justify-center py-8">
+                                <Spinner size="lg" />
                             </div>
+                        ) : books.length > 0 ? (
+                            /* Books Grid */
+                            <div>
+                                {/* Tiêu đề section sách */}
+                                <div className="flex items-center justify-between mb-4">
+                                    <h3 className="text-lg font-semibold text-text-primary">
+                                        Sách {selectedCategory.name}
+                                    </h3>
+                                    <Link
+                                        to={`/search?category=${selectedCategory.id}`}
+                                        className="text-sm text-primary hover:text-primary-hover transition-colors flex items-center gap-1"
+                                    >
+                                        Xem tất cả
+                                        <ArrowRight size={14} />
+                                    </Link>
+                                </div>
 
-                            {/* Grid sách - 6 columns trên desktop */}
-                            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-4">
-                                {books.map((book) => {
-                                    const bookId = book.id || book.book_id || book._id;
-                                    const handleBookClick = (e) => {
-                                        e.preventDefault();
-                                        e.stopPropagation();
-                                        openBookDetail(bookId);
-                                    };
+                                {/* Grid sách - 6 columns trên desktop */}
+                                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-4">
+                                    {books.map((book) => {
+                                        const bookId = book.id || book.book_id || book._id;
+                                        const handleBookClick = (e) => {
+                                            e.preventDefault();
+                                            e.stopPropagation();
+                                            navigate(`/books/${bookId}`);
+                                        };
 
-                                    return (
-                                        <div
-                                            key={bookId}
-                                            onClick={handleBookClick}
-                                            className="group cursor-pointer"
-                                            role="button"
-                                            tabIndex={0}
-                                            onKeyDown={(e) => {
-                                                if (e.key === 'Enter' || e.key === ' ') {
-                                                    handleBookClick(e);
-                                                }
-                                            }}
-                                        >
-                                            {/* Book Cover */}
-                                            <div className="aspect-3/4 overflow-hidden rounded-lg mb-2 bg-border">
-                                                <img
-                                                    src={book.coverImage || FALLBACK_IMAGES.bookPlaceholder}
-                                                    alt={book.title}
-                                                    className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
-                                                    onError={(e) => {
-                                                        e.target.onerror = null;
-                                                        e.target.src = FALLBACK_IMAGES.bookPlaceholder;
-                                                    }}
-                                                />
+                                        return (
+                                            <div
+                                                key={bookId}
+                                                onClick={handleBookClick}
+                                                className="group cursor-pointer"
+                                                role="button"
+                                                tabIndex={0}
+                                                onKeyDown={(e) => {
+                                                    if (e.key === 'Enter' || e.key === ' ') {
+                                                        handleBookClick(e);
+                                                    }
+                                                }}
+                                            >
+                                                {/* Book Cover */}
+                                                <div className="aspect-3/4 overflow-hidden rounded-lg mb-2 bg-border">
+                                                    <img
+                                                        src={getBookCoverUrl(book.cover_url || book.coverImage || book.image)}
+                                                        alt={book.title}
+                                                        className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                                                        onError={(e) => {
+                                                            e.target.onerror = null;
+                                                            e.target.src = FALLBACK_IMAGES.bookPlaceholder;
+                                                        }}
+                                                    />
+                                                </div>
+                                                {/* Book Info */}
+                                                <h4 className="text-sm font-medium text-text-primary line-clamp-2 group-hover:text-primary transition-colors">
+                                                    {book.title}
+                                                </h4>
+                                                <p className="text-xs text-text-sub mt-1 truncate">
+                                                    {book.author}
+                                                </p>
                                             </div>
-                                            {/* Book Info */}
-                                            <h4 className="text-sm font-medium text-text-primary line-clamp-2 group-hover:text-primary transition-colors">
-                                                {book.title}
-                                            </h4>
-                                            <p className="text-xs text-text-sub mt-1 truncate">
-                                                {book.author}
-                                            </p>
-                                        </div>
-                                    );
-                                })}
+                                        );
+                                    })}
+                                </div>
                             </div>
-                        </div>
-                    ) : (
-                        /* Empty state */
-                        <div className="text-center py-8 text-text-sub">
-                            <p>Chưa có sách trong danh mục này</p>
-                        </div>
-                    )}
-                </div>
-            )}
-        </section>
+                        ) : (
+                            /* Empty state */
+                            <div className="text-center py-8 text-text-sub">
+                                <p>Chưa có sách trong danh mục này</p>
+                            </div>
+                        )}
+                    </div>
+                )
+            }
+        </section >
     );
 };
 
