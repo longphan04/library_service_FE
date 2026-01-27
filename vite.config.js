@@ -10,7 +10,7 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url))
 export default defineConfig(({ mode }) => {
   // Load env file based on `mode` in the current working directory.
   const env = loadEnv(mode, process.cwd(), '')
-  const apiTarget = env.VITE_API_BASE_URL || 'http://10.0.5.101:3000'
+  const apiTarget = env.VITE_API_BASE_URL = 'https://place-potentially-downloaded-lyrics.trycloudflare.com'
 
   return {
     plugins: [
@@ -39,7 +39,47 @@ export default defineConfig(({ mode }) => {
           target: apiTarget,
           changeOrigin: true,
           secure: false,
-        }
+        },
+        '/user': {
+          target: apiTarget,
+          changeOrigin: true,
+          secure: false,
+        },
+        '/category': {
+          target: apiTarget,
+          changeOrigin: true,
+          secure: false,
+        },
+        '/shelves': {
+          target: apiTarget,
+          changeOrigin: true,
+          secure: false,
+        },
+        '/dashboard': {
+          target: apiTarget,
+          changeOrigin: true,
+          secure: false,
+        },
+        '/book': {
+          target: apiTarget,
+          changeOrigin: true,
+          secure: false,
+        },
+        '/author': {
+          target: apiTarget,
+          changeOrigin: true,
+          secure: false,
+        },
+        '/publisher': {
+          target: apiTarget,
+          changeOrigin: true,
+          secure: false,
+        },
+        '/borrow': {
+          target: apiTarget,
+          changeOrigin: true,
+          secure: false,
+        },
       }
     }
   }

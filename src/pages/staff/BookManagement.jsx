@@ -4,6 +4,7 @@ import BookCard from "@/components/ui/BookCardStaff";
 import Pagination from "@/components/ui/Pagination";
 import AddBookForm from "@/components/ui/AddBookForm/addBookForm";
 import useBookManagement from "@/hooks/useBookManagement";
+import axios from "@/utils/axiosConfig";
 
 export default function BookManagement() {
   const {
@@ -19,35 +20,28 @@ export default function BookManagement() {
     setSearchTerm: hookSetSearchTerm,
     setSelectedBooks,
     handleDeleteBooks,
-    handleEditBook,
-    closeEditBook,
     fetchBooks,
+    openEditBook,
+    closeEditBook,
+    editingBook,
   } = useBookManagement();
 
   // State cho modal - ĐẢM BẢO khởi tạo đúng
   const [showAddBookForm, setShowAddBookForm] = useState(false);
-  const [editingBook, setEditingBook] = useState(null);
 
   // Local search term
   const [localSearchTerm, setLocalSearchTerm] = useState(hookSearchTerm);
 
-  const handleEdit = async (bookId) => {
-    const data = await bookService.getById(bookId);
 
-    setEditBook({
-      book_id: data.book_id,
-      title: data.title,
-      description: data.description,
-      publish_year: data.publish_year,
-      language: data.language,
-      cover_url: data.cover_url,
-      authors: data.authors,       // array [{author_id, name}]
-      categories: data.categories, // nếu có
-      shelf_id: data.shelf_id,
-      publisher_id: data.publisher_id,
-    });
 
-    setOpenEditModal(true);
+  const handleEditBook = async (bookId) => {
+    try {
+      await openEditBook(bookId);
+      setShowAddBookForm(true);
+    } catch (err) {
+      console.error("Không load được chi tiết sách", err);
+      alert("Không thể tải dữ liệu sách");
+    }
   };
 
   // Đồng bộ local search term với hook search term
@@ -75,7 +69,7 @@ export default function BookManagement() {
   const handleClearSearch = () => {
     setLocalSearchTerm('');
     hookSetSearchTerm('');
-    setPage(1);
+    setPagination(prev => ({ ...prev, page: 1 }));
   };
 
   // Form submit
@@ -87,7 +81,7 @@ export default function BookManagement() {
   // Mở form thêm sách - SỬA LẠI ĐỂ ĐẢM BẢO STATE UPDATE
   const handleOpenAddBook = () => {
     console.log("handleOpenAddBook called");
-    setEditingBook(null);
+    closeEditBook();
     // Dùng functional update để đảm bảo
     setShowAddBookForm(true);
   };
@@ -95,7 +89,7 @@ export default function BookManagement() {
   // Mở form chỉnh sửa sách
   const handleOpenEditBook = (book) => {
     console.log("handleOpenEditBook called with:", book);
-    setEditingBook(book);
+    // Lưu ý: handleOpenEditBook này có thể không cần thiết nếu dùng handleEditBook từ card
     setShowAddBookForm(true);
   };
 
@@ -103,7 +97,7 @@ export default function BookManagement() {
   const handleCloseForm = () => {
     console.log("handleCloseForm called");
     setShowAddBookForm(false);
-    setEditingBook(null);
+    closeEditBook();
   };
 
   // Lấy tên category
@@ -183,7 +177,7 @@ export default function BookManagement() {
               <div className="flex gap-6">
                 <button
                   onClick={handleOpenAddBook}
-                  className="flex items-center gap-2 px-8 py-3 text-base rounded text-white font-medium hover:opacity-90 transition-opacity"
+                  className="flex items-center gap-2 px-8 py-3 text-base rounded text-white font-medium hover:opacity-90 transition-opacity cursor-pointer"
                   style={{ backgroundColor: '#7A4A2E' }}
                 >
                   <Plus size={22} />
@@ -191,7 +185,7 @@ export default function BookManagement() {
                 </button>
                 <button
                   onClick={handleDeleteBooks}
-                  className="flex items-center gap-2 px-8 py-3 text-base rounded text-white font-medium hover:opacity-90 transition-opacity"
+                  className="flex items-center gap-2 px-8 py-3 text-base rounded text-white font-medium hover:opacity-90 transition-opacity cursor-pointer"
                   style={{ backgroundColor: '#DE6767' }}
                 >
                   <Trash2 size={22} />
@@ -209,11 +203,16 @@ export default function BookManagement() {
               <div className="grid grid-cols-2 gap-8">
                 {books.map((book) => (
                   <BookCard
-                    key={book.id}
+                    key={book.book_id}
                     book={book}
-                    isChecked={selectedBooks[book.id] || false}
-                    onCheckChange={handleCheckChange}
-                    onEdit={() => handleOpenEditBook(book)}
+                    isChecked={!!selectedBooks[book.book_id]}
+                    onCheckChange={(bookId, checked) =>
+                      setSelectedBooks(prev => ({
+                        ...prev,
+                        [bookId]: checked
+                      }))
+                    }
+                    onEdit={handleEditBook}
                   />
                 ))}
               </div>
@@ -240,17 +239,16 @@ export default function BookManagement() {
         {/* Pagination section */}
         <div className="mt-auto p-8">
           <div className="max-w-8xl mx-auto">
-            {books.length > 0 && (
+            {books.length > 0 && pagination && (
               <>
                 <div className="text-center mb-4 text-gray-600">
-                  Hiển thị {(pagination.page - 1) * 10 + 1}–
-                  {Math.min(pagination.page * 10, pagination.totalItems)}
-                  trong tổng số {pagination.totalItems} sách
+                  Hiển thị {((pagination.page || 1) - 1) * 10 + 1}–
+                  {Math.min((pagination.page || 1) * 10, pagination.totalItems || 0)} trong tổng số {pagination.totalItems || 0} sách
                 </div>
 
                 <Pagination
-                  currentPage={pagination.page}
-                  totalPages={pagination.totalPages}
+                  currentPage={pagination.page || 1}
+                  totalPages={pagination.totalPages || 1}
                   onPageChange={(p) =>
                     setPagination((prev) => ({ ...prev, page: p }))
                   }
@@ -267,8 +265,8 @@ export default function BookManagement() {
         bookToEdit={editingBook}
         onClose={handleCloseForm}
         onSave={() => {
-          fetchBooks();      // 🔥 reload từ DB
-          handleCloseForm(); // đóng modal
+          fetchBooks();
+          handleCloseForm();
         }}
       />
     </>

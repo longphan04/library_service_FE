@@ -119,14 +119,16 @@ const useBooksByCategory = (limit = 18) => {
         // ========== FETCH DATA ==========
         setLoading(true);
         setError(null);
+        setBooks([]); // Clear old books immediately to avoid showing stale data
 
         try {
             // DEBUG: Log API call
             console.log('[useBooksByCategory] 🔍 Fetching books for category:', categoryId);
 
-            // Gọi API: GET /book?category={categoryId}&limit={limit}
+            // Gọi API: GET /book?categoryId={categoryId}&limit={limit}
+            // Backend nhận param "categoryId" (confirmed)
             const response = await bookService.getAll({
-                category: categoryId,
+                categoryId: categoryId,
                 limit
             });
 
@@ -139,9 +141,13 @@ const useBooksByCategory = (limit = 18) => {
             }
 
             // Extract books từ response
+            // API có thể trả về: array trực tiếp, { data: [...] }, hoặc { books: [...] }
             const rawBooks = Array.isArray(response)
                 ? response
-                : response.data || [];
+                : response.data || response.books || [];
+
+            // DEBUG: Log số lượng books
+            console.log('[useBooksByCategory] 📚 Books count:', rawBooks.length);
 
             // Normalize tất cả books
             const normalizedBooks = rawBooks.map(normalizeBook);

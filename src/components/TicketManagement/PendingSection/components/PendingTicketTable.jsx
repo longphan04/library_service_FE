@@ -8,7 +8,7 @@ export default function PendingTicketTable({
   onToggleOne,
   onConfirmOne,
   onRejectOne,
-  onViewTicket, // Thêm prop mới
+  onViewTicket,
 }) {
   if (tickets.length === 0) {
     return (
@@ -21,11 +21,11 @@ export default function PendingTicketTable({
 
   return (
     <div className="rounded-lg overflow-hidden">
-      <PendingTableHeader 
-        allChecked={allChecked} 
+      <PendingTableHeader
+        allChecked={allChecked}
         onToggleAll={onToggleAll}
       />
-      
+
       <div className="divide-y divide-gray-100">
         {tickets.map((ticket) => (
           <PendingTicketRow
@@ -34,7 +34,7 @@ export default function PendingTicketTable({
             onToggleOne={onToggleOne}
             onConfirmOne={onConfirmOne}
             onRejectOne={onRejectOne}
-            onViewTicket={onViewTicket} // Truyền prop xuống
+            onViewTicket={onViewTicket}
           />
         ))}
       </div>

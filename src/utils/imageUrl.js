@@ -7,13 +7,13 @@
 // Fallback Images (No hardcoded placeholders in components)
 // ==========================================
 export const FALLBACK_IMAGES = {
-    book: '/assets/fallback/book-cover.png',
+    book: '/assets/fallback/book.png',
     category: '/assets/fallback/category.png',
     avatar: '/assets/fallback/avatar.png',
-    // Legacy placeholder URLs (giữ lại để tương thích)
-    bookPlaceholder: 'https://via.placeholder.com/200x280/FFF8F0/7D5B4F?text=No+Image',
-    categoryPlaceholder: 'https://via.placeholder.com/300x200/7D5B4F/FFF8F0?text=Category',
-    avatarPlaceholder: 'https://via.placeholder.com/100x100/7D5B4F/FFF8F0?text=Avatar',
+    // Backward compatibility aliases
+    bookPlaceholder: '/assets/fallback/book.png',
+    categoryPlaceholder: '/assets/fallback/category.png',
+    avatarPlaceholder: '/assets/fallback/avatar.png',
 };
 
 /**
@@ -44,7 +44,7 @@ export const buildImageUrl = (imagePath) => {
     }
 
     // Nếu là relative path → prefix với API base URL + /public/
-    const baseUrl = import.meta.env.VITE_API_BASE_URL || 'http://10.0.5.101:3000';
+    const baseUrl = import.meta.env.VITE_API_BASE_URL || 'https://9c386f455b68.ngrok-free.app';
 
     // Đảm bảo path không bắt đầu bằng / (tránh double slash)
     const cleanPath = imagePath.startsWith('/') ? imagePath.slice(1) : imagePath;
@@ -94,7 +94,7 @@ export const buildStaticUrl = (path) => {
         return path;
     }
 
-    const baseUrl = import.meta.env.VITE_API_BASE_URL || 'http://10.0.5.101:3000';
+    const baseUrl = import.meta.env.VITE_API_BASE_URL || 'https://51d078483375.ngrok-free.app/book';
     const cleanPath = path.startsWith('/') ? path : `/${path}`;
     return `${baseUrl}${cleanPath}`;
 };

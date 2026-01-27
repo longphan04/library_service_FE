@@ -1,14 +1,17 @@
 import PendingSection from "./PendingSection";
-import ReceiveBookSection from "./ReceiveBookSection";
-import ReturnBookSection from "./ReturnBookSection";
+import CancelledSection from "./CancelledSection";
+import ApprovedSection from "./ApprovedSection";
+import PickedUpSection from "./PickedUpSection";
+import ReturnedSection from "./ReturnedSection";
 
-export default function TicketManagement({ 
+export default function TicketManagement({
   activeSection = "pending",
   allTickets,
   setAllTickets,
   updateTicketStatus,
   bulkUpdateTickets,
-  updateReturnedCount
+  updateApprovedCount,
+  refreshData
 }) {
   const renderSection = () => {
     const commonProps = {
@@ -16,16 +19,21 @@ export default function TicketManagement({
       setAllTickets,
       updateTicketStatus,
       bulkUpdateTickets,
-      updateReturnedCount
+      updateApprovedCount,
+      refreshData
     };
 
     switch (activeSection) {
       case "pending":
         return <PendingSection {...commonProps} />;
-      case "receive":
-        return <ReceiveBookSection {...commonProps} />;
-      case "return":
-        return <ReturnBookSection {...commonProps} />;
+      case "approved":
+        return <ApprovedSection {...commonProps} />;
+      case "picked-up":
+        return <PickedUpSection {...commonProps} />;
+      case "returned":
+        return <ReturnedSection {...commonProps} />;
+      case "cancelled":
+        return <CancelledSection {...commonProps} />;
       default:
         return <PendingSection {...commonProps} />;
     }

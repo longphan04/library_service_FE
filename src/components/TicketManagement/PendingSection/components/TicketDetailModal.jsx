@@ -1,37 +1,6 @@
 import { useEffect, useState } from "react";
 import { X } from "lucide-react";
 
-// Mock data cho books
-const MOCK_BOOKS = [
-  {
-    id: "B001",
-    name: "Nhà Giả Kim",
-    author: "Paulo Coelho",
-    image: "https://images.unsplash.com/photo-1544947950-fa07a98d237f?w=100&h=140&fit=crop",
-    quantity: 2,
-    category: "Tiểu thuyết",
-    publishYear: 1988
-  },
-  {
-    id: "B002",
-    name: "Đắc Nhân Tâm",
-    author: "Dale Carnegie",
-    image: "https://images.unsplash.com/photo-1543002588-bfa74002ed7e?w=100&h=140&fit=crop",
-    quantity: 1,
-    category: "Self-help",
-    publishYear: 1936
-  },
-  {
-    id: "B003",
-    name: "Trí Tuệ Do Thái",
-    author: "Eran Katz",
-    image: "https://images.unsplash.com/photo-1532012197267-da84d127e765?w=100&h=140&fit=crop",
-    quantity: 3,
-    category: "Kinh doanh",
-    publishYear: 2006
-  }
-];
-
 export default function TicketDetailModal({
   open,
   onClose,
@@ -55,31 +24,11 @@ export default function TicketDetailModal({
   // Effect để khởi tạo dữ liệu khi modal mở
   useEffect(() => {
     if (open && ticket) {
-      // Mock user info dựa trên ticket
-      const mockUserInfo = {
-        name: ticket.userName || "Người dùng",
-        email: ticket.email || "email@example.com",
-        cardId: ticket.cardId || "000000",
-        phone: "0123 456 789",
-        address: "123 Đường ABC, Quận XYZ",
-        joinDate: "15/03/2023",
-        borrowedBooks: 5,
-        totalFine: 0
-      };
-
-      // Mock books data (lấy số lượng sách từ ticket.quantity)
-      const bookCount = ticket.quantity || 3;
-      const initialBooks = MOCK_BOOKS.slice(0, bookCount).map(book => ({
-        ...book,
-        quantity: Math.min(book.quantity, 2) // Giới hạn số lượng
-      }));
-
-      setUserInfo(mockUserInfo);
-      setBooks(initialBooks);
+      setUserInfo(ticket.userInfo);
+      setBooks(ticket.books);
     } else {
-      // Reset state khi modal đóng
-      setBooks([]);
       setUserInfo(null);
+      setBooks([]);
     }
   }, [open, ticket]);
 
@@ -166,37 +115,20 @@ export default function TicketDetailModal({
                 <p className="font-medium">{userInfo?.email}</p>
               </div>
               <div>
-                <p className="text-sm text-gray-500">Mã thẻ</p>
-                <p className="font-medium">{userInfo?.cardId}</p>
-              </div>
-              <div>
                 <p className="text-sm text-gray-500">Số điện thoại</p>
                 <p className="font-medium">{userInfo?.phone}</p>
-              </div>
-              <div>
-                <p className="text-sm text-gray-500">Ngày tham gia</p>
-                <p className="font-medium">{userInfo?.joinDate}</p>
-              </div>
-              <div>
-                <p className="text-sm text-gray-500">Số sách đang mượn</p>
-                <p className="font-medium">{userInfo?.borrowedBooks}</p>
               </div>
             </div>
           </div>
 
           {/* Books Section */}
           <div>
-            <div className="flex justify-between items-center mb-4">
-              <h3 className="text-lg font-semibold text-gray-800">
-                Danh sách sách yêu cầu mượn
-              </h3>
-              <div className="text-sm text-gray-600">
-                Tổng: {books.length} sách • {totalQuantity} bản
-              </div>
-            </div>
+            <h3 className="text-lg font-semibold text-gray-800 mb-4">
+              Danh sách sách yêu cầu mượn
+            </h3>
 
             {/* TABLE HEADER - Không có checkbox */}
-            <div className="grid grid-cols-[100px_2fr_1fr_1fr_120px] bg-[#7A4A2E] text-white px-4 py-3 rounded-t">
+            <div className="grid grid-cols-[100px_1fr_1fr_1fr_120px] bg-[#7A4A2E] text-white px-4 py-3 rounded-t">
               <div>Ảnh</div>
               <div>Tên sách</div>
               <div>Tác giả</div>
@@ -209,14 +141,14 @@ export default function TicketDetailModal({
               {books.map((book) => (
                 <div
                   key={book.id}
-                  className="grid grid-cols-[100px_2fr_1fr_1fr_120px] px-4 py-4 border-b border-gray-200 items-center hover:bg-gray-50 transition"
+                  className="grid grid-cols-[100px_1fr_1fr_1fr_120px] px-4 py-4 border-b border-gray-200 items-center hover:bg-gray-50 transition"
                 >
                   <img
                     src={book.image}
                     alt={book.name}
                     className="w-14 h-20 object-cover rounded shadow"
                     onError={(e) => {
-                      e.target.src = "https://via.placeholder.com/100x140?text=No+Image";
+                      e.target.src = FALLBACK_IMAGES.book;
                     }}
                   />
 
@@ -243,8 +175,6 @@ export default function TicketDetailModal({
           <div className="flex justify-between items-center">
             <div className="text-gray-600">
               <span className="font-medium">Tổng số sách: {books.length}</span>
-              <span className="mx-2">•</span>
-              <span>Tổng số bản: {totalQuantity}</span>
             </div>
 
             <div className="flex gap-4">

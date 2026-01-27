@@ -10,7 +10,7 @@ export default function AdminTabs({ active }) {
     ];
 
     return (
-        <div className="flex justify-center gap-4 mb-8">
+        <div className="flex justify-center gap-4 mb-4">
             {tabs.map(tab => (
                 <button
                     key={tab.key}

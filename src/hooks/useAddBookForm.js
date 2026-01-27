@@ -73,12 +73,29 @@ export default function useAddBookForm({
        EDIT MODE
     ======================= */
     useEffect(() => {
-        if (!bookToEdit) return;
+        if (!bookToEdit) {
+            setFormData({
+                title: "",
+                description: "",
+                copy_quantity: "1",
+                publish_year: String(new Date().getFullYear()),
+            });
+            setSelectedAuthors([]);
+            setSelectedPublisher(null);
+            setSelectedShelf(null);
+            setSelectedCategories([]);
+            setPreviewImage(null);
+            return;
+        }
+
+        if (bookToEdit.cover_url) {
+            setPreviewImage(`https://place-potentially-downloaded-lyrics.trycloudflare.com/public/${bookToEdit.cover_url}`);
+        }
 
         setFormData({
             title: bookToEdit.title || "",
             description: bookToEdit.description || "",
-            copy_quantity: String(bookToEdit.copy_quantity || "1"),
+            copy_quantity: String(bookToEdit.available_copies || bookToEdit.total_copies || "1"),
             publish_year: String(bookToEdit.publish_year || ""),
         });
 
@@ -163,10 +180,6 @@ export default function useAddBookForm({
 
             const fd = new FormData();
 
-            const authorPayload = selectedAuthors.map(a =>
-                a.author_id ? a.author_id : a.name
-            );
-
             fd.append("title", formData.title);
             fd.append("description", formData.description);
             fd.append("publish_year", formData.publish_year);
@@ -174,18 +187,16 @@ export default function useAddBookForm({
             fd.append("publisher_id", selectedPublisher.publisher_id);
             fd.append("shelf_id", selectedShelf.shelf_id);
 
-            fd.append(
-                "author_ids",
-                selectedAuthors.map(a => a.author_id ?? a.name).join(",")
-            );
+            // Gửi mảng IDs cho authors và categories
+            selectedAuthors.forEach(a => {
+                fd.append("author_ids[]", a.author_id);
+            });
 
-            fd.append(
-                "category_ids",
-                selectedCategories.map(c => c.category_id).join(",")
-            );
+            selectedCategories.forEach(c => {
+                fd.append("category_ids[]", c.category_id);
+            });
 
             if (imageFile) fd.append("image", imageFile);
-
 
             if (bookToEdit) {
                 await updateBook(bookToEdit.book_id, fd);
@@ -196,8 +207,13 @@ export default function useAddBookForm({
             onSave();
             onClose();
         } catch (err) {
-            console.error(err);
-            alert("Lưu sách thất bại");
+            console.error("Lỗi khi lưu sách:", err);
+            if (err.response?.data) {
+                console.error("Chi tiết lỗi từ server:", err.response.data);
+                alert(`Lưu sách thất bại: ${err.response.data.message || "Lỗi validation"}`);
+            } else {
+                alert("Lưu sách thất bại: Lỗi hệ thống");
+            }
         } finally {
             setLoading(false);
         }

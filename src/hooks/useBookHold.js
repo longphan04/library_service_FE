@@ -48,6 +48,7 @@ const normalizeHoldData = (hold) => {
             || null,
         availableCopies: rawBook.available_copies
             || rawBook.availableCopies
+            || rawBook.available
             || 0,
     };
 

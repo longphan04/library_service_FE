@@ -1,15 +1,33 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useCallback, useEffect } from "react";
+import { userManagementStaffService } from "@/services/userManagementStaff.service";
 
 const ITEMS_PER_PAGE = 5;
 
-export default function useUserManagement(initialUsers = []) {
-    const [users, setUsers] = useState(
-        Array.isArray(initialUsers) ? initialUsers : []
-    );
+export default function useUserManagement() {
+    const [users, setUsers] = useState([]);
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState(null);
     const [searchTerm, setSearchTerm] = useState("");
     const [statusFilter, setStatusFilter] = useState("all");
     const [currentPage, setCurrentPage] = useState(1);
     const [selectedUsers, setSelectedUsers] = useState({});
+
+    const fetchUsers = useCallback(async () => {
+        setLoading(true);
+        setError(null);
+        try {
+            const data = await userManagementStaffService.getMembers();
+            setUsers(data);
+        } catch (err) {
+            setError(err.message || "Không thể tải danh sách người dùng");
+        } finally {
+            setLoading(false);
+        }
+    }, []);
+
+    useEffect(() => {
+        fetchUsers();
+    }, [fetchUsers]);
 
     /* ===== FILTER + SEARCH ===== */
     const filteredUsers = useMemo(() => {
@@ -17,8 +35,8 @@ export default function useUserManagement(initialUsers = []) {
 
         return users.filter(user => {
             const matchSearch =
-                user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                user.email.toLowerCase().includes(searchTerm.toLowerCase());
+                (user.name || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
+                (user.email || "").toLowerCase().includes(searchTerm.toLowerCase());
 
             const matchStatus =
                 statusFilter === "all" || user.status === statusFilter;
@@ -66,31 +84,44 @@ export default function useUserManagement(initialUsers = []) {
         currentItems.every(user => selectedUsers[user.id]);
 
     /* ===== ACTIONS ===== */
-    const lockUsers = () => {
-        setUsers(prev =>
-            prev.map(user =>
-                selectedIds.includes(user.id)
-                    ? { ...user, status: "locked" }
-                    : user
-            )
-        );
-        setSelectedUsers({});
+    const lockUsers = async () => {
+        try {
+            await Promise.all(selectedIds.map(id => userManagementStaffService.updateUserStatus(id, "locked")));
+            setUsers(prev =>
+                prev.map(user =>
+                    selectedIds.includes(user.id)
+                        ? { ...user, status: "locked" }
+                        : user
+                )
+            );
+            setSelectedUsers({});
+        } catch (err) {
+            alert("Lỗi khi khóa người dùng");
+        }
     };
 
-    const unlockUsers = () => {
-        setUsers(prev =>
-            prev.map(user =>
-                selectedIds.includes(user.id)
-                    ? { ...user, status: "active" }
-                    : user
-            )
-        );
-        setSelectedUsers({});
+    const unlockUsers = async () => {
+        try {
+            await Promise.all(selectedIds.map(id => userManagementStaffService.updateUserStatus(id, "active")));
+            setUsers(prev =>
+                prev.map(user =>
+                    selectedIds.includes(user.id)
+                        ? { ...user, status: "active" }
+                        : user
+                )
+            );
+            setSelectedUsers({});
+        } catch (err) {
+            alert("Lỗi khi mở khóa người dùng");
+        }
     };
 
     return {
         users,
         setUsers,
+        loading,
+        error,
+        fetchUsers,
 
         currentItems,
         currentPage,

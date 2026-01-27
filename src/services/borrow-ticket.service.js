@@ -151,7 +151,7 @@ export const getRecentBorrowTickets = async () => {
  * Endpoint: GET /dashboard/recent-return-tickets
  * @returns {Promise<BorrowTicket[]>}
  */
-export const getRecentReturnTickets = async () => {
+export const getRecentApprovedTickets = async () => {
     try {
         const response = await axios.get('/dashboard/recent-return-tickets');
         return response.data;

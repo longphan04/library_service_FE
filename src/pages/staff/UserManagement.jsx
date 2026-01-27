@@ -2,13 +2,8 @@ import { useState } from "react";
 import Pagination from "@/components/ui/Pagination";
 import useUserManagement from "@/hooks/useUserManagement";
 import UserDetailModal from "@/components/UserDetailModal/UserDetailModal";
-import { Search } from "lucide-react";
-
-const usersData = [
-    { id: 1, name: "Leslie Maya", email: "leslie@gmail.com", date: "22/02/2010", status: "locked" },
-    { id: 2, name: "Mike Dean", email: "mike@gmail.com", date: "14/04/2015", status: "active" },
-    { id: 3, name: "Jorge Ferreira", email: "jorge@gmail.com", date: "14/03/2018", status: "active" },
-];
+import { Search, RefreshCw } from "lucide-react";
+import { userManagementStaffService } from "@/services/userManagementStaff.service";
 
 export default function UserManagement() {
     const {
@@ -29,14 +24,22 @@ export default function UserManagement() {
         unlockUsers,
         setUsers,
         users,
-    } = useUserManagement(usersData);
+        loading,
+        error,
+        fetchUsers
+    } = useUserManagement();
 
-    const handleSaveUser = (updatedUser) => {
-        setUsers(prev =>
-            prev.map(u =>
-                u.id === updatedUser.id ? updatedUser : u
-            )
-        );
+    const handleSaveUser = async (updatedUser) => {
+        try {
+            await userManagementStaffService.updateUserStatus(updatedUser.id, updatedUser.status);
+            setUsers(prev =>
+                prev.map(u =>
+                    u.id === updatedUser.id ? updatedUser : u
+                )
+            );
+        } catch (err) {
+            alert("Không thể cập nhật trạng thái người dùng");
+        }
     };
 
     const [selectedUser, setSelectedUser] = useState(null);
@@ -58,25 +61,35 @@ export default function UserManagement() {
     };
 
     // Hàm để mở khóa một user cụ thể
-    const handleUnlockSingleUser = (userId) => {
-        setUsers(prev =>
-            prev.map(user =>
-                user.id === userId
-                    ? { ...user, status: "active" }
-                    : user
-            )
-        );
+    const handleUnlockSingleUser = async (userId) => {
+        try {
+            await userManagementStaffService.updateUserStatus(userId, "active");
+            setUsers(prev =>
+                prev.map(user =>
+                    user.id === userId
+                        ? { ...user, status: "active" }
+                        : user
+                )
+            );
+        } catch (err) {
+            alert("Không thể mở khóa người dùng");
+        }
     };
 
     // Hàm để khóa một user cụ thể
-    const handleLockSingleUser = (userId) => {
-        setUsers(prev =>
-            prev.map(user =>
-                user.id === userId
-                    ? { ...user, status: "locked" }
-                    : user
-            )
-        );
+    const handleLockSingleUser = async (userId) => {
+        try {
+            await userManagementStaffService.updateUserStatus(userId, "locked");
+            setUsers(prev =>
+                prev.map(user =>
+                    user.id === userId
+                        ? { ...user, status: "locked" }
+                        : user
+                )
+            );
+        } catch (err) {
+            alert("Không thể khóa người dùng");
+        }
     };
 
     return (
@@ -91,7 +104,7 @@ export default function UserManagement() {
                         <select
                             value={statusFilter}
                             onChange={(e) => setStatusFilter(e.target.value)}
-                            className="px-6 py-3 rounded border border-primary bg-white"
+                            className="px-6 py-3 rounded border border-primary"
                         >
                             <option value="all">Tất cả trạng thái</option>
                             <option value="active">Hoạt động</option>
@@ -111,13 +124,21 @@ export default function UserManagement() {
                                 style={{ backgroundColor: "#7D5B4F", minWidth: "320px" }}
                             />
                         </div>
+
+                        <button
+                            onClick={fetchUsers}
+                            className="p-3 rounded-full hover:rotate-360 transition-all duration-1000 text-primary cursor-pointer"
+                            title="Làm mới"
+                        >
+                            <RefreshCw size={20} className={loading ? "animate-spin" : ""} />
+                        </button>
                     </div>
 
                     {/* RIGHT - Các nút hành động cho nhiều user */}
                     <div className="flex gap-6">
                         <button
                             onClick={unlockUsers}
-                            disabled={selectedIds.length === 0}
+                            disabled={selectedIds.length === 0 || loading}
                             className="px-8 py-3 rounded text-white disabled:opacity-40"
                             style={{ backgroundColor: "#7A4A2E" }}
                         >
@@ -125,7 +146,7 @@ export default function UserManagement() {
                         </button>
                         <button
                             onClick={lockUsers}
-                            disabled={selectedIds.length === 0}
+                            disabled={selectedIds.length === 0 || loading}
                             className="px-8 py-3 rounded text-white disabled:opacity-40"
                             style={{ backgroundColor: "#DE6767" }}
                         >
@@ -152,65 +173,81 @@ export default function UserManagement() {
             </div>
 
             {/* ================= TABLE BODY ================= */}
-            {currentItems.map((user) => (
-                <div
-                    key={user.id}
-                    className="grid grid-cols-[40px_2fr_2fr_1.5fr_1.5fr_250px] px-4 py-4 border-b border-gray-200 items-center hover:bg-gray-50 transition cursor-pointer"
-                    onClick={(e) => handleRowClick(user, e)}
-                >
-                    {/* Checkbox - cần stopPropagation để không mở modal khi click */}
-                    <div onClick={(e) => e.stopPropagation()}>
-                        <input
-                            type="checkbox"
-                            checked={selectedUsers[user.id] || false}
-                            onChange={(e) => toggleUser(user.id, e.target.checked)}
-                            style={{ accentColor: '#7A4A2E' }}
-                            className="h-5 w-5 cursor-pointer"
-                        />
+            <div className="flex-1 flex flex-col">
+                {loading && users.length === 0 ? (
+                    <div className="flex-1 flex items-center justify-center p-12 text-gray-500">
+                        Đang tải dữ liệu...
                     </div>
-
-                    <div className="font-medium text-gray-800">{user.name}</div>
-                    <div className="text-gray-600">{user.email}</div>
-                    <div className="text-gray-600">{user.date}</div>
-
-                    <div>
-                        <span
-                            className={`px-4 py-2 rounded text-white text-sm ${user.status === "active" ? "bg-black" : "bg-red-500"
-                                }`}
+                ) : error ? (
+                    <div className="flex-1 flex items-center justify-center p-12 text-red-500">
+                        {error}
+                    </div>
+                ) : currentItems.length === 0 ? (
+                    <div className="flex-1 flex items-center justify-center p-12 text-gray-500">
+                        Không tìm thấy người dùng nào
+                    </div>
+                ) : (
+                    currentItems.map((user) => (
+                        <div
+                            key={user.id}
+                            className="grid grid-cols-[40px_2fr_2fr_1.5fr_1.5fr_250px] px-4 py-4 border-b border-gray-200 items-center hover:bg-gray-50 transition cursor-pointer"
+                            onClick={(e) => handleRowClick(user, e)}
                         >
-                            {user.status === "active" ? "Hoạt động" : "Khóa"}
-                        </span>
-                    </div>
+                            {/* Checkbox - cần stopPropagation để không mở modal khi click */}
+                            <div onClick={(e) => e.stopPropagation()}>
+                                <input
+                                    type="checkbox"
+                                    checked={selectedUsers[user.id] || false}
+                                    onChange={(e) => toggleUser(user.id, e.target.checked)}
+                                    style={{ accentColor: '#7A4A2E' }}
+                                    className="h-5 w-5 cursor-pointer"
+                                />
+                            </div>
 
-                    {/* ================= ACTIONS COLUMN ================= */}
-                    {/* Container cho các nút hành động - cần stopPropagation */}
-                    <div
-                        className="flex justify-end gap-3 actions-container"
-                        onClick={(e) => e.stopPropagation()}
-                    >
-                        {/* Các nút hành động cho từng user */}
-                        <div className="flex gap-2">
-                            {user.status === "locked" ? (
-                                <button
-                                    onClick={() => handleUnlockSingleUser(user.id)}
-                                    className="px-4 py-2.5 text-sm rounded text-white hover:opacity-90 transition"
-                                    style={{ backgroundColor: "#7A4A2E", minWidth: "80px" }}
+                            <div className="font-medium text-gray-800">{user.name}</div>
+                            <div className="text-gray-600">{user.email}</div>
+                            <div className="text-gray-600">{user.date}</div>
+
+                            <div>
+                                <span
+                                    className={`px-4 py-2 rounded text-white text-sm ${user.status === "active" ? "bg-black" : "bg-red-500"
+                                        }`}
                                 >
-                                    Mở khóa
-                                </button>
-                            ) : (
-                                <button
-                                    onClick={() => handleLockSingleUser(user.id)}
-                                    className="px-4 py-2.5 text-sm rounded text-white hover:opacity-90 transition"
-                                    style={{ backgroundColor: "#DE6767", minWidth: "80px" }}
-                                >
-                                    Khóa
-                                </button>
-                            )}
+                                    {user.status === "active" ? "Hoạt động" : "Khóa"}
+                                </span>
+                            </div>
+
+                            {/* ================= ACTIONS COLUMN ================= */}
+                            {/* Container cho các nút hành động - cần stopPropagation */}
+                            <div
+                                className="flex justify-end gap-3 actions-container"
+                                onClick={(e) => e.stopPropagation()}
+                            >
+                                {/* Các nút hành động cho từng user */}
+                                <div className="flex gap-2">
+                                    {user.status === "locked" ? (
+                                        <button
+                                            onClick={() => handleUnlockSingleUser(user.id)}
+                                            className="px-4 py-2.5 text-sm rounded text-white hover:opacity-90 transition"
+                                            style={{ backgroundColor: "#7A4A2E", minWidth: "80px" }}
+                                        >
+                                            Mở khóa
+                                        </button>
+                                    ) : (
+                                        <button
+                                            onClick={() => handleLockSingleUser(user.id)}
+                                            className="px-4 py-2.5 text-sm rounded text-white hover:opacity-90 transition"
+                                            style={{ backgroundColor: "#DE6767", minWidth: "80px" }}
+                                        >
+                                            Khóa
+                                        </button>
+                                    )}
+                                </div>
+                            </div>
                         </div>
-                    </div>
-                </div>
-            ))}
+                    ))
+                )}
+            </div>
 
             {/* ================= PAGINATION ================= */}
             <div className="mt-auto p-6 flex justify-center">

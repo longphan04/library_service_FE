@@ -1,4 +1,5 @@
 import { createContext, useContext, useState, useEffect } from 'react';
+import { FALLBACK_IMAGES } from '../../utils/imageUrl';
 
 const AuthContext = createContext(null);
 
@@ -13,7 +14,7 @@ const MOCK_USERS = [
         name: 'Quản trị viên',
         email: 'admin@library.com',
         role: 'ADMIN',
-        avatarUrl: 'https://via.placeholder.com/40/4CAF50/FFFFFF?text=AD',
+        avatarUrl: FALLBACK_IMAGES.avatar,
     },
     {
         id: '2',
@@ -22,7 +23,7 @@ const MOCK_USERS = [
         name: 'Thủ thư A',
         email: 'librarian@library.com',
         role: 'STAFF',
-        avatarUrl: 'https://via.placeholder.com/40/2196F3/FFFFFF?text=LB',
+        avatarUrl: FALLBACK_IMAGES.avatar,
     },
     {
         id: '3',
@@ -31,7 +32,7 @@ const MOCK_USERS = [
         name: 'Thành viên B',
         email: 'member@library.com',
         role: 'MEMBER',
-        avatarUrl: 'https://via.placeholder.com/40/FF9800/FFFFFF?text=MB',
+        avatarUrl: FALLBACK_IMAGES.avatar,
     },
 ];
 

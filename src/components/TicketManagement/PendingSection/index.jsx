@@ -1,25 +1,35 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import SearchBar from "./components/SearchBar";
 import ActionButtons from "./components/ActionButtons";
 import PendingTicketTable from "./components/PendingTicketTable";
 import TicketDetailModal from "./components/TicketDetailModal";
+import useNotiStaff from "@/hooks/useNotiStaff";
+import { borrowTicketStaffService } from "@/services/borrowTicketStaff.service";
+import usePagination from "@/hooks/usePagination";
+import Pagination from "@/components/ui/Pagination";
 
-export default function PendingSection({ 
-  allTickets, 
+export default function PendingSection({
+  allTickets,
   updateTicketStatus,
-  bulkUpdateTickets 
+  bulkUpdateTickets,
+  refreshData
 }) {
   const [search, setSearch] = useState("");
   const [checkedTickets, setCheckedTickets] = useState({});
   const [selectedTicket, setSelectedTicket] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
+  const { clearNotification } = useNotiStaff();
+
+  useEffect(() => {
+    clearNotification();
+  }, []);
+
   // Filter chỉ lấy pending và rejected tickets
   const filteredTickets = allTickets
     .filter((t) => t.status === "pending" || t.status === "rejected")
     .filter((t) =>
-      t.userName.toLowerCase().includes(search.toLowerCase()) ||
-      t.email.toLowerCase().includes(search.toLowerCase())
+      t.userName.toLowerCase().includes(search.toLowerCase())
     )
     .map(ticket => ({
       ...ticket,
@@ -42,85 +52,141 @@ export default function PendingSection({
   };
 
   // Mở modal xem chi tiết ticket
-  const handleViewTicket = (ticket) => {
-    setSelectedTicket(ticket);
+  const handleViewTicket = async (ticket) => {
+    const detail = await borrowTicketStaffService.getTicketDetail(ticket.id);
+
+    setSelectedTicket({
+      ...ticket,
+      userInfo: detail.user,
+      books: detail.books,
+    });
+
     setIsModalOpen(true);
   };
 
   // Xác nhận toàn bộ ticket từ modal
-  const handleConfirmTicket = (ticketId, books) => {
-    console.log(`Xác nhận ticket ${ticketId} với ${books.length} sách`);
-    updateTicketStatus(ticketId, "waiting_pickup");
-    setCheckedTickets(prev => ({ ...prev, [ticketId]: false }));
-    setIsModalOpen(false);
-    setSelectedTicket(null);
+  const handleConfirmTicket = async (ticketId) => {
+    try {
+      await borrowTicketStaffService.updateStatus(ticketId, "APPROVED");
+
+      updateTicketStatus(ticketId, "APPROVED");
+      if (refreshData) refreshData();
+
+      setIsModalOpen(false);
+      setSelectedTicket(null);
+    } catch (err) {
+      console.error(err);
+      alert("Duyệt phiếu thất bại");
+    }
   };
 
   // Từ chối toàn bộ ticket từ modal
-  const handleRejectTicket = (ticketId) => {
-    console.log(`Từ chối ticket ${ticketId}`);
-    updateTicketStatus(ticketId, "rejected");
-    setCheckedTickets(prev => ({ ...prev, [ticketId]: false }));
-    setIsModalOpen(false);
-    setSelectedTicket(null);
-  };
+  const handleRejectTicket = async (ticketId) => {
+    try {
+      await borrowTicketStaffService.updateStatus(ticketId, "CANCELLED");
 
-  const confirmSelected = () => {
-    const selectedIds = filteredTickets
-      .filter(t => t.checked && t.status === "pending")
-      .map(t => t.id);
-    
-    if (selectedIds.length > 0) {
-      bulkUpdateTickets(selectedIds, "waiting_pickup");
-      // Reset checkboxes
-      const resetChecks = {};
-      selectedIds.forEach(id => {
-        resetChecks[id] = false;
-      });
-      setCheckedTickets(prev => ({ ...prev, ...resetChecks }));
+      updateTicketStatus(ticketId, "CANCELLED");
+      if (refreshData) refreshData();
+      setCheckedTickets(prev => ({ ...prev, [ticketId]: false }));
+      setIsModalOpen(false);
+      setSelectedTicket(null);
+    } catch (err) {
+      console.error(err);
+      alert("Từ chối phiếu thất bại");
     }
   };
 
-  const rejectSelected = () => {
+  const confirmSelected = async () => {
     const selectedIds = filteredTickets
       .filter(t => t.checked && t.status === "pending")
       .map(t => t.id);
-    
-    if (selectedIds.length > 0) {
-      bulkUpdateTickets(selectedIds, "rejected");
-      // Reset checkboxes
-      const resetChecks = {};
-      selectedIds.forEach(id => {
-        resetChecks[id] = false;
-      });
-      setCheckedTickets(prev => ({ ...prev, ...resetChecks }));
+
+    for (const id of selectedIds) {
+      await borrowTicketStaffService.updateStatus(id, "APPROVED");
+      updateTicketStatus(id, "APPROVED");
+    }
+
+    if (refreshData) refreshData();
+    setCheckedTickets({});
+  };
+
+  const rejectSelected = async () => {
+    const selectedIds = filteredTickets
+      .filter(t => t.checked && t.status === "pending")
+      .map(t => t.id);
+
+    try {
+      for (const id of selectedIds) {
+        await borrowTicketStaffService.updateStatus(id, "CANCELLED");
+        updateTicketStatus(id, "CANCELLED");
+      }
+
+      if (refreshData) refreshData();
+      setCheckedTickets({});
+    } catch (err) {
+      console.error(err);
+      alert("Từ chối các phiếu đã chọn thất bại");
     }
   };
 
-  const confirmOne = (id) => {
-    updateTicketStatus(id, "waiting_pickup");
-    setCheckedTickets(prev => ({ ...prev, [id]: false }));
+  const confirmOne = async (id) => {
+    try {
+      await borrowTicketStaffService.updateStatus(id, "APPROVED");
+
+      // Xóa ticket khỏi danh sách pending
+      updateTicketStatus(id, "APPROVED");
+      if (refreshData) refreshData();
+
+      setCheckedTickets(prev => ({ ...prev, [id]: false }));
+    } catch (err) {
+      console.error(err);
+      alert("Duyệt phiếu thất bại");
+    }
   };
 
-  const rejectOne = (id) => {
-    updateTicketStatus(id, "rejected");
-    setCheckedTickets(prev => ({ ...prev, [id]: false }));
+  const rejectOne = async (id) => {
+    try {
+      await borrowTicketStaffService.updateStatus(id, "CANCELLED");
+
+      updateTicketStatus(id, "CANCELLED");
+      if (refreshData) refreshData();
+      setCheckedTickets(prev => ({ ...prev, [id]: false }));
+    } catch (err) {
+      console.error(err);
+      alert("Từ chối phiếu thất bại");
+    }
   };
+
+  const {
+    currentItems,
+    currentPage,
+    totalPages,
+    goToNextPage,
+    goToPrevPage,
+    setCurrentPage,
+    resetPage,
+  } = usePagination(filteredTickets, 6);
+
+  useEffect(() => {
+    resetPage();
+  }, [search]);
+
 
   return (
     <>
       <div className="flex justify-between items-center mb-6">
         <SearchBar search={search} setSearch={setSearch} />
-        <ActionButtons 
-          onConfirm={confirmSelected} 
-          onReject={rejectSelected} 
+        <ActionButtons
+          onConfirm={confirmSelected}
+          onReject={rejectSelected}
           confirmLabel="Xác nhận"
           showReject={true}
+          disabled={Object.values(checkedTickets).every(v => !v)}
         />
       </div>
 
       <PendingTicketTable
-        tickets={filteredTickets}
+        tickets={currentItems}
         allChecked={allChecked}
         onToggleAll={toggleAll}
         onToggleOne={toggleOne}
@@ -140,6 +206,16 @@ export default function PendingSection({
         onConfirm={handleConfirmTicket}
         onReject={handleRejectTicket}
       />
+
+      {totalPages > 1 && (
+        <div className="mt-6 flex justify-center">
+          <Pagination
+            currentPage={currentPage}
+            totalPages={totalPages}
+            onPageChange={setCurrentPage}
+          />
+        </div>
+      )}
     </>
   );
 }

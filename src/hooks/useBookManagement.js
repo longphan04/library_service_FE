@@ -1,8 +1,8 @@
 import { useState, useEffect, useCallback } from "react";
-import axios from "axios";
+import axios from "@/utils/axiosConfig";
 
-const API_URL = "http://10.0.5.101:3000/book";
-const CATEGORY_API_URL = "http://10.0.5.101:3000/category";
+const API_URL = "https://place-potentially-downloaded-lyrics.trycloudflare.com/book";
+const CATEGORY_API_URL = "https://place-potentially-downloaded-lyrics.trycloudflare.com/category";
 
 export default function useBookManagement() {
     const [books, setBooks] = useState([]);
@@ -40,36 +40,66 @@ export default function useBookManagement() {
                 params: {
                     q: searchTerm || undefined,
                     categoryId: selectedCategory !== "all" ? selectedCategory : undefined,
-                    page: pagination.page,
+                    page: pagination?.page || 1,
                     limit: 10,
                 },
             });
 
-            const mappedBooks = res.data.data.map((b) => ({
-                id: b.book_id,
-                title: b.title || "Không có tiêu đề",
-                author: b.authors?.map((a) => a.name).join(", ") || "Chưa rõ tác giả",
-                publisher: b.publisher?.name || "Chưa rõ NXB",
-                availability: `${b.available_copies ?? 0} cuốn`,
-                year: b.publish_year || "—",
-                tags: b.categories?.map((c) => c.name) || [],
-                cover: b.cover_url,
+            console.log("📚 API Response:", res.data);
+
+            // Kiểm tra structure của response
+            if (!res.data || !res.data.data) {
+                console.error("❌ Invalid response structure:", res.data);
+                setBooks([]);
+                return;
+            }
+
+            const mappedBooks = res.data.data.map((book) => ({
+                id: book.book_id,
+                title: book.title || "Không có tiêu đề",
+                author: book.authors?.map((a) => a.name).join(", ") || "Chưa rõ tác giả",
+                publisher: book.publisher?.name || "Chưa rõ NXB",
+                availability: `${book.available_copies ?? 0} cuốn`,
+                year: book.publish_year || "—",
+                tags: book.categories?.map((c) => c.name) || [],
+                cover: book.cover_url,
             }));
 
-            setBooks(mappedBooks);
-            setPagination(res.data.pagination);
+            setBooks(res.data.data);
+
+            // ✅ Đảm bảo pagination luôn là object
+            if (res.data.pagination) {
+                setPagination(res.data.pagination);
+            } else {
+                setPagination(prev => ({
+                    ...prev,
+                    page: 1,
+                    totalPages: 1,
+                    totalItems: res.data.data.length
+                }));
+            }
         } catch (err) {
             console.error("Lỗi tải sách:", err);
+            console.error("Response data:", err.response?.data);
         } finally {
             setLoading(false);
         }
-    }, [searchTerm, selectedCategory, pagination.page]);
+    }, [searchTerm, selectedCategory, pagination?.page]);
 
     // api lọc sách
     useEffect(() => {
         axios
             .get(CATEGORY_API_URL)
             .then((res) => {
+                console.log("📂 Categories Response:", res.data);
+
+                // Kiểm tra xem res.data có phải là array không
+                if (!Array.isArray(res.data)) {
+                    console.error("❌ Categories response is not an array:", res.data);
+                    setCategories([]);
+                    return;
+                }
+
                 const mapped = res.data.map((c) => ({
                     id: c.category_id,
                     name: c.name,
@@ -79,6 +109,7 @@ export default function useBookManagement() {
             })
             .catch((err) => {
                 console.error("Lỗi khi tải categories:", err);
+                console.error("Response data:", err.response?.data);
             });
     }, []);
 
@@ -99,22 +130,26 @@ export default function useBookManagement() {
     }, [fetchBooks]);
 
     // Xử lý xóa nhiều sách
-    const handleDeleteBooks = useCallback(async () => {
-        const ids = Object.keys(selectedBooks).filter((id) => selectedBooks[id]);
+    const handleDeleteBooks = async () => {
+        const ids = Object.keys(selectedBooks).filter(id => selectedBooks[id]);
+
         if (!ids.length) {
             alert("Chưa chọn sách");
             return;
         }
 
         try {
-            await Promise.all(ids.map((id) => axios.delete(`${API_URL}/${id}`)));
-            setBooks((prev) => prev.filter((b) => !ids.includes(String(b.id))));
-            setSelectedBooks({});
-        } catch (error) {
-            console.error("Lỗi khi xóa sách:", error);
-            alert("Có lỗi xảy ra khi xóa sách");
+            await Promise.all(
+                ids.map(id => axios.delete(`${API_URL}/${id}`))
+            );
+
+            setBooks(prev => prev.filter(b => !ids.includes(String(b.book_id))));
+            setSelectedBooks({}); 1
+        } catch (err) {
+            console.error("Lỗi khi xóa sách:", err);
+            alert("Không thể xóa sách (có thể sách đang được mượn)");
         }
-    }, [selectedBooks]);
+    };
 
     return {
         books,

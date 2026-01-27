@@ -125,6 +125,7 @@ const Pagination = ({
                     hover:bg-primary/10 hover:text-primary
                     active:scale-95
                     disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:text-text-primary
+                    cursor-pointer
                 `}
                 aria-label="Trang trước"
             >
@@ -161,6 +162,7 @@ const Pagination = ({
                                 text-sm font-medium
                                 transition-all duration-300 ease-out
                                 active:scale-95
+                                cursor-pointer
                                 ${isActive
                                     ? 'bg-primary text-white scale-110 shadow-md shadow-primary/30'
                                     : 'text-text-primary hover:bg-primary/10 hover:text-primary'
@@ -189,6 +191,7 @@ const Pagination = ({
                     hover:bg-primary/10 hover:text-primary
                     active:scale-95
                     disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:text-text-primary
+                    cursor-pointer
                 `}
                 aria-label="Trang sau"
             >

@@ -12,7 +12,7 @@ function MainLayout() {
     <>
       <div className="fixed inset-0 bg-bg-app -z-10" />
       <div className="relative z-10 min-h-screen">
-        <HeaderStaff />
+        <HeaderStaff activeTab={activeTab} />
         <Tabs activeTab={activeTab} onChange={setActiveTab} />
 
         {activeTab === "books" && <BookManagement />}

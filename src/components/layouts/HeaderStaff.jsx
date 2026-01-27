@@ -5,7 +5,7 @@
 // ==========================================
 
 import { useState, useEffect, useRef } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import {
     User,
     Bell,
@@ -15,9 +15,11 @@ import {
 
 // Import logo
 import Logo from '../../assets/icons/logo.png';
-
+import SmallNotificationStaff from '../ui/SmallNotificationStaff';
+import useNotiStaff from '../../hooks/useNotiStaff';
 import EditProfileModal from '../ui/EditProfileModal';
 import { useAuth } from '../../contexts/AuthContext';
+import { FALLBACK_IMAGES } from '../../utils/imageUrl';
 
 // ==========================================
 // Constants
@@ -32,43 +34,111 @@ const USER_MENU_ITEMS = [
 ];
 
 // Default avatar placeholder
-const DEFAULT_AVATAR = 'https://via.placeholder.com/40/7D5B4F/FFFFFF?text=U';
+const DEFAULT_AVATAR = FALLBACK_IMAGES.avatar;
 
 // ==========================================
 // Header Component
 // ==========================================
-const HeaderStaff = () => {
+const HeaderStaff = ({ activeTab }) => {
     const navigate = useNavigate();
+    const location = useLocation();
     const userDropdownRef = useRef(null);
+    const notiDropdownRef = useRef(null);
 
     // Get user data from AuthContext (fetched from API on mount)
     const { user, isLoading: isAuthLoading, logout: authLogout } = useAuth();
 
     // State quản lý dropdown và modal
     const [isUserDropdownOpen, setIsUserDropdownOpen] = useState(false);
+    const [isNotiOpen, setIsNotiOpen] = useState(false);
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 
-    // ==========================================
-    // User Display Data (from AuthContext)
-    // ==========================================
-    const userDisplayName = user?.fullName || user?.name || user?.email?.split('@')[0] || 'User';
-    const userEmail = user?.email || '';
-    const userAvatar = user?.avatar || user?.avatarUrl || DEFAULT_AVATAR;
+    const {
+        notifications,
+        unreadCount,
+        hasUnread,
+        fetchNotifications,
+        markAsRead,
+        markAllAsRead,
+        reset
+    } = useNotiStaff();
 
-    // Toggle user dropdown
-    const toggleUserDropdown = () => setIsUserDropdownOpen(prev => !prev);
+    // ==========================================
+    // Lifecycle & Auto-fetch
+    // ==========================================
 
-    // Close user dropdown when clicking outside
+    // Fetch notifications on mount
+    useEffect(() => {
+        fetchNotifications();
+        // Polling every 30s with new notification detection
+        const interval = setInterval(() => {
+            fetchNotifications(true).then(data => {
+                // If there were new unread notifications that we didn't have before
+                // it would be handled inside fetchNotifications if we wanted,
+                // but let's do a simple count check or ID check here if preferred.
+            });
+        }, 30000);
+        return () => clearInterval(interval);
+    }, []);
+
+    // Mark all as read when entering Ticket Management tab
+    useEffect(() => {
+        if (activeTab === 'tickets' && hasUnread) {
+            console.log("Entering Tickets Tab - Marking all as read");
+            markAllAsRead();
+        }
+    }, [activeTab, hasUnread]);
+
+    // Detect new notifications and alert user
+    const [lastNotiCount, setLastNotiCount] = useState(0);
+    useEffect(() => {
+        if (unreadCount > lastNotiCount) {
+            // New notification!
+            const latest = notifications.find(n => !n.is_read);
+            if (latest) {
+                // Simple alert as requested
+                // alert(`Thông báo mới: ${latest.title}\n${latest.content}`);
+                // Alternatively, just log it. The red badge will reappear.
+            }
+        }
+        setLastNotiCount(unreadCount);
+    }, [unreadCount, notifications]);
+
+
+    // Close dropdowns when clicking outside
     useEffect(() => {
         const handleClickOutside = (event) => {
             if (userDropdownRef.current && !userDropdownRef.current.contains(event.target)) {
                 setIsUserDropdownOpen(false);
+            }
+            if (notiDropdownRef.current && !notiDropdownRef.current.contains(event.target)) {
+                setIsNotiOpen(false);
             }
         };
 
         document.addEventListener('mousedown', handleClickOutside);
         return () => document.removeEventListener('mousedown', handleClickOutside);
     }, []);
+
+    // ==========================================
+    // Handlers
+    // ==========================================
+
+    const toggleUserDropdown = () => setIsUserDropdownOpen(prev => !prev);
+    const toggleNotiDropdown = () => {
+        const nextState = !isNotiOpen;
+        setIsNotiOpen(nextState);
+        if (nextState) {
+            fetchNotifications();
+            if (hasUnread) {
+                markAllAsRead();
+            }
+        }
+    };
+
+    const userDisplayName = user?.fullName || user?.name || user?.email?.split('@')[0] || 'User';
+    const userEmail = user?.email || '';
+    const userAvatar = user?.avatar || user?.avatarUrl || DEFAULT_AVATAR;
 
     // Handle menu item click
     const handleMenuClick = (itemId, link) => {
@@ -84,19 +154,13 @@ const HeaderStaff = () => {
 
     // Handle logout
     const handleLogout = async () => {
-        console.log('🔴 Logout button clicked');
         setIsUserDropdownOpen(false);
         try {
-            console.log('🔴 Calling authLogout...');
             await authLogout();
-            console.log('🔴 authLogout completed successfully');
         } catch (error) {
             console.error('🔴 Logout error:', error);
         } finally {
-            console.log('🔴 Navigating to /login...');
-            // Always navigate to login after logout (success or error)
             navigate('/login', { replace: true });
-            console.log('🔴 Navigate called');
         }
     };
 
@@ -125,21 +189,72 @@ const HeaderStaff = () => {
 
                         {/* Right Section - Icons */}
                         <div className="flex items-center gap-2">
-                            {/* Notification Button */}
-                            <button
-                                type="button"
-                                className="p-2 rounded-full text-primary hover:bg-primary/10 transition-colors"
-                                aria-label="Thông báo"
-                            >
-                                <Bell size={ICON_SIZE} strokeWidth={ICON_STROKE_WIDTH} />
-                            </button>
+                            {/* Notification Dropdown Container */}
+                            <div className="relative" ref={notiDropdownRef}>
+                                <button
+                                    type="button"
+                                    onClick={toggleNotiDropdown}
+                                    className="relative p-2 rounded-full text-primary hover:bg-primary/10 transition-colors cursor-pointer"
+                                >
+                                    <Bell size={ICON_SIZE} strokeWidth={ICON_STROKE_WIDTH} />
+                                    {hasUnread && (
+                                        <span className="absolute top-1 right-1 flex h-4 w-4">
+                                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                                            <span className="relative inline-flex rounded-full h-4 w-4 bg-red-500 text-[10px] text-white items-center justify-center font-bold">
+                                                {unreadCount > 9 ? '9+' : unreadCount}
+                                            </span>
+                                        </span>
+                                    )}
+                                </button>
+
+                                {/* Notification Dropdown Menu */}
+                                {isNotiOpen && (
+                                    <div className="absolute right-0 mt-2 w-96 bg-white rounded-2xl shadow-2xl border border-gray-100 overflow-hidden z-50 flex flex-col max-h-[500px]">
+                                        <div className="p-4 border-b border-gray-100 flex justify-between items-center bg-white sticky top-0">
+                                            <h3 className="font-bold text-lg text-text-primary">Thông báo</h3>
+                                            {hasUnread && (
+                                                <button
+                                                    onClick={markAllAsRead}
+                                                    className="text-xs text-primary font-medium hover:underline"
+                                                >
+                                                    Đánh dấu tất cả là đã đọc
+                                                </button>
+                                            )}
+                                        </div>
+
+                                        <div className="overflow-y-auto flex-1 custom-scrollbar">
+                                            {notifications.length > 0 ? (
+                                                notifications.map((noti) => (
+                                                    <SmallNotificationStaff
+                                                        key={noti.notification_id}
+                                                        notification={noti}
+                                                        onClick={() => {
+                                                            markAsRead(noti.notification_id);
+                                                            setIsNotiOpen(false);
+                                                            // Navigate to management page if it's a borrow ticket
+                                                            if (noti.type === 'BORROW_CREATED' || noti.type === 'WARNING') {
+                                                                navigate('/staff/ticket-management');
+                                                            }
+                                                        }}
+                                                    />
+                                                ))
+                                            ) : (
+                                                <div className="p-10 text-center text-gray-400">
+                                                    <Bell size={40} className="mx-auto mb-3 opacity-20" />
+                                                    <p>Không có thông báo nào</p>
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
 
                             {/* User Dropdown */}
                             <div className="relative" ref={userDropdownRef}>
                                 <button
                                     type="button"
                                     onClick={toggleUserDropdown}
-                                    className="flex items-center gap-2 p-2 rounded-lg hover:bg-primary/10 transition-colors"
+                                    className="flex items-center gap-2 p-2 rounded-lg hover:bg-primary/10 transition-colors cursor-pointer"
                                     aria-label="Tài khoản"
                                 >
                                     <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
@@ -214,7 +329,7 @@ const HeaderStaff = () => {
                                         <div className="border-t border-gray-100 p-2">
                                             <button
                                                 onClick={handleLogout}
-                                                className="w-full flex items-center gap-3 px-4 py-3 hover:bg-red-50 rounded-lg transition-colors text-left"
+                                                className="w-full flex items-center gap-3 px-4 py-3 hover:bg-red-50 rounded-lg transition-colors text-left cursor-pointer"
                                             >
                                                 <div className="w-9 h-9 rounded-full bg-red-100 flex items-center justify-center shrink-0">
                                                     <LogOut size={18} className="text-red-600" />

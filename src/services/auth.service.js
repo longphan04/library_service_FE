@@ -4,7 +4,6 @@
 // ==========================================
 
 import axios, { getToken, getRefreshToken, setTokens, clearTokens } from './axios';
-import { buildImageUrl } from '../utils/imageUrl';
 
 // ==========================================
 // Token Management Functions (re-export)
@@ -32,26 +31,43 @@ export const isAuthenticated = () => {
  */
 export const login = async (credentials) => {
     try {
-        const response = await axios.post('auth/login', credentials);
+        const response = await axios.post('/auth/login', credentials);
 
         // Handle various token field names from different API responses
         const accessToken = response.data.accessToken || response.data.token || response.data.access_token;
         const refreshToken = response.data.refreshToken || response.data.refresh_token;
         const user = response.data.user;
 
-        // Log để debug
-        console.log('Login response:', response.data);
-        console.log('Access token:', accessToken);
-
         if (accessToken) {
             setTokens(accessToken, refreshToken);
         }
 
+        // Fetch profile data after login
+        let userData = user;
         if (user) {
-            localStorage.setItem('user', JSON.stringify(user));
+            try {
+                const profileResponse = await axios.get('/profile/me');
+                const profileData = profileResponse.data.data || profileResponse.data;
+
+                // Merge user data with profile data
+                userData = {
+                    ...user,
+                    profile: profileData,
+                    fullName: profileData.full_name,
+                    full_name: profileData.full_name,
+                };
+            } catch (profileError) {
+                console.error('Failed to fetch profile data:', profileError);
+                // Continue with basic user data if profile fetch fails
+            }
+
+            localStorage.setItem('user', JSON.stringify(userData));
         }
 
-        return response.data;
+        return {
+            ...response.data,
+            user: userData
+        };
     } catch (error) {
         if (error.response) {
             const status = error.response.status;
@@ -73,14 +89,15 @@ export const login = async (credentials) => {
 };
 
 /**
- * Đăng nhập dành cho Admin/Staff
+ * Đăng nhập cho Staff/Admin
  * @param {Object} credentials - { email, password }
  * @returns {Promise} - Response data từ server
  */
 export const loginStaff = async (credentials) => {
     try {
-        const response = await axios.post('auth/login-staff', credentials);
+        const response = await axios.post('/auth/login-staff', credentials);
 
+        // Handle various token field names from different API responses
         const accessToken = response.data.accessToken || response.data.token || response.data.access_token;
         const refreshToken = response.data.refreshToken || response.data.refresh_token;
         const user = response.data.user;
@@ -89,11 +106,32 @@ export const loginStaff = async (credentials) => {
             setTokens(accessToken, refreshToken);
         }
 
+        // Fetch profile data after login
+        let userData = user;
         if (user) {
-            localStorage.setItem('user', JSON.stringify(user));
+            try {
+                const profileResponse = await axios.get('/profile/me');
+                const profileData = profileResponse.data.data || profileResponse.data;
+
+                // Merge user data with profile data
+                userData = {
+                    ...user,
+                    profile: profileData,
+                    fullName: profileData.full_name,
+                    full_name: profileData.full_name,
+                };
+            } catch (profileError) {
+                console.error('Failed to fetch profile data:', profileError);
+                // Continue with basic user data if profile fetch fails
+            }
+
+            localStorage.setItem('user', JSON.stringify(userData));
         }
 
-        return response.data;
+        return {
+            ...response.data,
+            user: userData
+        };
     } catch (error) {
         if (error.response) {
             const status = error.response.status;
@@ -101,6 +139,8 @@ export const loginStaff = async (credentials) => {
 
             if (status === 401 || status === 400) {
                 throw new Error(message || 'Email hoặc mật khẩu không đúng');
+            } else if (status === 403) {
+                throw new Error(message || 'Bạn không có quyền truy cập');
             } else if (status === 500) {
                 throw new Error('Lỗi server. Vui lòng thử lại sau');
             } else {
@@ -120,7 +160,7 @@ export const loginStaff = async (credentials) => {
  */
 export const logout = async () => {
     try {
-        await axios.post('auth/logout');
+        await axios.post('/auth/logout');
     } catch (error) {
         console.error('Logout error:', error);
     } finally {
@@ -140,7 +180,7 @@ export const refreshToken = async () => {
     }
 
     try {
-        const response = await axios.post('auth/refresh', {
+        const response = await axios.post('/auth/refresh', {
             refreshToken: currentRefreshToken,
         });
 
@@ -159,50 +199,36 @@ export const refreshToken = async () => {
 };
 
 /**
- * Lấy thông tin user hiện tại từ API
- * @returns {Promise<{id: string, email: string, name: string, role: string, avatar: string}>}
- * @throws {Error} Nếu token không hợp lệ hoặc hết hạn
+ * Lấy thông tin user hiện tại
+ * @returns {Promise} - User data từ server
  */
 export const getCurrentUser = async () => {
-    const token = getToken();
-
-    // Không có token → chưa đăng nhập
-    if (!token) {
-        return null;
-    }
-
     try {
-        const response = await axios.get('profile/me');
-        const data = response.data;
+        // Get existing user data from localStorage to preserve roles
+        const existingUser = JSON.parse(localStorage.getItem('user') || '{}');
 
-        // Lấy raw avatar path từ API (field avatar_url chứa path như "avatar/filename.jpg")
-        const rawAvatar = data.avatar_url || data.avatar || data.avatarUrl || data.profileImage;
+        const response = await axios.get('/profile/me');
+        const profileData = response.data.data || response.data;
 
-        // DEBUG: Log avatar URL processing
-        console.log('[Auth] Raw avatar path from API:', rawAvatar);
-        console.log('[Auth] Built avatar URL:', buildImageUrl(rawAvatar));
-
-        // Normalize user data - đảm bảo các fields cần thiết
+        // Merge basic user info with profile data, preserving roles from existing user
         const user = {
-            id: data.id || data._id || data.userId,
-            email: data.email,
-            name: data.name || data.fullName || data.username,
-            role: data.role || data.roles?.[0] || 'MEMBER',
-            avatar: buildImageUrl(rawAvatar),
+            user_id: profileData.user_id,
+            email: profileData.email || existingUser.email || '',
+            status: profileData.status || existingUser.status || 'ACTIVE',
+            roles: existingUser.roles || ['USER'], // Preserve roles from existing user data
+            profile: profileData,
+            fullName: profileData.full_name,
+            full_name: profileData.full_name,
         };
 
-        // Cache user data
-        localStorage.setItem('user', JSON.stringify(user));
+        if (user) {
+            localStorage.setItem('user', JSON.stringify(user));
+        }
 
         return user;
     } catch (error) {
-        // Token hết hạn / không hợp lệ → logout và redirect
-        if (error.response?.status === 401) {
+        if (error.response && error.response.status === 401) {
             clearTokens();
-            // Redirect về login nếu không phải đang ở trang login
-            if (!window.location.pathname.includes('/login')) {
-                window.location.href = '/login';
-            }
         }
         throw error;
     }
@@ -215,7 +241,7 @@ export const getCurrentUser = async () => {
  */
 export const register = async (userData) => {
     try {
-        const response = await axios.post('auth/register', userData);
+        const response = await axios.post('/auth/register', userData);
         return response.data;
     } catch (error) {
         if (error.response) {
@@ -236,7 +262,7 @@ export const register = async (userData) => {
  */
 export const changePassword = async (data) => {
     try {
-        const response = await axios.patch('auth/change-password', data);
+        const response = await axios.patch('/auth/change-password', data);
         return response.data;
     } catch (error) {
         if (error.response) {

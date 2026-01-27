@@ -1,147 +1,70 @@
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import Pagination from "@/components/ui/Pagination";
 import TicketManagement from "@/components/TicketManagement";
-
-const ALL_TICKETS = [
-  // Tab Duyệt yêu cầu
-  {
-    id: "t1",
-    userName: "Leslie Maya",
-    email: "leslie@gmail.com",
-    cardId: "123456",
-    quantity: 3,
-    status: "pending",
-    checked: false,
-  },
-  {
-    id: "t2",
-    userName: "Josie Deck",
-    email: "josie@gmail.com",
-    cardId: "j234535",
-    quantity: 4,
-    status: "pending",
-    checked: false,
-  },
-  {
-    id: "t6",
-    userName: "David Wilson",
-    email: "david@gmail.com",
-    cardId: "d345678",
-    quantity: 5,
-    status: "rejected",
-    checked: false,
-  },
-
-  // Tab Nhận sách
-  {
-    id: "t3",
-    userName: "Mike Dean",
-    email: "mike@gmail.com",
-    cardId: "m454646",
-    quantity: 3,
-    status: "waiting_pickup",
-    checked: false,
-    expirationDate: "20/05/2024",
-  },
-  {
-    id: "t5",
-    userName: "Sarah Johnson",
-    email: "sarah@gmail.com",
-    cardId: "s789012",
-    quantity: 2,
-    status: "waiting_pickup",
-    checked: false,
-    expirationDate: "18/05/2024",
-  },
-
-  // Tab Trả sách
-  {
-    id: "t4",
-    userName: "Mateus Cunha",
-    email: "cunha@gmail.com",
-    cardId: "c945633",
-    quantity: 3,
-    returnedCount: 1, // Đã trả 1/3 cuốn
-    status: "received",
-    checked: false,
-    expirationDate: "15/05/2024",
-    isOverdue: false
-  },
-  {
-    id: "t7",
-    userName: "Emma Thompson",
-    email: "emma@gmail.com",
-    cardId: "e567890",
-    quantity: 2,
-    returnedCount: 0, // Chưa trả cuốn nào
-    status: "received",
-    checked: false,
-    expirationDate: "17/05/2024",
-    isOverdue: true
-  },
-  {
-    id: "t9", // Thêm ticket mới
-    userName: "John Doe",
-    email: "john@gmail.com",
-    cardId: "j999999",
-    quantity: 5,
-    returnedCount: 3, // Đã trả 3/5 cuốn
-    status: "received",
-    checked: false,
-    expirationDate: "20/05/2024",
-    isOverdue: false
-  },
-  {
-    id: "t8",
-    userName: "James Miller",
-    email: "james@gmail.com",
-    cardId: "j123456",
-    quantity: 3,
-    returnedCount: 3, // Đã trả đủ 3/3
-    status: "completed",
-    checked: false,
-    expirationDate: "10/05/2024",
-    isOverdue: false
-  },
-];
+import { borrowTicketStaffService } from "@/services/borrowTicketStaff.service";
+import { canceledTicketStaffService } from "@/services/canceledTicketStaff.service";
+import { approvedTicketStaffService } from "@/services/approvedTicketStaff.service";
+import { pickedUpTicketStaffService } from "@/services/pickedUpTicketStaff.service";
+import { returnedTicketStaffService } from "@/services/returnedTicketStaff.service";
 
 export default function TicketManagementPage() {
   const [activeTab, setActiveTab] = useState("pending");
-  const [allTickets, setAllTickets] = useState(ALL_TICKETS);
+  const [allTickets, setAllTickets] = useState([]);
 
   const TABS = [
     { key: "pending", label: "Duyệt yêu cầu" },
-    { key: "receive", label: "Nhận sách" },
-    { key: "return", label: "Trả sách" },
+    { key: "approved", label: "Nhận sách" },
+    { key: "picked-up", label: "Đã mượn" },
+    { key: "returned", label: "Đã trả sách" },
+    { key: "cancelled", label: "Đã hủy" },
   ];
 
+  const fetchTickets = useCallback(() => {
+    if (activeTab === "pending") {
+      borrowTicketStaffService.getPendingTickets().then(setAllTickets);
+    }
+    else if (activeTab === "cancelled") {
+      canceledTicketStaffService.getCanceledTickets().then(setAllTickets);
+    }
+    else if (activeTab === "approved") {
+      approvedTicketStaffService.getApprovedTickets().then(setAllTickets);
+    }
+    else if (activeTab === "picked-up") {
+      pickedUpTicketStaffService.getPickedUpTickets().then(setAllTickets);
+    }
+    else if (activeTab === "returned") {
+      returnedTicketStaffService.getReturnedTickets().then(setAllTickets);
+    }
+  }, [activeTab]);
+
+  useEffect(() => {
+    fetchTickets();
+  }, [fetchTickets]);
+
   // Hàm cập nhật ticket
-  const updateTicketStatus = (id, newStatus) => {
+  const updateTicketStatus = async (id, newStatus) => {
+    await approvedTicketStaffService.updateStatus(id, newStatus);
+
     setAllTickets(prev =>
       prev.map(ticket =>
         ticket.id === id
-          ? {
-            ...ticket,
-            status: newStatus,
-            // Nếu chuyển sang completed, set returnedCount = quantity
-            returnedCount: newStatus === "completed" ? ticket.quantity : ticket.returnedCount,
-            checked: false
-          }
+          ? { ...ticket, status: newStatus, checked: false }
           : ticket
       )
     );
   };
 
   // Hàm bulk update
-  const bulkUpdateTickets = (ticketIds, newStatus) => {
+  const bulkUpdateTickets = async (ticketIds, newStatus) => {
+    await approvedTicketStaffService.updateStatus(ticketIds, newStatus);
+
     setAllTickets(prev =>
       prev.map(ticket =>
         ticketIds.includes(ticket.id) && ticket.status !== "rejected"
           ? {
             ...ticket,
             status: newStatus,
-            // Nếu chuyển sang completed, set returnedCount = quantity
-            returnedCount: newStatus === "completed" ? ticket.quantity : ticket.returnedCount,
+            returnedCount: (newStatus === "completed" || newStatus === "RETURNED") ? (ticket.quantity || ticket.items?.length || 0) : ticket.returnedCount,
             checked: false
           }
           : ticket
@@ -149,14 +72,13 @@ export default function TicketManagementPage() {
     );
   };
 
-  const updateReturnedCount = (ticketId, returnedCount) => {
+  const updateApprovedCount = (ticketId, returnedCount) => {
     setAllTickets(prev =>
       prev.map(ticket =>
         ticket.id === ticketId
           ? {
             ...ticket,
             returnedCount: returnedCount,
-            // Nếu đã trả đủ, tự động chuyển sang completed
             status: returnedCount >= ticket.quantity ? "completed" : ticket.status, checked: false
           }
           : ticket
@@ -166,7 +88,7 @@ export default function TicketManagementPage() {
 
   return (
     <div className="p-6 bg-bg-app min-h-screen">
-      <div className="flex gap-10 border-b mb-6 text-lg">
+      <div className="flex gap-10 border-b mb-6 text-lg hover:cursor-pointer">
         {TABS.map((tab) => (
           <div
             key={tab.key}
@@ -191,12 +113,9 @@ export default function TicketManagementPage() {
         setAllTickets={setAllTickets}
         updateTicketStatus={updateTicketStatus}
         bulkUpdateTickets={bulkUpdateTickets}
-        updateReturnedCount={updateReturnedCount}
+        updateApprovedCount={updateApprovedCount}
+        refreshData={fetchTickets}
       />
-
-      <div className="mt-6 flex justify-center">
-        <Pagination currentPage={1} totalPages={3} onPageChange={() => { }} />
-      </div>
     </div>
   );
 }

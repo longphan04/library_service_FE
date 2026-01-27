@@ -3,10 +3,11 @@ import useAddBookForm from "../../../hooks/useAddBookForm";
 import { useRef, useState } from "react";
 
 export default function AddBookForm({ isOpen, onClose, bookToEdit, onSave }) {
-    if (!isOpen) return null;
-
+    // 1. All hooks must be called at the very top
     const fileInputRef = useRef(null);
+    const [showAuthorInput, setShowAuthorInput] = useState(false);
 
+    // yearOptions is not a hook but needs to be defined
     const yearOptions = Array.from(
         { length: 50 },
         (_, i) => new Date().getFullYear() - i
@@ -62,7 +63,8 @@ export default function AddBookForm({ isOpen, onClose, bookToEdit, onSave }) {
         setShowCategoryDropdown,
     } = useAddBookForm({ bookToEdit, onClose, onSave });
 
-    const [showAuthorInput, setShowAuthorInput] = useState(false);
+    // 2. Early return AFTER all hooks
+    if (!isOpen) return null;
 
     const handleClearAllCategories = () => {
         setSelectedCategories([]);
@@ -85,7 +87,7 @@ export default function AddBookForm({ isOpen, onClose, bookToEdit, onSave }) {
                         <button
                             onClick={onClose}
                             type="button"
-                            className="p-2 hover:bg-gray-200 rounded-full transition-colors"
+                            className="p-2 hover:bg-gray-200 rounded-full transition-colors cursor-pointer"
                         >
                             <X size={28} />
                         </button>
@@ -398,12 +400,12 @@ export default function AddBookForm({ isOpen, onClose, bookToEdit, onSave }) {
                                         <input
                                             type="number"
                                             min="1"
-                                            value={formData.total_copies}
+                                            value={formData.copy_quantity}
                                             onChange={(e) =>
-                                                handleInputChange("total_copies", e.target.value)
+                                                handleInputChange("copy_quantity", e.target.value)
                                             }
                                             className="w-full border-2 border-gray-300 p-3 rounded-xl focus:ring-3 focus:ring-[#7A4A2E] focus:border-transparent text-base"
-                                            placeholder="0"
+                                            placeholder="1"
                                         />
                                     </div>
 
@@ -447,13 +449,13 @@ export default function AddBookForm({ isOpen, onClose, bookToEdit, onSave }) {
                     <div className="flex justify-center gap-6 mt-8">
                         <button
                             onClick={handleSubmit}
-                            className="bg-[#7A4A2E] text-white px-12 py-4 rounded-xl font-semibold text-lg hover:bg-[#6a3a1e] transition-colors"
+                            className="bg-[#7A4A2E] text-white px-12 py-4 rounded-xl font-semibold text-lg hover:bg-[#6a3a1e] transition-colors cursor-pointer"
                         >
                             {bookToEdit ? "Cập nhật sách" : "Thêm sách"}
                         </button>
                         <button
                             onClick={onClose}
-                            className="px-12 py-4 bg-gray-200 rounded-xl font-semibold text-lg hover:bg-gray-300 transition-colors"
+                            className="px-12 py-4 bg-gray-200 rounded-xl font-semibold text-lg hover:bg-gray-300 transition-colors cursor-pointer"
                         >
                             Hủy
                         </button>

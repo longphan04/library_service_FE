@@ -67,12 +67,12 @@ export default function InventoryLog() {
                 });
             }
 
-            // 3. Recent Return Ticket
+            // 3. Recent Approved Ticket
             if (recent_return_ticket) {
                 activitiesList.push({
-                    id: `return-${recent_return_ticket.ticket_id}`,
-                    type: "return",
-                    title: "Trả sách",
+                    id: `approved-${recent_return_ticket.ticket_id}`,
+                    type: "approved",
+                    title: "Trả sách (Đã duyệt)",
                     desc: `${recent_return_ticket.member_name} đã trả ${recent_return_ticket.item_count} sách`,
                     timestamp: new Date(recent_return_ticket.returned_at).getTime(),
                 });
@@ -92,7 +92,7 @@ export default function InventoryLog() {
     const iconMap = {
         add: <PlusCircle size={26} />,
         borrow: <BookOpen size={26} />,
-        return: <CornerDownLeft size={26} />,
+        approved: <CornerDownLeft size={26} />,
     };
 
     return (

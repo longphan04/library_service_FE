@@ -6,7 +6,7 @@ function Tabs({ activeTab, onChange }) {
   ];
 
   return (
-    <div className="pt-6">
+    <div className="pt-5">
       <div
         className="flex bg-white"
         style={{
@@ -19,7 +19,7 @@ function Tabs({ activeTab, onChange }) {
           <div
             key={tab.id}
             onClick={() => onChange(tab.id)}
-            className={`py-5 text-xl font-medium flex-1 cursor-pointer flex justify-center
+            className={`py-3 text-xl font-medium flex-1 cursor-pointer flex justify-center
               ${activeTab === tab.id ? 'text-white bg-primary' : 'text-gray-700 opacity-40'}
               ${index === 0 ? 'rounded-tl-[18px]' : ''}
               ${index === tabs.length - 1 ? 'rounded-tr-[18px]' : ''}

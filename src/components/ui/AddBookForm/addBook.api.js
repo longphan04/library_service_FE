@@ -1,6 +1,6 @@
-import axios from 'axios';
+import axios from '@/utils/axiosConfig';
 
-const BASE_URL = 'http://10.0.5.101:3000';
+const BASE_URL = 'https://place-potentially-downloaded-lyrics.trycloudflare.com';
 
 export const getAuthors = () => axios.get(`${BASE_URL}/author`);
 export const getPublishers = () => axios.get(`${BASE_URL}/publisher`);
@@ -13,14 +13,6 @@ export const createBook = (formData) =>
 
 export const getBookDetail = (id) =>
     axios.get(`${BASE_URL}/book/${id}`);
-
-axios.interceptors.request.use(config => {
-    const token = localStorage.getItem("access_token");
-    if (token) {
-        config.headers.Authorization = `Bearer ${token}`;
-    }
-    return config;
-});
 
 export const uploadImage = (file) =>
     axios.post(`${BASE_URL}/upload`, file, {
