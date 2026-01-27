@@ -32,13 +32,16 @@ const EditProfileModal = ({ isOpen, onClose, userData, onSave }) => {
     const validateForm = () => {
         const newErrors = {};
 
-        if (!formData.name.trim()) {
-            newErrors.name = 'Tên không được để trống';
+        // Removed mandatory name check as per requirement
+
+        if (formData.email && !formData.email.trim()) {
+            // If email is being cleared effectively? 
+            // Logic: If email is provided (edited), it must be valid. 
+            // If original was present and now empty, that might be an issue, but prompt says "don't add extra validation".
+            // Let's keep email format check if value exists.
         }
 
-        if (!formData.email.trim()) {
-            newErrors.email = 'Email không được để trống';
-        } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
+        if (formData.email && !/\S+@\S+\.\S+/.test(formData.email)) {
             newErrors.email = 'Email không hợp lệ';
         }
 
@@ -62,17 +65,23 @@ const EditProfileModal = ({ isOpen, onClose, userData, onSave }) => {
         e.preventDefault();
 
         if (validateForm()) {
-            const updatedData = {
-                name: formData.name,
-                email: formData.email,
-            };
+            const updatedData = {};
+
+            // Helper to check if changed
+            const isChanged = (field) => formData[field] !== (userData?.[field] || '');
+
+            if (isChanged('name')) updatedData.name = formData.name;
+            if (isChanged('email')) updatedData.email = formData.email;
 
             if (formData.password) {
                 updatedData.currentPassword = formData.currentPassword;
                 updatedData.password = formData.password;
             }
 
-            onSave(updatedData);
+            // Only call API if there are changes
+            if (Object.keys(updatedData).length > 0) {
+                onSave(updatedData);
+            }
             onClose();
         }
     };
@@ -86,7 +95,6 @@ const EditProfileModal = ({ isOpen, onClose, userData, onSave }) => {
             confirmPassword: '',
         });
         setErrors({});
-        setErrors({});
         setShowCurrentPassword(false);
         setShowPassword(false);
         setShowConfirmPassword(false);
@@ -96,7 +104,7 @@ const EditProfileModal = ({ isOpen, onClose, userData, onSave }) => {
     if (!isOpen) return null;
 
     return (
-        <div className="fixed inset-0 z-100 flex items-center justify-center">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-0">
             {/* Backdrop */}
             <div
                 className="absolute inset-0 bg-black/50 backdrop-blur-sm"
@@ -104,19 +112,19 @@ const EditProfileModal = ({ isOpen, onClose, userData, onSave }) => {
             />
 
             {/* Modal */}
-            <div className="relative w-full max-w-md mx-4 bg-white rounded-3xl shadow-2xl overflow-hidden">
+            <div className="relative w-full max-w-md bg-white rounded-3xl shadow-2xl flex flex-col max-h-[90vh] sm:max-h-[85vh] animate-fadeIn">
                 {/* Close Button */}
                 <button
                     onClick={handleClose}
-                    className="absolute top-4 right-4 p-2 rounded-full hover:bg-gray-100 transition-colors z-10"
+                    className="absolute top-4 right-4 p-2 rounded-full hover:bg-gray-100 transition-colors z-10 bg-white/80 backdrop-blur-sm"
                 >
                     <X size={20} className="text-gray-600" />
                 </button>
 
-                {/* Header */}
-                <div className="bg-linear-to-b from-primary/5 to-transparent pt-8 pb-6 px-6">
+                {/* Header - Fixed at top */}
+                <div className="bg-linear-to-b from-primary/5 to-transparent pt-8 pb-4 px-6 flex-shrink-0">
                     <div className="text-center">
-                        <div className="relative w-24 h-24 mx-auto mb-4">
+                        <div className="relative w-20 h-20 sm:w-24 sm:h-24 mx-auto mb-3">
                             <img
                                 src={userData?.avatarUrl}
                                 alt={userData?.name}
@@ -137,130 +145,137 @@ const EditProfileModal = ({ isOpen, onClose, userData, onSave }) => {
                     </div>
                 </div>
 
-                {/* Form */}
-                <form onSubmit={handleSubmit} className="p-6 space-y-4">
-                    {/* Name */}
-                    <div>
-                        <label className="block text-sm font-medium text-text-primary mb-2">
-                            <UserIcon size={16} className="inline mr-1" />
-                            Tên
-                        </label>
-                        <input
-                            type="text"
-                            name="name"
-                            value={formData.name}
-                            onChange={handleChange}
-                            placeholder="Nhập tên của bạn"
-                            className={`w-full px-4 py-3 rounded-lg border ${errors.name ? 'border-red-500' : 'border-gray-300'
-                                } focus:outline-none focus:ring-2 focus:ring-primary/50`}
-                        />
-                        {errors.name && <p className="mt-1 text-xs text-red-500">{errors.name}</p>}
-                    </div>
-
-                    {/* Email */}
-                    <div>
-                        <label className="block text-sm font-medium text-text-primary mb-2">
-                            <Mail size={16} className="inline mr-1" />
-                            Email
-                        </label>
-                        <input
-                            type="email"
-                            name="email"
-                            value={formData.email}
-                            onChange={handleChange}
-                            placeholder="Nhập email của bạn"
-                            className={`w-full px-4 py-3 rounded-lg border ${errors.email ? 'border-red-500' : 'border-gray-300'
-                                } focus:outline-none focus:ring-2 focus:ring-primary/50`}
-                        />
-                        {errors.email && <p className="mt-1 text-xs text-red-500">{errors.email}</p>}
-                    </div>
-
-                    {/* Password Section Title */}
-                    <div className="pt-2 border-t border-gray-100">
-                        <h3 className="text-sm font-semibold text-gray-500 mb-3">Đổi mật khẩu (Tùy chọn)</h3>
-                    </div>
-
-                    {/* Current Password */}
-                    <div>
-                        <label className="block text-sm font-medium text-text-primary mb-2">
-                            <Lock size={16} className="inline mr-1" />
-                            Mật khẩu hiện tại
-                        </label>
-                        <div className="relative">
+                {/* Form - Scrollable */}
+                <div className="overflow-y-auto flex-1 custom-scrollbar">
+                    <form onSubmit={handleSubmit} className="p-6 space-y-4">
+                        {/* Name */}
+                        <div>
+                            <label className="block text-sm font-medium text-text-primary mb-2">
+                                <UserIcon size={16} className="inline mr-1" />
+                                Tên
+                            </label>
                             <input
-                                type={showCurrentPassword ? 'text' : 'password'}
-                                name="currentPassword"
-                                value={formData.currentPassword}
+                                type="text"
+                                name="name"
+                                value={formData.name}
                                 onChange={handleChange}
-                                placeholder="Nhập mật khẩu hiện tại nếu muốn đổi mật khẩu"
-                                className={`w-full px-4 py-3 pr-12 rounded-lg border ${errors.currentPassword ? 'border-red-500' : 'border-gray-300'
+                                placeholder="Nhập tên của bạn"
+                                className={`w-full px-4 py-3 rounded-lg border ${errors.name ? 'border-red-500' : 'border-gray-300'
                                     } focus:outline-none focus:ring-2 focus:ring-primary/50`}
                             />
-                            <button
-                                type="button"
-                                onClick={() => setShowCurrentPassword(!showCurrentPassword)}
-                                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500"
-                            >
-                                {showCurrentPassword ? <EyeOff size={20} /> : <Eye size={20} />}
-                            </button>
+                            {errors.name && <p className="mt-1 text-xs text-red-500">{errors.name}</p>}
                         </div>
-                        {errors.currentPassword && <p className="mt-1 text-xs text-red-500">{errors.currentPassword}</p>}
-                    </div>
-                    <div>
-                        <label className="block text-sm font-medium text-text-primary mb-2">
-                            <Lock size={16} className="inline mr-1" />
-                            Mật khẩu mới (tùy chọn)
-                        </label>
-                        <div className="relative">
+
+                        {/* Email */}
+                        <div>
+                            <label className="block text-sm font-medium text-text-primary mb-2">
+                                <Mail size={16} className="inline mr-1" />
+                                Email
+                            </label>
                             <input
-                                type={showPassword ? 'text' : 'password'}
-                                name="password"
-                                value={formData.password}
+                                type="email"
+                                name="email"
+                                value={formData.email}
                                 onChange={handleChange}
-                                placeholder="Nhập mật khẩu mới"
-                                className={`w-full px-4 py-3 pr-12 rounded-lg border ${errors.password ? 'border-red-500' : 'border-gray-300'
+                                placeholder="Nhập email của bạn"
+                                className={`w-full px-4 py-3 rounded-lg border ${errors.email ? 'border-red-500' : 'border-gray-300'
                                     } focus:outline-none focus:ring-2 focus:ring-primary/50`}
                             />
-                            <button
-                                type="button"
-                                onClick={() => setShowPassword(!showPassword)}
-                                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500"
-                            >
-                                {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
-                            </button>
+                            {errors.email && <p className="mt-1 text-xs text-red-500">{errors.email}</p>}
                         </div>
-                        {errors.password && <p className="mt-1 text-xs text-red-500">{errors.password}</p>}
-                    </div>
 
-                    {/* Confirm Password */}
-                    <div>
-                        <label className="block text-sm font-medium text-text-primary mb-2">
-                            <Lock size={16} className="inline mr-1" />
-                            Xác nhận mật khẩu
-                        </label>
-                        <div className="relative">
-                            <input
-                                type={showConfirmPassword ? 'text' : 'password'}
-                                name="confirmPassword"
-                                value={formData.confirmPassword}
-                                onChange={handleChange}
-                                placeholder="Nhập lại mật khẩu mới"
-                                className={`w-full px-4 py-3 pr-12 rounded-lg border ${errors.confirmPassword ? 'border-red-500' : 'border-gray-300'
-                                    } focus:outline-none focus:ring-2 focus:ring-primary/50`}
-                            />
-                            <button
-                                type="button"
-                                onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500"
-                            >
-                                {showConfirmPassword ? <EyeOff size={20} /> : <Eye size={20} />}
-                            </button>
+                        {/* Password Section Title */}
+                        <div className="pt-2 border-t border-gray-100">
+                            <h3 className="text-sm font-semibold text-gray-500 mb-3">Đổi mật khẩu (Tùy chọn)</h3>
                         </div>
-                        {errors.confirmPassword && <p className="mt-1 text-xs text-red-500">{errors.confirmPassword}</p>}
-                    </div>
 
-                    {/* Buttons */}
-                    <div className="flex gap-3 pt-4">
+                        {/* Current Password */}
+                        <div>
+                            <label className="block text-sm font-medium text-text-primary mb-2">
+                                <Lock size={16} className="inline mr-1" />
+                                Mật khẩu hiện tại
+                            </label>
+                            <div className="relative">
+                                <input
+                                    type={showCurrentPassword ? 'text' : 'password'}
+                                    name="currentPassword"
+                                    value={formData.currentPassword}
+                                    onChange={handleChange}
+                                    placeholder="Nhập mật khẩu hiện tại nếu muốn đổi mật khẩu"
+                                    className={`w-full px-4 py-3 pr-12 rounded-lg border ${errors.currentPassword ? 'border-red-500' : 'border-gray-300'
+                                        } focus:outline-none focus:ring-2 focus:ring-primary/50`}
+                                />
+                                <button
+                                    type="button"
+                                    onClick={() => setShowCurrentPassword(!showCurrentPassword)}
+                                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500"
+                                >
+                                    {showCurrentPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                                </button>
+                            </div>
+                            {errors.currentPassword && <p className="mt-1 text-xs text-red-500">{errors.currentPassword}</p>}
+                        </div>
+                        <div>
+                            <label className="block text-sm font-medium text-text-primary mb-2">
+                                <Lock size={16} className="inline mr-1" />
+                                Mật khẩu mới (tùy chọn)
+                            </label>
+                            <div className="relative">
+                                <input
+                                    type={showPassword ? 'text' : 'password'}
+                                    name="password"
+                                    value={formData.password}
+                                    onChange={handleChange}
+                                    placeholder="Nhập mật khẩu mới"
+                                    className={`w-full px-4 py-3 pr-12 rounded-lg border ${errors.password ? 'border-red-500' : 'border-gray-300'
+                                        } focus:outline-none focus:ring-2 focus:ring-primary/50`}
+                                />
+                                <button
+                                    type="button"
+                                    onClick={() => setShowPassword(!showPassword)}
+                                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500"
+                                >
+                                    {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                                </button>
+                            </div>
+                            {errors.password && <p className="mt-1 text-xs text-red-500">{errors.password}</p>}
+                        </div>
+
+                        {/* Confirm Password */}
+                        <div>
+                            <label className="block text-sm font-medium text-text-primary mb-2">
+                                <Lock size={16} className="inline mr-1" />
+                                Xác nhận mật khẩu
+                            </label>
+                            <div className="relative">
+                                <input
+                                    type={showConfirmPassword ? 'text' : 'password'}
+                                    name="confirmPassword"
+                                    value={formData.confirmPassword}
+                                    onChange={handleChange}
+                                    placeholder="Nhập lại mật khẩu mới"
+                                    className={`w-full px-4 py-3 pr-12 rounded-lg border ${errors.confirmPassword ? 'border-red-500' : 'border-gray-300'
+                                        } focus:outline-none focus:ring-2 focus:ring-primary/50`}
+                                />
+                                <button
+                                    type="button"
+                                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500"
+                                >
+                                    {showConfirmPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                                </button>
+                            </div>
+                            {errors.confirmPassword && <p className="mt-1 text-xs text-red-500">{errors.confirmPassword}</p>}
+                        </div>
+
+                        {/* Bottom spacer for scrolling */}
+                        <div className="h-1"></div>
+                    </form>
+                </div>
+
+                {/* Footer Buttons - Fixed at bottom */}
+                <div className="p-4 sm:p-6 border-t border-gray-100 bg-white flex-shrink-0 rounded-3xl">
+                    <div className="flex gap-3">
                         <button
                             type="button"
                             onClick={handleClose}
@@ -269,13 +284,14 @@ const EditProfileModal = ({ isOpen, onClose, userData, onSave }) => {
                             Hủy
                         </button>
                         <button
-                            type="submit"
+                            onClick={handleSubmit}
+                            type="button"
                             className="flex-1 px-6 py-3 bg-primary text-white rounded-full font-semibold hover:bg-primary-hover transition-colors shadow-md"
                         >
                             Xác nhận
                         </button>
                     </div>
-                </form>
+                </div>
             </div>
         </div>
     );

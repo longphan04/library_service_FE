@@ -1,4 +1,5 @@
 import { useState, useEffect, memo, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useBookDetail } from '@/contexts/BookDetailContext';
 import { FALLBACK_IMAGES, getBookCoverUrl } from '@/utils/imageUrl';
 
@@ -40,6 +41,7 @@ const BookCard = memo(function BookCard({
     // Context & Hooks
     // ==========================================
     const { openBookDetail } = useBookDetail();
+    const navigate = useNavigate();
 
     // ==========================================
     // Trạng thái hình ảnh (Image State)
@@ -78,19 +80,15 @@ const BookCard = memo(function BookCard({
     // ==========================================
     // Các hàm xử lý (Handlers)
     // ==========================================
-    const handleClick = (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-
-        // Nếu có hàm onClick tùy chọn, ưu tiên thực hiện và KHÔNG mở modal
+    const handleCardClick = (e) => {
+        // Nếu có hàm onClick tùy chọn (từ Chatbot/Hero), ưu tiên thực hiện
         if (onClick) {
+            e.preventDefault();
+            e.stopPropagation();
             onClick(id);
-            return;
-        }
-
-        // Mở modal chi tiết sách toàn cục (nếu không có hành động ghi đè)
-        if (id && !String(id).includes('placeholder')) {
-            openBookDetail(id);
+        } else {
+            // Navigate to detail page
+            navigate(`/books/${id}`);
         }
     };
 
@@ -142,16 +140,11 @@ const BookCard = memo(function BookCard({
             className={`group bg-white rounded-lg shadow-md overflow-hidden transition-all duration-300 hover:shadow-lg ${className}`}
         >
             <div
-                onClick={handleClick}
-                className="block cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 rounded-lg"
+                onClick={handleCardClick}
+                className="block cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 rounded-lg h-full"
                 role="button"
                 tabIndex={0}
                 aria-label={`Xem chi tiết sách: ${title}`}
-                onKeyDown={(e) => {
-                    if (e.key === 'Enter' || e.key === ' ') {
-                        handleClick(e);
-                    }
-                }}
             >
                 <CardContent />
             </div>

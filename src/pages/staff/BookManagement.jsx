@@ -108,6 +108,61 @@ export default function BookManagement() {
       ? ''
       : categories.find((c) => c.id === Number(selectedCategory))?.name || '';
 
+
+  // Lưu sách (thêm mới hoặc cập nhật)
+  const handleSaveBook = (bookData, bookId) => {
+    console.log("handleSaveBook called with:", bookData, "bookId:", bookId);
+
+    // Đảm bảo tags là array
+    const tags = Array.isArray(bookData.categories) && bookData.categories.length > 0
+      ? bookData.categories
+      : bookData.category
+        ? [bookData.category]
+        : ["Chưa phân loại"];
+
+    if (bookId) {
+      // Cập nhật sách
+      setBooks(prevBooks =>
+        prevBooks.map(book =>
+          book.id === bookId
+            ? {
+              ...book,
+              ...bookData,
+              quantity: Number(bookData.quantity),
+              availability: `${bookData.quantity} cuốn`,
+              tags: tags // Dùng categories làm tags
+            }
+            : book
+        )
+      );
+      console.log("Book updated:", bookId);
+    } else {
+      // Thêm sách mới
+      const newBook = {
+        id: Date.now(),
+        ...bookData,
+        quantity: Number(bookData.quantity),
+        availability: `${bookData.quantity} cuốn`,
+        tags: tags // Dùng categories làm tags
+      };
+
+      setBooks(prevBooks => [newBook, ...prevBooks]);
+      console.log("New book added:", newBook);
+    }
+  };
+
+  // Xử lý click nút "Chỉnh sửa" trong BookCard
+  const handleEditBookCard = async (bookId) => {
+    try {
+      const res = await axios.get(`https://place-potentially-downloaded-lyrics.trycloudflare.com/book/${bookId}`);
+      setEditingBook(res.data);   // FULL DATA
+      setShowAddBookForm(true);
+    } catch (err) {
+      console.error("Lỗi load book để edit:", err);
+      alert("Không tải được dữ liệu sách");
+    }
+  };
+
   const handleCheckChange = (bookId, checked) => {
     setSelectedBooks(prev => ({
       ...prev,

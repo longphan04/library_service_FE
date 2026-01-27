@@ -100,15 +100,25 @@ const NotificationDropdown = ({ iconSize = 20, iconStrokeWidth = 2 }) => {
         }
     }, []);
 
-    // Fetch on mount
+    // Fetch notifications with polling (every 5 seconds)
     useEffect(() => {
         const token = localStorage.getItem('access_token');
         if (token) {
+            // Initial fetch
             fetchNotifications();
+
+            // Set up polling interval
+            const intervalId = setInterval(() => {
+                fetchNotifications();
+            }, 5000);
+
+            // Cleanup on unmount
+            return () => clearInterval(intervalId);
         } else {
             setLoading(false);
         }
     }, [fetchNotifications]);
+
 
     // Close dropdown when clicking outside
     useEffect(() => {
@@ -163,9 +173,11 @@ const NotificationDropdown = ({ iconSize = 20, iconStrokeWidth = 2 }) => {
             >
                 <Bell size={iconSize} strokeWidth={iconStrokeWidth} />
 
-                {/* Red Dot - Hiển thị khi có thông báo chưa đọc */}
+                {/* Badge - Hiển thị số lượng thông báo chưa đọc */}
                 {unreadCount > 0 && (
-                    <span className="absolute top-1 right-1 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-white animate-pulse" />
+                    <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] bg-red-500 rounded-full border-2 border-white flex items-center justify-center text-[10px] font-bold text-white px-1 shadow-sm">
+                        {unreadCount > 99 ? '99+' : unreadCount}
+                    </span>
                 )}
             </button>
 

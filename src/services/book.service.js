@@ -186,7 +186,7 @@ export const getRecommendations = async (limit = 12) => {
             params: { limit },
             headers
         });
-        return response.data;
+        return response.data['books'];
     } catch (error) {
         console.error('Error fetching recommendations:', error);
         return [];

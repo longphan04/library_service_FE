@@ -51,6 +51,9 @@ import UserList from '../pages/admin/users/UserList';
 import StaffList from '../pages/admin/staff/StaffList';
 import AdminProfile from '../pages/admin/account/AdminProfile';
 
+// Utilities
+import ScrollToTop from '../components/utils/ScrollToTop';
+
 /**
  * Root Component - Bao bọc toàn bộ ứng dụng trong các context cần thiết.
  * Việc đặt Provider bên trong cấu trúc Router giúp giải quyết triệt để các lỗi runtime
@@ -59,6 +62,7 @@ import AdminProfile from '../pages/admin/account/AdminProfile';
 const Root = () => (
     <AuthProvider>
         <BookDetailProvider>
+            <ScrollToTop />
             <Outlet />
             <Toaster position="top-right" reverseOrder={false} />
         </BookDetailProvider>
