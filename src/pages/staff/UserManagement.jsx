@@ -4,6 +4,7 @@ import useUserManagement from "@/hooks/useUserManagement";
 import UserDetailModal from "@/components/UserDetailModal/UserDetailModal";
 import { Search, RefreshCw } from "lucide-react";
 import { userManagementStaffService } from "@/services/userManagementStaff.service";
+import ConfirmModal from "@/components/modal/ConfirmModal";
 
 export default function UserManagement() {
     const {
@@ -28,6 +29,13 @@ export default function UserManagement() {
         error,
         fetchUsers
     } = useUserManagement();
+
+    const [confirmConfig, setConfirmConfig] = useState({
+        open: false,
+        title: "",
+        onConfirm: () => { },
+        variant: "success"
+    });
 
     const handleSaveUser = async (updatedUser) => {
         try {
@@ -76,6 +84,18 @@ export default function UserManagement() {
         }
     };
 
+    const confirmUnlockSingle = (user) => {
+        setConfirmConfig({
+            open: true,
+            title: `Bạn có chắc chắn muốn mở khóa người dùng "${user.name}"?`,
+            variant: "success",
+            onConfirm: async () => {
+                await handleUnlockSingleUser(user.id);
+                setConfirmConfig(prev => ({ ...prev, open: false }));
+            }
+        });
+    };
+
     // Hàm để khóa một user cụ thể
     const handleLockSingleUser = async (userId) => {
         try {
@@ -90,6 +110,42 @@ export default function UserManagement() {
         } catch (err) {
             alert("Không thể khóa người dùng");
         }
+    };
+
+    const confirmLockSingle = (user) => {
+        setConfirmConfig({
+            open: true,
+            title: `Bạn có chắc chắn muốn khóa người dùng "${user.name}"?`,
+            variant: "danger",
+            onConfirm: async () => {
+                await handleLockSingleUser(user.id);
+                setConfirmConfig(prev => ({ ...prev, open: false }));
+            }
+        });
+    };
+
+    const confirmUnlockBulk = () => {
+        setConfirmConfig({
+            open: true,
+            title: `Bạn có chắc chắn muốn mở khóa ${selectedIds.length} người dùng đã chọn?`,
+            variant: "success",
+            onConfirm: async () => {
+                await unlockUsers();
+                setConfirmConfig(prev => ({ ...prev, open: false }));
+            }
+        });
+    };
+
+    const confirmLockBulk = () => {
+        setConfirmConfig({
+            open: true,
+            title: `Bạn có chắc chắn muốn khóa ${selectedIds.length} người dùng đã chọn?`,
+            variant: "danger",
+            onConfirm: async () => {
+                await lockUsers();
+                setConfirmConfig(prev => ({ ...prev, open: false }));
+            }
+        });
     };
 
     return (
@@ -137,7 +193,7 @@ export default function UserManagement() {
                     {/* RIGHT - Các nút hành động cho nhiều user */}
                     <div className="flex gap-6">
                         <button
-                            onClick={unlockUsers}
+                            onClick={confirmUnlockBulk}
                             disabled={selectedIds.length === 0 || loading}
                             className="px-8 py-3 rounded text-white disabled:opacity-40"
                             style={{ backgroundColor: "#7A4A2E" }}
@@ -145,7 +201,7 @@ export default function UserManagement() {
                             Mở khóa ({selectedIds.length})
                         </button>
                         <button
-                            onClick={lockUsers}
+                            onClick={confirmLockBulk}
                             disabled={selectedIds.length === 0 || loading}
                             className="px-8 py-3 rounded text-white disabled:opacity-40"
                             style={{ backgroundColor: "#DE6767" }}
@@ -210,7 +266,7 @@ export default function UserManagement() {
 
                             <div>
                                 <span
-                                    className={`px-4 py-2 rounded text-white text-sm ${user.status === "active" ? "bg-black" : "bg-red-500"
+                                    className={`px-4 py-2 rounded  text-sm ${user.status === "active" ? "text-black" : "text-red-500"
                                         }`}
                                 >
                                     {user.status === "active" ? "Hoạt động" : "Khóa"}
@@ -227,7 +283,7 @@ export default function UserManagement() {
                                 <div className="flex gap-2">
                                     {user.status === "locked" ? (
                                         <button
-                                            onClick={() => handleUnlockSingleUser(user.id)}
+                                            onClick={() => confirmUnlockSingle(user)}
                                             className="px-4 py-2.5 text-sm rounded text-white hover:opacity-90 transition"
                                             style={{ backgroundColor: "#7A4A2E", minWidth: "80px" }}
                                         >
@@ -235,7 +291,7 @@ export default function UserManagement() {
                                         </button>
                                     ) : (
                                         <button
-                                            onClick={() => handleLockSingleUser(user.id)}
+                                            onClick={() => confirmLockSingle(user)}
                                             className="px-4 py-2.5 text-sm rounded text-white hover:opacity-90 transition"
                                             style={{ backgroundColor: "#DE6767", minWidth: "80px" }}
                                         >
@@ -266,6 +322,14 @@ export default function UserManagement() {
                     onSave={handleSaveUser}
                 />
             )}
+
+            <ConfirmModal
+                open={confirmConfig.open}
+                title={confirmConfig.title}
+                confirmVariant={confirmConfig.variant}
+                onConfirm={confirmConfig.onConfirm}
+                onCancel={() => setConfirmConfig(prev => ({ ...prev, open: false }))}
+            />
         </div>
     );
 }

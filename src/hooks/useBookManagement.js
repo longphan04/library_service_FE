@@ -13,10 +13,19 @@ export default function useBookManagement() {
     });
     const [categories, setCategories] = useState([]);
     const [searchTerm, setSearchTerm] = useState("");
+    const [debouncedSearchTerm, setDebouncedSearchTerm] = useState("");
     const [selectedCategory, setSelectedCategory] = useState("all");
     const [loading, setLoading] = useState(false);
     const [selectedBooks, setSelectedBooks] = useState({});
     const [editingBook, setEditingBook] = useState(null);
+
+    // Debounce search term
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            setDebouncedSearchTerm(searchTerm);
+        }, 400);
+        return () => clearTimeout(timer);
+    }, [searchTerm]);
 
     // ✅ đóng form edit
     const closeEditBook = () => {
@@ -33,17 +42,19 @@ export default function useBookManagement() {
     };
 
     // Fetch books từ API
-    const fetchBooks = useCallback(async () => {
+    const fetchBooks = useCallback(async (isMounted) => {
         setLoading(true);
         try {
             const res = await axios.get(API_URL, {
                 params: {
-                    q: searchTerm || undefined,
+                    q: debouncedSearchTerm || undefined,
                     categoryId: selectedCategory !== "all" ? selectedCategory : undefined,
                     page: pagination?.page || 1,
                     limit: 10,
                 },
             });
+
+            if (!isMounted()) return;
 
             console.log("📚 API Response:", res.data);
 
@@ -53,17 +64,6 @@ export default function useBookManagement() {
                 setBooks([]);
                 return;
             }
-
-            const mappedBooks = res.data.data.map((book) => ({
-                id: book.book_id,
-                title: book.title || "Không có tiêu đề",
-                author: book.authors?.map((a) => a.name).join(", ") || "Chưa rõ tác giả",
-                publisher: book.publisher?.name || "Chưa rõ NXB",
-                availability: `${book.available_copies ?? 0} cuốn`,
-                year: book.publish_year || "—",
-                tags: book.categories?.map((c) => c.name) || [],
-                cover: book.cover_url,
-            }));
 
             setBooks(res.data.data);
 
@@ -79,12 +79,13 @@ export default function useBookManagement() {
                 }));
             }
         } catch (err) {
+            if (!isMounted()) return;
             console.error("Lỗi tải sách:", err);
             console.error("Response data:", err.response?.data);
         } finally {
-            setLoading(false);
+            if (isMounted()) setLoading(false);
         }
-    }, [searchTerm, selectedCategory, pagination?.page]);
+    }, [debouncedSearchTerm, selectedCategory, pagination?.page]);
 
     // api lọc sách
     useEffect(() => {
@@ -113,10 +114,26 @@ export default function useBookManagement() {
             });
     }, []);
 
+    // Fetch books on dependency change with cleanup to prevent race conditions
+    useEffect(() => {
+        let active = true;
+        const isMounted = () => active;
+
+        // Reset to page 1 when search or category changes
+        // This is done implicitly by the component calling hookSetSearchTerm or handleCategoryChange
+        // but we need to ensure pagination.page updates before fetching or we fetch twice.
+
+        fetchBooks(isMounted);
+
+        return () => {
+            active = false;
+        };
+    }, [fetchBooks]);
+
     // Reset về trang 1 khi thay đổi search hoặc category
     useEffect(() => {
         setPagination((p) => ({ ...p, page: 1 }));
-    }, [searchTerm, selectedCategory]);
+    }, [debouncedSearchTerm, selectedCategory]);
 
     // Xử lý thay đổi category
     const handleCategoryChange = (e) => {
@@ -124,10 +141,6 @@ export default function useBookManagement() {
         setSelectedCategory(value);
         setPagination((prev) => ({ ...prev, page: 1 }));
     };
-
-    useEffect(() => {
-        fetchBooks();
-    }, [fetchBooks]);
 
     // Xử lý xóa nhiều sách
     const handleDeleteBooks = async () => {
@@ -144,7 +157,7 @@ export default function useBookManagement() {
             );
 
             setBooks(prev => prev.filter(b => !ids.includes(String(b.book_id))));
-            setSelectedBooks({}); 1
+            setSelectedBooks({});
         } catch (err) {
             console.error("Lỗi khi xóa sách:", err);
             alert("Không thể xóa sách (có thể sách đang được mượn)");

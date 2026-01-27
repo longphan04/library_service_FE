@@ -1,9 +1,11 @@
 import { useState, useMemo, useCallback, useEffect } from "react";
+import { RefreshCw } from "lucide-react";
 import SearchBar from "./components/SearchBar";
 import ActionButtons from "./components/ActionButtons";
 import PickedUpTicketTable from "./components/PickedUpTicketTable";
 import TicketDetailModal from "./components/TicketDetailModal";
 import Pagination from "@/components/ui/Pagination";
+import ConfirmModal from "@/components/modal/ConfirmModal";
 
 export default function PickedUpBookSection({
     allTickets,
@@ -15,10 +17,25 @@ export default function PickedUpBookSection({
     const [checkedTickets, setCheckedTickets] = useState({});
     const [selectedTicket, setSelectedTicket] = useState(null);
     const [isModalOpen, setIsModalOpen] = useState(false);
+    const [loading, setLoading] = useState(false);
+    const [showConfirm, setShowConfirm] = useState(false);
+    const [confirmConfig, setConfirmConfig] = useState({ title: "", onConfirm: () => { } });
 
     // Pagination State
     const [currentPage, setCurrentPage] = useState(1);
     const itemsPerPage = 6;
+
+    const handleReload = async () => {
+        setLoading(true);
+        try {
+            if (refreshData) {
+                await refreshData();
+            }
+            setSearch("");
+        } finally {
+            setTimeout(() => setLoading(false), 500);
+        }
+    };
 
     // Reset page khi search thay đổi
     useEffect(() => {
@@ -47,27 +64,15 @@ export default function PickedUpBookSection({
         paginatedTickets.every((t) => t.checked);
 
     const toggleAll = (checked) => {
-        const newChecked = { ...checkedTickets };
+        const newChecked = {};
         paginatedTickets.forEach(ticket => {
-            if (checked) {
-                newChecked[ticket.id] = true;
-            } else {
-                delete newChecked[ticket.id];
-            }
+            newChecked[ticket.id] = checked;
         });
-        setCheckedTickets(newChecked);
+        setCheckedTickets(prev => ({ ...prev, ...newChecked }));
     };
 
     const toggleOne = (id, checked) => {
-        setCheckedTickets(prev => {
-            const newState = { ...prev };
-            if (checked) {
-                newState[id] = true;
-            } else {
-                delete newState[id];
-            }
-            return newState;
-        });
+        setCheckedTickets(prev => ({ ...prev, [id]: checked }));
     };
 
     const handleViewTicket = (ticket) => {
@@ -77,15 +82,22 @@ export default function PickedUpBookSection({
 
     // Xác nhận trả sách
     const handleConfirmReturn = (ticketId) => {
-        updateTicketStatus(ticketId, "RETURNED");
-        if (refreshData) refreshData();
-        setCheckedTickets(prev => {
-            const newState = { ...prev };
-            delete newState[ticketId];
-            return newState;
+        setConfirmConfig({
+            title: "Xác nhận khách hàng đã trả sách cho phiếu này?",
+            onConfirm: () => {
+                updateTicketStatus(ticketId, "RETURNED");
+                if (refreshData) refreshData();
+                setCheckedTickets(prev => {
+                    const newState = { ...prev };
+                    delete newState[ticketId];
+                    return newState;
+                });
+                setIsModalOpen(false);
+                setSelectedTicket(null);
+                setShowConfirm(false);
+            }
         });
-        setIsModalOpen(false);
-        setSelectedTicket(null);
+        setShowConfirm(true);
     };
 
     const confirmSelected = useCallback(() => {
@@ -98,30 +110,52 @@ export default function PickedUpBookSection({
             return;
         }
 
-        bulkUpdateTickets(selectedIds, "RETURNED");
-        if (refreshData) refreshData();
-        setCheckedTickets(prev => {
-            const newState = { ...prev };
-            selectedIds.forEach(id => delete newState[id]);
-            return newState;
+        setConfirmConfig({
+            title: `Xác nhận đã trả sách cho ${selectedIds.length} phiếu đã chọn?`,
+            onConfirm: () => {
+                bulkUpdateTickets(selectedIds, "RETURNED");
+                if (refreshData) refreshData();
+                setCheckedTickets(prev => {
+                    const newState = { ...prev };
+                    selectedIds.forEach(id => delete newState[id]);
+                    return newState;
+                });
+                setShowConfirm(false);
+            }
         });
+        setShowConfirm(true);
     }, [filteredTickets, bulkUpdateTickets, refreshData]);
 
     const confirmOne = useCallback((id) => {
-        updateTicketStatus(id, "RETURNED");
-        if (refreshData) refreshData();
-        setCheckedTickets(prev => {
-            const newState = { ...prev };
-            delete newState[id];
-            return newState;
+        setConfirmConfig({
+            title: "Xác nhận khách hàng đã trả sách cho phiếu này?",
+            onConfirm: () => {
+                updateTicketStatus(id, "RETURNED");
+                if (refreshData) refreshData();
+                setCheckedTickets(prev => {
+                    const newState = { ...prev };
+                    delete newState[id];
+                    return newState;
+                });
+                setShowConfirm(false);
+            }
         });
+        setShowConfirm(true);
     }, [updateTicketStatus, refreshData]);
 
     return (
         <>
             <div className="flex justify-between items-center mb-6">
-                <div className="flex gap-4 items-center">
+                <div className="flex gap-2 items-center">
                     <SearchBar search={search} setSearch={setSearch} />
+                    <button
+                        onClick={handleReload}
+                        className="p-3 rounded-full hover:rotate-360 transition-all duration-1000 text-primary cursor-pointer bg-white/10"
+                        title="Làm mới"
+                        disabled={loading}
+                    >
+                        <RefreshCw size={20} className={loading ? "animate-spin" : ""} />
+                    </button>
                 </div>
                 <div className="flex gap-4">
                     <ActionButtons
@@ -161,6 +195,13 @@ export default function PickedUpBookSection({
                 }}
                 ticket={selectedTicket}
                 onConfirm={handleConfirmReturn}
+            />
+
+            <ConfirmModal
+                open={showConfirm}
+                title={confirmConfig.title}
+                onConfirm={confirmConfig.onConfirm}
+                onCancel={() => setShowConfirm(false)}
             />
         </>
     );

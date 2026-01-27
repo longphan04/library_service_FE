@@ -14,8 +14,9 @@ import VersionSelector from '../../components/ui/VersionSelector';
 import BorrowConfirmationModal from '../../components/ui/BorrowConfirmationModal';
 import Toast from '../../components/ui/Toast';
 import useBookHold from '../../hooks/useBookHold';
+import { useAuth } from '../../contexts/AuthContext';
 import bookService from '../../services/book.service';
-import { FALLBACK_IMAGES } from '../../utils/imageUrl';
+import { FALLBACK_IMAGES, getBookCoverUrl } from '../../utils/imageUrl';
 
 // ==========================================
 // Loading Skeleton
@@ -68,11 +69,14 @@ const BookDetail = () => {
     // State quản lý modal xác nhận mượn sách
     const [isBorrowConfirmOpen, setIsBorrowConfirmOpen] = useState(false);
 
-    // State quản lý toast notification
+    // State quản lý toast notification (success, error, warning)
     const [toast, setToast] = useState({ isOpen: false, type: '', message: '' });
 
     // Hook quản lý book holds
-    const { createHold, isBookOnHold, actionLoading } = useBookHold();
+    const { createHold, isBookOnHold, borrowDirectly, actionLoading } = useBookHold();
+
+    // Hook kiểm tra trạng thái đăng nhập
+    const { isAuthenticated, isLoading: authLoading } = useAuth();
 
     // ==========================================
     // Fetch Book Data from API
@@ -92,7 +96,9 @@ const BookDetail = () => {
                 id: bookData.book_id || bookData.id || bookData._id,
                 title: bookData.title || 'Không rõ',
                 author: bookData.authors?.[0]?.name || bookData.author?.name || bookData.authorName || 'Không rõ',
-                coverImage: bookData.cover_url || bookData.coverImage || bookData.image || bookData.thumbnail,
+                coverImage: getBookCoverUrl(
+                    bookData.cover_url || bookData.coverImage || bookData.image || bookData.thumbnail
+                ),
                 publishYear: bookData.publish_year || bookData.publishYear || bookData.year || 'N/A',
                 categoryId: bookData.categories?.[0]?.category_id || bookData.category?.id || bookData.categoryId,
                 categoryName: bookData.categories?.[0]?.name || bookData.category?.name || bookData.categoryName || 'Không phân loại',
@@ -136,6 +142,12 @@ const BookDetail = () => {
     };
 
     const handleBorrowBook = () => {
+        // Auth guard: Redirect nếu chưa đăng nhập
+        if (!authLoading && !isAuthenticated) {
+            navigate('/login');
+            return;
+        }
+
         if (!selectedVersion && book?.versions?.length > 0) {
             setToast({
                 isOpen: true,
@@ -147,10 +159,14 @@ const BookDetail = () => {
         setIsBorrowConfirmOpen(true);
     };
 
+    /**
+     * Xác nhận mượn sách trực tiếp
+     * Cập nhật: Tạo phiếu mượn thay vì chỉ thêm vào kệ
+     */
     const handleConfirmBorrow = async () => {
         try {
-            // Call API to create book hold
-            await createHold({ bookId: book.id });
+            // Sử dụng borrowDirectly từ useBookHold hook
+            await borrowDirectly(book.id);
 
             setIsBorrowConfirmOpen(false);
             setToast({
@@ -161,15 +177,39 @@ const BookDetail = () => {
 
         } catch (err) {
             setIsBorrowConfirmOpen(false);
-            setToast({
-                isOpen: true,
-                type: 'error',
-                message: err.message || 'Mượn sách thất bại. Vui lòng thử lại'
-            });
+
+            // Xử lý lỗi giới hạn mượn sách (Max 3 phiếu)
+            const status = err.response?.status;
+            const apiMessage = err.response?.data?.message || err.message || '';
+
+            const isLimitError =
+                (status === 400 || status === 403 || status === 409 || status === 404) &&
+                (apiMessage.includes('limit') || apiMessage.includes('3 phiếu') || apiMessage.includes('trả sách'));
+
+            if (isLimitError) {
+                // Thay vì PopUp, sử dụng Toast màu nâu (warning) để đồng nhất
+                setToast({
+                    isOpen: true,
+                    type: 'warning',
+                    message: 'Bạn đã mượn tối đa 3 phiếu. Vui lòng trả sách để có thể mượn thêm!'
+                });
+            } else {
+                setToast({
+                    isOpen: true,
+                    type: 'error',
+                    message: apiMessage || 'Mượn sách thất bại. Vui lòng thử lại'
+                });
+            }
         }
     };
 
     const handleAddToBookshelf = async () => {
+        // Auth guard: Redirect nếu chưa đăng nhập
+        if (!authLoading && !isAuthenticated) {
+            navigate('/login');
+            return;
+        }
+
         try {
             await createHold({ bookId: book.id });
             setToast({
@@ -252,18 +292,19 @@ const BookDetail = () => {
     const selectedVersionData = book.versions?.find(v => v.id === selectedVersion);
 
     const borrowDate = new Date();
-    const loanPeriod = 60;
+    const loanPeriod = 10;
     const dueDate = new Date(borrowDate);
     dueDate.setDate(dueDate.getDate() + loanPeriod);
 
     const borrowInfo = {
+        id: book.id,
+        availableCopies: book.availableCopies,
         title: book.title,
         author: book.author,
         coverImage: book.coverImage,
         borrowDate: formatDate(borrowDate),
         loanPeriod: loanPeriod,
         dueDate: formatDate(dueDate),
-        version: selectedVersionData?.year || 'N/A',
     };
 
     const isAlreadyOnHold = isBookOnHold(book.id);
@@ -293,15 +334,17 @@ const BookDetail = () => {
                         {/* Book Cover - Left Side */}
                         <div className="md:col-span-1">
                             <div className="sticky top-24">
-                                <img
-                                    src={book.coverImage || FALLBACK_IMAGES.bookPlaceholder}
-                                    alt={book.title}
-                                    className="w-full rounded-lg shadow-lg"
-                                    onError={(e) => {
-                                        e.target.onerror = null;
-                                        e.target.src = FALLBACK_IMAGES.bookPlaceholder;
-                                    }}
-                                />
+                                <div className="aspect-3/4 overflow-hidden rounded-lg shadow-lg bg-gray-100">
+                                    <img
+                                        src={book.coverImage || FALLBACK_IMAGES.bookPlaceholder}
+                                        alt={book.title}
+                                        className="w-full h-full object-cover"
+                                        onError={(e) => {
+                                            e.target.onerror = null;
+                                            e.target.src = FALLBACK_IMAGES.bookPlaceholder;
+                                        }}
+                                    />
+                                </div>
                             </div>
                         </div>
 
@@ -460,6 +503,8 @@ const BookDetail = () => {
                 onClose={() => setToast({ ...toast, isOpen: false })}
                 duration={3000}
             />
+
+            <Footer />
         </div>
     );
 };

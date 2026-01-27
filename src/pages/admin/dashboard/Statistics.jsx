@@ -45,9 +45,31 @@ export default function Statistics() {
         fetchTicketFlowStats();
     }, [timeRange]);
 
+    // Helper function to format labels - show month only on first and last day
+    const formatChartLabels = (labels) => {
+        if (!labels || labels.length === 0) return labels;
+        
+        return labels.map((label, index) => {
+            // First and last items keep full format (with month)
+            if (index === 0 || index === labels.length - 1) {
+                return label; // Keep original format like "15/01"
+            }
+            // Middle items remove month part (keep only day)
+            // Example: "15/01" becomes "15"
+            return label.split('/')[0];
+        });
+    };
+
+    // Helper function to format date from yyyy-MM-dd to dd-MM-yyyy
+    const formatDate = (dateStr) => {
+        if (!dateStr) return '';
+        const [year, month, day] = dateStr.split('-');
+        return `${day}-${month}-${year}`;
+    };
+
     // Prepare chart data from API response
     const getChartData = () => {
-        if (!borrowReturnData || !borrowReturnData.chart) {
+        if (!borrowReturnData || !borrowReturnData.chart || borrowReturnData.chart.length === 0) {
             return {
                 categories: [],
                 borrow: [],
@@ -55,10 +77,12 @@ export default function Statistics() {
             };
         }
 
+        // Only use data from the API chart array, don't add extra days
+        const chartArray = borrowReturnData.chart;
         return {
-            categories: borrowReturnData.chart.map(item => item.label),
-            borrow: borrowReturnData.chart.map(item => item.picked_up),
-            return: borrowReturnData.chart.map(item => item.returned)
+            categories: formatChartLabels(chartArray.map(item => item.label)),
+            borrow: chartArray.map(item => item.picked_up),
+            return: chartArray.map(item => item.returned)
         };
     };
 
@@ -66,7 +90,7 @@ export default function Statistics() {
 
     // Prepare ticket flow chart data from API response
     const getTicketFlowChartData = () => {
-        if (!ticketFlowData || !ticketFlowData.chart) {
+        if (!ticketFlowData || !ticketFlowData.chart || ticketFlowData.chart.length === 0) {
             return {
                 categories: [],
                 pending: [],
@@ -75,11 +99,13 @@ export default function Statistics() {
             };
         }
 
+        // Only use data from the API chart array, don't add extra days
+        const chartArray = ticketFlowData.chart;
         return {
-            categories: ticketFlowData.chart.map(item => item.label),
-            pending: ticketFlowData.chart.map(item => item.pending),
-            approved: ticketFlowData.chart.map(item => item.approved),
-            cancelled: ticketFlowData.chart.map(item => item.cancelled)
+            categories: formatChartLabels(chartArray.map(item => item.label)),
+            pending: chartArray.map(item => item.pending),
+            approved: chartArray.map(item => item.approved),
+            cancelled: chartArray.map(item => item.cancelled)
         };
     };
 
@@ -260,7 +286,7 @@ export default function Statistics() {
         },
         tooltip: {
             custom: function (props) {
-                return buildTooltipCompareTwo(props, {
+                return buildTooltip(props, {
                     title: `Thống kê lượt mượn - trả sách`,
                     mode: "light",
                     valuePrefix: "",
@@ -289,7 +315,7 @@ export default function Statistics() {
             </h1>
 
             {/* TAB BUTTONS */}
-            <div className="flex justify-center gap-4 mb-10">
+            <div className="flex justify-center gap-4 mb-4">
                 <button
                     className="px-6 py-2 rounded-full bg-[#D9A37B] text-white cursor-default shadow-sm"
                 >
@@ -328,12 +354,12 @@ export default function Statistics() {
 
                 {/* TICKET FLOW STATISTICS CHART */}
                 <div className="bg-white p-6 rounded-xl shadow-md border border-[#E2C6A6]">
-                    <div className="flex justify-between items-center mb-6">
+                    <div className="flex justify-between items-center mb-4">
                         <div className="flex-1">
                             <h2 className="text-xl font-semibold text-[#4A3728]">Thống kê luồng phiếu ({getPeriodLabel()})</h2>
                             {ticketFlowData && (
                                 <p className="text-sm text-gray-600 mt-2">
-                                    Từ {ticketFlowData.start_date} đến {ticketFlowData.end_date}
+                                    Từ {formatDate(ticketFlowData.start_date)} đến {formatDate(ticketFlowData.end_date)}
                                 </p>
                             )}
                         </div>
@@ -356,18 +382,18 @@ export default function Statistics() {
 
                     {/* Summary Stats */}
                     {ticketFlowData && (
-                        <div className="grid grid-cols-3 gap-4 mb-6 p-4 bg-gray-50 rounded-lg">
+                        <div className="grid grid-cols-3 gap-4 p-2 bg-gray-50 rounded-lg">
                             <div className="text-center">
                                 <p className="text-sm text-gray-600">Chờ xử lý</p>
-                                <p className="text-2xl font-bold text-[#f59e0b]">{ticketFlowData.summary.total_pending}</p>
+                                <p className="text-xl font-bold text-[#f59e0b]">{ticketFlowData.summary.total_pending}</p>
                             </div>
                             <div className="text-center">
                                 <p className="text-sm text-gray-600">Đã phê duyệt</p>
-                                <p className="text-2xl font-bold text-[#10b981]">{ticketFlowData.summary.total_approved}</p>
+                                <p className="text-xl font-bold text-[#10b981]">{ticketFlowData.summary.total_approved}</p>
                             </div>
                             <div className="text-center">
                                 <p className="text-sm text-gray-600">Đã hủy</p>
-                                <p className="text-2xl font-bold text-[#ef4444]">{ticketFlowData.summary.total_cancelled}</p>
+                                <p className="text-xl font-bold text-[#ef4444]">{ticketFlowData.summary.total_cancelled}</p>
                             </div>
                         </div>
                     )}
@@ -388,12 +414,12 @@ export default function Statistics() {
                     </div>
                 </div>
                 <div className="bg-white p-6 rounded-xl shadow-md border border-[#E2C6A6]">
-                    <div className="flex justify-between items-center mb-6">
+                    <div className="flex justify-between items-center mb-4">
                         <div className="flex-1">
                             <h2 className="text-xl font-semibold text-[#4A3728]">Thống kê lượt mượn - trả sách ({getPeriodLabel()})</h2>
                             {borrowReturnData && (
                                 <p className="text-sm text-gray-600 mt-2">
-                                    Từ {borrowReturnData.start_date} đến {borrowReturnData.end_date}
+                                    Từ {formatDate(borrowReturnData.start_date)} đến {formatDate(borrowReturnData.end_date)}
                                 </p>
                             )}
                         </div>
@@ -412,14 +438,14 @@ export default function Statistics() {
 
                     {/* Summary Stats */}
                     {borrowReturnData && (
-                        <div className="grid grid-cols-2 gap-4 mb-6 p-4 bg-gray-50 rounded-lg">
+                        <div className="grid grid-cols-2 gap-4 p-2 bg-gray-50 rounded-lg">
                             <div className="text-center">
                                 <p className="text-sm text-gray-600">Tổng mượn</p>
-                                <p className="text-2xl font-bold text-[#2563eb]">{borrowReturnData.summary.total_picked_up}</p>
+                                <p className="text-xl font-bold text-[#2563eb]">{borrowReturnData.summary.total_picked_up}</p>
                             </div>
                             <div className="text-center">
                                 <p className="text-sm text-gray-600">Tổng trả</p>
-                                <p className="text-2xl font-bold text-[#d946ef]">{borrowReturnData.summary.total_returned}</p>
+                                <p className="text-xl font-bold text-[#d946ef]">{borrowReturnData.summary.total_returned}</p>
                             </div>
                         </div>
                     )}

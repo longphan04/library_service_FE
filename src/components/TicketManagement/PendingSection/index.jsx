@@ -1,12 +1,13 @@
 import { useState, useEffect } from "react";
+import { RefreshCw } from "lucide-react";
 import SearchBar from "./components/SearchBar";
 import ActionButtons from "./components/ActionButtons";
 import PendingTicketTable from "./components/PendingTicketTable";
 import TicketDetailModal from "./components/TicketDetailModal";
 import useNotiStaff from "@/hooks/useNotiStaff";
 import { borrowTicketStaffService } from "@/services/borrowTicketStaff.service";
-import usePagination from "@/hooks/usePagination";
 import Pagination from "@/components/ui/Pagination";
+import ConfirmModal from "@/components/modal/ConfirmModal";
 
 export default function PendingSection({
   allTickets,
@@ -18,8 +19,33 @@ export default function PendingSection({
   const [checkedTickets, setCheckedTickets] = useState({});
   const [selectedTicket, setSelectedTicket] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
+  const [confirmConfig, setConfirmConfig] = useState({ title: "", onConfirm: () => { } });
+  const [showReject, setShowReject] = useState(false);
+
+  // Pagination State
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 6;
 
   const { clearNotification } = useNotiStaff();
+
+  const handleReload = async () => {
+    setLoading(true);
+    try {
+      if (refreshData) {
+        await refreshData();
+      }
+      setSearch("");
+    } finally {
+      setTimeout(() => setLoading(false), 500); // Thêm delay nhỏ để thấy hiệu ứng
+    }
+  };
+
+  // Reset page khi search thay đổi
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [search]);
 
   useEffect(() => {
     clearNotification();
@@ -96,86 +122,115 @@ export default function PendingSection({
     }
   };
 
-  const confirmSelected = async () => {
+  const confirmSelected = () => {
     const selectedIds = filteredTickets
       .filter(t => t.checked && t.status === "pending")
       .map(t => t.id);
 
-    for (const id of selectedIds) {
-      await borrowTicketStaffService.updateStatus(id, "APPROVED");
-      updateTicketStatus(id, "APPROVED");
-    }
+    if (selectedIds.length === 0) return;
 
-    if (refreshData) refreshData();
-    setCheckedTickets({});
-  };
-
-  const rejectSelected = async () => {
-    const selectedIds = filteredTickets
-      .filter(t => t.checked && t.status === "pending")
-      .map(t => t.id);
-
-    try {
-      for (const id of selectedIds) {
-        await borrowTicketStaffService.updateStatus(id, "CANCELLED");
-        updateTicketStatus(id, "CANCELLED");
+    setConfirmConfig({
+      title: `Bạn có chắc chắn muốn duyệt ${selectedIds.length} phiếu đã chọn?`,
+      onConfirm: async () => {
+        for (const id of selectedIds) {
+          await borrowTicketStaffService.updateStatus(id, "APPROVED");
+          updateTicketStatus(id, "APPROVED");
+        }
+        if (refreshData) refreshData();
+        setCheckedTickets({});
+        setShowConfirm(false);
       }
-
-      if (refreshData) refreshData();
-      setCheckedTickets({});
-    } catch (err) {
-      console.error(err);
-      alert("Từ chối các phiếu đã chọn thất bại");
-    }
+    });
+    setShowConfirm(true);
   };
 
-  const confirmOne = async (id) => {
-    try {
-      await borrowTicketStaffService.updateStatus(id, "APPROVED");
+  const rejectSelected = () => {
+    const selectedIds = filteredTickets
+      .filter(t => t.checked && t.status === "pending")
+      .map(t => t.id);
 
-      // Xóa ticket khỏi danh sách pending
-      updateTicketStatus(id, "APPROVED");
-      if (refreshData) refreshData();
+    if (selectedIds.length === 0) return;
 
-      setCheckedTickets(prev => ({ ...prev, [id]: false }));
-    } catch (err) {
-      console.error(err);
-      alert("Duyệt phiếu thất bại");
-    }
+    setConfirmConfig({
+      title: `Bạn có chắc chắn muốn từ chối ${selectedIds.length} phiếu đã chọn?`,
+      onConfirm: async () => {
+        try {
+          for (const id of selectedIds) {
+            await borrowTicketStaffService.updateStatus(id, "CANCELLED");
+            updateTicketStatus(id, "CANCELLED");
+          }
+          if (refreshData) refreshData();
+          setCheckedTickets({});
+        } catch (err) {
+          console.error(err);
+          alert("Từ chối các phiếu đã chọn thất bại");
+        }
+        setShowReject(false);
+      }
+    });
+    setShowReject(true);
   };
 
-  const rejectOne = async (id) => {
-    try {
-      await borrowTicketStaffService.updateStatus(id, "CANCELLED");
-
-      updateTicketStatus(id, "CANCELLED");
-      if (refreshData) refreshData();
-      setCheckedTickets(prev => ({ ...prev, [id]: false }));
-    } catch (err) {
-      console.error(err);
-      alert("Từ chối phiếu thất bại");
-    }
+  const confirmOne = (id) => {
+    setConfirmConfig({
+      title: "Bạn có chắc chắn muốn duyệt phiếu mượn này?",
+      onConfirm: async () => {
+        try {
+          await borrowTicketStaffService.updateStatus(id, "APPROVED");
+          updateTicketStatus(id, "APPROVED");
+          if (refreshData) refreshData();
+          setCheckedTickets(prev => ({ ...prev, [id]: false }));
+        } catch (err) {
+          console.error(err);
+          alert("Duyệt phiếu thất bại");
+        }
+        setShowConfirm(false);
+      }
+    });
+    setShowConfirm(true);
   };
 
-  const {
-    currentItems,
-    currentPage,
-    totalPages,
-    goToNextPage,
-    goToPrevPage,
-    setCurrentPage,
-    resetPage,
-  } = usePagination(filteredTickets, 6);
+  const rejectOne = (id) => {
+    setConfirmConfig({
+      title: "Bạn có chắc chắn muốn từ chối phiếu mượn này?",
+      onConfirm: async () => {
+        try {
+          await borrowTicketStaffService.updateStatus(id, "CANCELLED");
+          updateTicketStatus(id, "CANCELLED");
+          if (refreshData) refreshData();
+          setCheckedTickets(prev => ({ ...prev, [id]: false }));
+        } catch (err) {
+          console.error(err);
+          alert("Từ chối phiếu thất bại");
+        }
+        setShowReject(false);
+      }
+    });
+    setShowReject(true);
+  };
 
-  useEffect(() => {
-    resetPage();
-  }, [search]);
+  // Logic phân trang
+  const totalPages = Math.ceil(filteredTickets.length / itemsPerPage);
+  const paginatedTickets = filteredTickets.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  );
 
 
   return (
     <>
       <div className="flex justify-between items-center mb-6">
-        <SearchBar search={search} setSearch={setSearch} />
+        <div className="flex items-center gap-2">
+          <SearchBar search={search} setSearch={setSearch} />
+          <button
+            onClick={handleReload}
+            className="p-3 rounded-full hover:rotate-360 transition-all duration-1000 text-primary cursor-pointer bg-white/10"
+            title="Làm mới"
+            disabled={loading}
+          >
+            <RefreshCw size={20} className={loading ? "animate-spin" : ""} />
+          </button>
+        </div>
         <ActionButtons
           onConfirm={confirmSelected}
           onReject={rejectSelected}
@@ -186,7 +241,7 @@ export default function PendingSection({
       </div>
 
       <PendingTicketTable
-        tickets={currentItems}
+        tickets={paginatedTickets}
         allChecked={allChecked}
         onToggleAll={toggleAll}
         onToggleOne={toggleOne}
@@ -216,6 +271,21 @@ export default function PendingSection({
           />
         </div>
       )}
+
+      <ConfirmModal
+        open={showConfirm}
+        title={confirmConfig.title}
+        onConfirm={confirmConfig.onConfirm}
+        onCancel={() => setShowConfirm(false)}
+      />
+
+      <ConfirmModal
+        open={showReject}
+        title={confirmConfig.title}
+        confirmVariant="danger"
+        onConfirm={confirmConfig.onConfirm}
+        onCancel={() => setShowReject(false)}
+      />
     </>
   );
 }

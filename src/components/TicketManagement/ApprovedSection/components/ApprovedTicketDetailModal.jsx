@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { X } from "lucide-react";
+import ConfirmModal from "@/components/modal/ConfirmModal";
 import { FALLBACK_IMAGES } from '../../../../utils/imageUrl';
 
 import { approvedTicketStaffService } from "@/services/approvedTicketStaff.service";
@@ -14,6 +15,8 @@ export default function ApprovedTicketDetailModal({
 }) {
   const [books, setBooks] = useState([]);
   const [userInfo, setUserInfo] = useState(null);
+  const [showConfirm, setShowConfirm] = useState(false);
+  const [confirmConfig, setConfirmConfig] = useState({ title: "", onConfirm: () => { } });
 
   // Effect để disable scroll khi modal mở
   useEffect(() => {
@@ -206,8 +209,16 @@ export default function ApprovedTicketDetailModal({
                 <>
                   <button
                     onClick={() => {
-                      onConfirm && ticket?.id && onConfirm(ticket.id);
-                      onClose();
+                      if (ticket?.id) {
+                        setConfirmConfig({
+                          title: "Xác nhận khách hàng đã nhận sách cho phiếu này?",
+                          onConfirm: () => {
+                            onConfirm && onConfirm(ticket.id);
+                            setShowConfirm(false);
+                          }
+                        });
+                        setShowConfirm(true);
+                      }
                     }}
                     className="px-8 py-4 text-white rounded-lg font-medium hover:opacity-90 transition text-base cursor-pointer"
                     style={{ backgroundColor: "#7A4A2E", minWidth: "140px" }}
@@ -220,6 +231,13 @@ export default function ApprovedTicketDetailModal({
           </div>
         </div>
       </div>
+
+      <ConfirmModal
+        open={showConfirm}
+        title={confirmConfig.title}
+        onConfirm={confirmConfig.onConfirm}
+        onCancel={() => setShowConfirm(false)}
+      />
     </div>
   );
 }

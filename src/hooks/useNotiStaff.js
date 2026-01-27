@@ -1,6 +1,7 @@
 // src/hooks/notiStaff.js
 import { useState } from "react";
 import axios from "@/utils/axiosConfig";
+import { toast } from "react-hot-toast";
 
 const API_URL = "https://place-potentially-downloaded-lyrics.trycloudflare.com/notification/";
 
@@ -22,9 +23,23 @@ export default function useNotiStaff() {
             if (showToast && prevIds.size > 0) {
                 const newItems = data.filter(n => !prevIds.has(n.notification_id) && !n.is_read);
                 if (newItems.length > 0) {
-                    // Trigger alert for the latest new notification
+                    // Trigger toast for the latest new notification
                     const latest = newItems[0];
-                    alert(`🔔 Thông báo mới: ${latest.title}\n${latest.content}`);
+                    if (latest.type === 'BORROW_CREATED') {
+                        toast.success("🔔 Có phiếu mới cần duyệt!", {
+                            duration: 5000,
+                            style: {
+                                background: '#7A4A2E',
+                                color: '#fff',
+                                fontWeight: 'bold'
+                            }
+                        });
+                    } else {
+                        toast(latest.content || "Có thông báo mới", {
+                            icon: '🔔',
+                            duration: 4000
+                        });
+                    }
                 }
             }
 

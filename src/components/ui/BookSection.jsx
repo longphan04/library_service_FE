@@ -14,7 +14,7 @@ import { useState, useMemo, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowRight, ChevronLeft, ChevronRight } from 'lucide-react';
 import BookCard from './BookCardUser';
-import { FALLBACK_IMAGES } from '../../utils/imageUrl';
+import { FALLBACK_IMAGES, getBookCoverUrl } from '../../utils/imageUrl';
 
 // ==========================================
 // Hằng số
@@ -160,7 +160,9 @@ const BookSection = ({
                         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4 md:gap-5 lg:gap-6">
                             {currentBooks.map((book) => {
                                 const bookId = book.book_id || book.id || book._id;
-                                const coverImage = book.cover_url || book.coverImage || book.image || book.thumbnail || FALLBACK_IMAGES.bookPlaceholder;
+                                const coverImage = getBookCoverUrl(
+                                    book.cover_url || book.coverImage || book.image || book.thumbnail
+                                );
                                 return (
                                     <BookCard
                                         key={bookId}

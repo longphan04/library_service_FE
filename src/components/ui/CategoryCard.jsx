@@ -1,4 +1,4 @@
-import React from 'react';
+
 
 /**
  * CategoryCard Component - Hiển thị thể loại sách với Tailwind CSS
@@ -9,11 +9,25 @@ import React from 'react';
  * @param {function} onClick - Hàm xử lý khi click
  * @param {boolean} selected - Trạng thái được chọn
  */
+import React from 'react';
+import { getCategoryImageUrl, FALLBACK_IMAGES } from '@/utils/imageUrl';
+
+/**
+ * CategoryCard Component - Hiển thị thể loại sách với hình ảnh background
+ * Design giống HotCategorySection trên Homepage
+ * 
+ * @param {string} id - ID thể loại
+ * @param {string} name - Tên thể loại
+ * @param {number} bookCount - Số lượng sách
+ * @param {string} image - URL ảnh của thể loại
+ * @param {function} onClick - Hàm xử lý khi click
+ * @param {boolean} selected - Trạng thái được chọn
+ */
 const CategoryCard = ({
     id,
     name,
     bookCount,
-    icon,
+    image,
     onClick,
     selected = false,
     className = '',
@@ -23,69 +37,65 @@ const CategoryCard = ({
         onClick?.(id);
     };
 
-    // Default book icon
-    const defaultIcon = (
-        <svg
-            className="w-8 h-8"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-        >
-            <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={1.5}
-                d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"
-            />
-        </svg>
-    );
+    // Chuẩn hóa URL ảnh
+    const imageUrl = getCategoryImageUrl(image);
 
     return (
         <button
-            className={`
-        flex flex-col items-center justify-center gap-3
-        p-6 min-w-[140px] min-h-[140px]
-        bg-white rounded-xl
-        border border-[#C4A77D] 
-        shadow-[0_2px_8px_rgba(122,74,46,0.12)]
-        transition-all duration-200
-        cursor-pointer
-        hover:shadow-[0_4px_12px_rgba(122,74,46,0.18)]
-        hover:border-primary
-        hover:bg-[#FFFBF7]
-        ${selected
-                    ? 'border-primary shadow-[0_4px_12px_rgba(122,74,46,0.18)] bg-[#FFFBF7]'
-                    : ''
-                }
-        ${className}
-      `}
             onClick={handleClick}
+            className={`
+                relative group overflow-hidden rounded-xl w-full aspect-3/2
+                transition-all duration-300
+                ${selected
+                    ? 'ring-4 ring-primary shadow-lg scale-[1.02]'
+                    : 'hover:shadow-md hover:scale-[1.01]'
+                }
+                ${className}
+            `}
             {...props}
         >
-            {/* Icon */}
-            <div className={`
-        flex items-center justify-center
-        w-12 h-12 rounded-lg
-        ${selected ? 'text-primary' : 'text-icon'}
-        transition-colors duration-200
-      `}>
-                {icon || defaultIcon}
+            {/* Ảnh category */}
+            <div className="absolute inset-0 w-full h-full">
+                <img
+                    src={imageUrl}
+                    alt={name}
+                    className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                    onError={(e) => {
+                        e.target.onerror = null;
+                        e.target.src = FALLBACK_IMAGES.categoryPlaceholder;
+                    }}
+                />
             </div>
 
-            {/* Category Name */}
-            <h3 className={`
-        text-base font-semibold text-center
-        ${selected ? 'text-primary' : 'text-text-primary'}
-        transition-colors duration-200
-      `}>
-                {name}
-            </h3>
+            {/* Overlay gradient */}
+            <div className={`
+                absolute inset-0 bg-linear-to-t 
+                ${selected
+                    ? 'from-primary/90 via-primary/40 to-transparent'
+                    : 'from-black/80 via-black/30 to-transparent'
+                }
+                transition-colors duration-300
+            `} />
 
-            {/* Book Count */}
-            {bookCount !== undefined && (
-                <p className="text-sm text-text-sub font-medium">
-                    {bookCount} cuốn sách
-                </p>
+            {/* Content */}
+            <div className="absolute bottom-0 left-0 right-0 p-3 sm:p-4 text-left">
+                <h3 className="text-white font-semibold text-base sm:text-lg truncate shadow-black/50 drop-shadow-sm">
+                    {name}
+                </h3>
+                {bookCount !== undefined && (
+                    <p className="text-white/90 text-xs sm:text-sm font-medium mt-0.5">
+                        {bookCount} cuốn sách
+                    </p>
+                )}
+            </div>
+
+            {/* Active indicator icon */}
+            {selected && (
+                <div className="absolute top-2 right-2 bg-primary text-white p-1 rounded-full shadow-lg">
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
+                    </svg>
+                </div>
             )}
         </button>
     );

@@ -3,8 +3,21 @@ import InfoRow from "./InfoRow";
 export default function UserHeader({ user, status }) {
     return (
         <div className="flex gap-8 mb-8">
-            <div className="w-28 h-28 rounded-full bg-gray-300 flex items-center justify-center text-4xl shrink-0">
-                👤
+            <div className="w-28 h-28 rounded-full bg-gray-300 flex items-center justify-center text-4xl shrink-0 overflow-hidden border-2 border-primary/20">
+                {user.avatar ? (
+                    <img
+                        src={`https://place-potentially-downloaded-lyrics.trycloudflare.com/public/${user.avatar}`}
+                        alt={user.name}
+                        className="w-full h-full object-cover"
+                        onError={(e) => {
+                            e.target.onerror = null;
+                            e.target.src = "";
+                            e.target.parentElement.innerHTML = "👤";
+                        }}
+                    />
+                ) : (
+                    "👤"
+                )}
             </div>
 
             <div className="text-primary space-y-3 min-w-0">

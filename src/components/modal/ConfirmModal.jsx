@@ -1,29 +1,33 @@
 import Modal from "./Modal";
+import ActionButton from "../ui/ActionButton";
 
 export default function ConfirmModal({
     open,
     title,
     onConfirm,
     onCancel,
+    confirmLabel = "Xác nhận",
+    cancelLabel = "Hủy",
+    confirmVariant = "success"
 }) {
     return (
         <Modal open={open} title={title} onClose={onCancel}>
             <div className="flex gap-6 mt-6">
-                <button
+                <ActionButton
                     onClick={onConfirm}
-                    className="flex-1 h-10 bg-green-500 text-white
-          rounded-full font-medium hover:bg-green-600"
+                    variant={confirmVariant}
+                    className="flex-1 h-10 rounded-full font-medium"
                 >
-                    Xác nhận
-                </button>
+                    {confirmLabel}
+                </ActionButton>
 
-                <button
+                <ActionButton
                     onClick={onCancel}
-                    className="flex-1 h-10 bg-secondary text-text-on-secondary
-          rounded-full font-medium hover:opacity-90"
+                    variant="outline"
+                    className="flex-1 h-10 rounded-full font-medium"
                 >
-                    Hủy
-                </button>
+                    {cancelLabel}
+                </ActionButton>
             </div>
         </Modal>
     );

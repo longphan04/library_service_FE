@@ -25,6 +25,7 @@ import Footer from '../../components/layouts/Footer';
 import CategoryCard from '../../components/ui/CategoryCard';
 import BookSection from '../../components/ui/BookSection';
 import BookDetailModal from '../../components/ui/BookDetailModal';
+import FloatingChatButton from '../../components/ui/FloatingChatButton';
 
 // ==========================================
 // [CHANGE] Import Custom Hooks (Clean Architecture)
@@ -191,7 +192,7 @@ const CategoriesPage = () => {
                             <div className="h-8 bg-border rounded w-1/3 mb-8" />
                             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 grid-rows-2 gap-4 sm:gap-6">
                                 {Array.from({ length: ITEMS_PER_PAGE }).map((_, i) => (
-                                    <div key={i} className="h-[140px] bg-border rounded-xl" />
+                                    <div key={i} className="aspect-3/2 bg-border rounded-xl" />
                                 ))}
                             </div>
                         </div>
@@ -259,6 +260,7 @@ const CategoriesPage = () => {
                                         id={categoryId}
                                         name={category.name}
                                         bookCount={category.bookCount || category.booksCount || 0}
+                                        image={category.image || category.cover_url || category.coverImage}
                                         onClick={handleCategoryClick}
                                         selected={selectedCategoryId === categoryId}
                                     />
@@ -269,7 +271,7 @@ const CategoriesPage = () => {
                             return (
                                 <div
                                     key={`empty-${index}`}
-                                    className="min-h-[140px]"
+                                    className="aspect-3/2"
                                     aria-hidden="true"
                                 />
                             );
@@ -330,6 +332,9 @@ const CategoriesPage = () => {
                 onClose={handleCloseModal}
                 bookId={selectedBookId}
             />
+
+            {/* Chat Button Component */}
+            <FloatingChatButton />
 
             {/* Footer */}
             <Footer />

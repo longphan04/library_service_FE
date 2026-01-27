@@ -105,18 +105,7 @@ export default function useAddBookForm({
         setSelectedCategories(bookToEdit.categories || []);
     }, [bookToEdit]);
 
-    useEffect(() => {
-        const handleClickOutside = (e) => {
-            if (wrapperRef.current && !wrapperRef.current.contains(e.target)) {
-                setShowAuthorDropdown(false);
-                setShowPublisherDropdown(false);
-                setShowCategoryDropdown(false);
-            }
-        };
 
-        document.addEventListener("mousedown", handleClickOutside);
-        return () => document.removeEventListener("mousedown", handleClickOutside);
-    }, []);
 
     /* =======================
        FILTER
@@ -151,8 +140,31 @@ export default function useAddBookForm({
     };
 
     const wrapperRef = useRef(null);
+    const authorDropdownRef = useRef(null);
+    const publisherDropdownRef = useRef(null);
+    const categoryDropdownRef = useRef(null);
 
     const [previewImage, setPreviewImage] = useState(null);
+
+    useEffect(() => {
+        const handleClickOutside = (e) => {
+            // Đóng tác giả nếu click ra ngoài
+            if (authorDropdownRef.current && !authorDropdownRef.current.contains(e.target)) {
+                setShowAuthorDropdown(false);
+            }
+            // Đóng nhà xuất bản nếu click ra ngoài
+            if (publisherDropdownRef.current && !publisherDropdownRef.current.contains(e.target)) {
+                setShowPublisherDropdown(false);
+            }
+            // Đóng thể loại nếu click ra ngoài
+            if (categoryDropdownRef.current && !categoryDropdownRef.current.contains(e.target)) {
+                setShowCategoryDropdown(false);
+            }
+        };
+
+        document.addEventListener("mousedown", handleClickOutside);
+        return () => document.removeEventListener("mousedown", handleClickOutside);
+    }, []);
 
     const handleImageChange = (e) => {
         const file = e.target.files[0];
@@ -243,6 +255,9 @@ export default function useAddBookForm({
     return {
         // refs
         wrapperRef,
+        authorDropdownRef,
+        publisherDropdownRef,
+        categoryDropdownRef,
 
         // master
         authors,

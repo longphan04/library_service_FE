@@ -5,6 +5,7 @@ import Pagination from "@/components/ui/Pagination";
 import AddBookForm from "@/components/ui/AddBookForm/addBookForm";
 import useBookManagement from "@/hooks/useBookManagement";
 import axios from "@/utils/axiosConfig";
+import ConfirmModal from "@/components/modal/ConfirmModal";
 
 export default function BookManagement() {
   const {
@@ -28,6 +29,7 @@ export default function BookManagement() {
 
   // State cho modal - ĐẢM BẢO khởi tạo đúng
   const [showAddBookForm, setShowAddBookForm] = useState(false);
+  const [showConfirmDelete, setShowConfirmDelete] = useState(false);
 
   // Local search term
   const [localSearchTerm, setLocalSearchTerm] = useState(hookSearchTerm);
@@ -184,7 +186,10 @@ export default function BookManagement() {
                   Thêm sách
                 </button>
                 <button
-                  onClick={handleDeleteBooks}
+                  onClick={() => {
+                    const count = Object.values(selectedBooks).filter(Boolean).length;
+                    if (count > 0) setShowConfirmDelete(true);
+                  }}
                   className="flex items-center gap-2 px-8 py-3 text-base rounded text-white font-medium hover:opacity-90 transition-opacity cursor-pointer"
                   style={{ backgroundColor: '#DE6767' }}
                 >
@@ -268,6 +273,18 @@ export default function BookManagement() {
           fetchBooks();
           handleCloseForm();
         }}
+      />
+
+      <ConfirmModal
+        open={showConfirmDelete}
+        title={`Bạn có chắc chắn muốn xóa ${Object.values(selectedBooks).filter(Boolean).length} sách đã chọn?`}
+        confirmVariant="danger"
+        confirmLabel="Xóa sách"
+        onConfirm={async () => {
+          await handleDeleteBooks();
+          setShowConfirmDelete(false);
+        }}
+        onCancel={() => setShowConfirmDelete(false)}
       />
     </>
   );

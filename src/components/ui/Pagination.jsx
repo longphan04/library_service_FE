@@ -51,11 +51,13 @@ const Pagination = ({
         // Luôn hiển thị trang đầu
         pages.push(1);
 
-        // Dots bên trái hoặc trang 2
+        // Dots bên trái hoặc các trang giữa 1 và leftSiblingIndex
         if (showLeftDots) {
             pages.push('...');
-        } else if (leftSiblingIndex > 1) {
-            pages.push(2);
+        } else {
+            for (let i = 2; i < leftSiblingIndex; i++) {
+                pages.push(i);
+            }
         }
 
         // Các trang xung quanh trang hiện tại
@@ -65,11 +67,13 @@ const Pagination = ({
             }
         }
 
-        // Dots bên phải hoặc trang áp cuối
+        // Dots bên phải hoặc các trang giữa rightSiblingIndex và totalPages
         if (showRightDots) {
             pages.push('...');
-        } else if (rightSiblingIndex < totalPages) {
-            pages.push(totalPages - 1);
+        } else {
+            for (let i = rightSiblingIndex + 1; i < totalPages; i++) {
+                pages.push(i);
+            }
         }
 
         // Luôn hiển thị trang cuối

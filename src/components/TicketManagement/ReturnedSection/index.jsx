@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { RefreshCw } from "lucide-react";
 import SearchBar from "./components/SearchBar";
 import ReturnedTicketTable from "./components/ReturnedTicketTable";
 import TicketDetailModal from "./components/TicketDetailModal";
@@ -6,11 +7,25 @@ import Pagination from "@/components/ui/Pagination";
 
 export default function ReturnedBookSection({
     allTickets,
+    refreshData
 }) {
     const [search, setSearch] = useState("");
     const [checkedTickets, setCheckedTickets] = useState({});
     const [selectedTicket, setSelectedTicket] = useState(null);
     const [isModalOpen, setIsModalOpen] = useState(false);
+    const [loading, setLoading] = useState(false);
+
+    const handleReload = async () => {
+        setLoading(true);
+        try {
+            if (refreshData) {
+                await refreshData();
+            }
+            setSearch("");
+        } finally {
+            setTimeout(() => setLoading(false), 500);
+        }
+    };
 
     // Pagination State
     const [currentPage, setCurrentPage] = useState(1);
@@ -60,8 +75,16 @@ export default function ReturnedBookSection({
     return (
         <>
             <div className="flex justify-between items-center mb-6">
-                <div className="flex gap-4 items-center">
+                <div className="flex gap-2 items-center">
                     <SearchBar search={search} setSearch={setSearch} />
+                    <button
+                        onClick={handleReload}
+                        className="p-3 rounded-full hover:rotate-360 transition-all duration-1000 text-primary cursor-pointer bg-white/10"
+                        title="Làm mới"
+                        disabled={loading}
+                    >
+                        <RefreshCw size={20} className={loading ? "animate-spin" : ""} />
+                    </button>
                 </div>
             </div>
 

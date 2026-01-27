@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { X } from "lucide-react";
+import ConfirmModal from "@/components/modal/ConfirmModal";
 
 export default function TicketDetailModal({
   open,
@@ -10,6 +11,9 @@ export default function TicketDetailModal({
 }) {
   const [books, setBooks] = useState([]);
   const [userInfo, setUserInfo] = useState(null);
+  const [showConfirm, setShowConfirm] = useState(false);
+  const [confirmConfig, setConfirmConfig] = useState({ title: "", onConfirm: () => { } });
+  const [showReject, setShowReject] = useState(false);
 
   // Effect để disable scroll khi modal mở
   useEffect(() => {
@@ -37,26 +41,30 @@ export default function TicketDetailModal({
 
   // Xử lý xác nhận toàn bộ ticket
   const handleConfirm = () => {
-    console.log("Xác nhận toàn bộ ticket:", ticket.id);
-
-    // Gọi callback từ parent
-    if (onConfirm) {
-      onConfirm(ticket.id, books); // Truyền toàn bộ books
-    }
-
-    onClose();
+    setConfirmConfig({
+      title: "Bạn có chắc chắn muốn duyệt phiếu mượn này?",
+      onConfirm: () => {
+        if (onConfirm) {
+          onConfirm(ticket.id, books);
+        }
+        setShowConfirm(false);
+      }
+    });
+    setShowConfirm(true);
   };
 
   // Xử lý từ chối toàn bộ ticket
   const handleReject = () => {
-    console.log("Từ chối toàn bộ ticket:", ticket.id);
-
-    // Gọi callback từ parent
-    if (onReject) {
-      onReject(ticket.id);
-    }
-
-    onClose();
+    setConfirmConfig({
+      title: "Bạn có chắc chắn muốn từ chối phiếu mượn này?",
+      onConfirm: () => {
+        if (onReject) {
+          onReject(ticket.id);
+        }
+        setShowReject(false);
+      }
+    });
+    setShowReject(true);
   };
 
   // Tính tổng số lượng sách
@@ -94,7 +102,7 @@ export default function TicketDetailModal({
 
           <button
             onClick={onClose}
-            className="p-2 hover:bg-gray-200 rounded-full transition"
+            className="p-2 hover:bg-gray-200 rounded-full transition cursor-pointer"
           >
             <X size={24} className="text-gray-600" />
           </button>
@@ -187,14 +195,14 @@ export default function TicketDetailModal({
                 <>
                   <button
                     onClick={handleReject}
-                    className="px-8 py-4 bg-red-600 text-white rounded-lg font-medium hover:bg-red-700 transition text-base"
+                    className="px-8 py-4 bg-red-600 text-white rounded-lg font-medium hover:bg-red-700 transition text-base cursor-pointer"
                     style={{ backgroundColor: "#DE6767", minWidth: "120px" }}
                   >
                     Từ chối
                   </button>
                   <button
                     onClick={handleConfirm}
-                    className="px-8 py-4 text-white rounded-lg font-medium hover:opacity-90 transition text-base"
+                    className="px-8 py-4 text-white rounded-lg font-medium hover:opacity-90 transition text-base cursor-pointer"
                     style={{ backgroundColor: "#7A4A2E", minWidth: "120px" }}
                   >
                     Xác nhận
@@ -205,6 +213,21 @@ export default function TicketDetailModal({
           </div>
         </div>
       </div>
+
+      <ConfirmModal
+        open={showConfirm}
+        title={confirmConfig.title}
+        onConfirm={confirmConfig.onConfirm}
+        onCancel={() => setShowConfirm(false)}
+      />
+
+      <ConfirmModal
+        open={showReject}
+        title={confirmConfig.title}
+        confirmVariant="danger"
+        onConfirm={confirmConfig.onConfirm}
+        onCancel={() => setShowReject(false)}
+      />
     </div>
   );
 }

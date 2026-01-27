@@ -1,4 +1,4 @@
-import { FALLBACK_IMAGES } from '../../utils/imageUrl';
+import { FALLBACK_IMAGES, getBookCoverUrl } from '../../utils/imageUrl';
 
 export default function BookCard({ book, isChecked, onCheckChange, onEdit }) {
   return (

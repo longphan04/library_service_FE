@@ -19,7 +19,6 @@ import Footer from '../../components/layouts/Footer';
 import BookCard from '../../components/ui/BookCardUser';
 import Pagination from '../../components/ui/Pagination';
 import Spinner from '../../components/ui/Spinner';
-import BookDetailModal from '../../components/ui/BookDetailModal';
 import { ArrowLeft, RefreshCw } from 'lucide-react';
 
 // Import services để gọi API
@@ -196,10 +195,6 @@ const CategoryBookList = () => {
      */
     const [totalPages, setTotalPages] = useState(1);
 
-    // State for Book Detail Modal
-    const [selectedBookId, setSelectedBookId] = useState(null);
-    const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
-
     // ==========================================
     // Refs
     // ==========================================
@@ -353,15 +348,6 @@ const CategoryBookList = () => {
      */
     const handleExplore = () => {
         navigate('/categories');
-    };
-
-    const handleBookClick = (bookId) => {
-        setSelectedBookId(bookId);
-        setIsDetailModalOpen(true);
-    };
-
-    const handleCloseModal = () => {
-        setIsDetailModalOpen(false);
     };
 
     // ==========================================
@@ -550,7 +536,6 @@ const CategoryBookList = () => {
                                 title={book.title}
                                 author={book.author}
                                 coverImage={book.coverImage}
-                                onClick={handleBookClick}
                             />
                         ))}
                     </div>
@@ -578,13 +563,6 @@ const CategoryBookList = () => {
                     </div>
                 )}
             </main>
-
-            {/* Book Detail Modal */}
-            <BookDetailModal
-                isOpen={isDetailModalOpen}
-                onClose={handleCloseModal}
-                bookId={selectedBookId}
-            />
 
             <Footer />
         </div>

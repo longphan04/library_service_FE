@@ -5,16 +5,27 @@
 
 import axios from 'axios';
 
+// ==========================================
+// Header Configuration
+// ==========================================
+const NGROK_HEADERS = {
+    'ngrok-skip-browser-warning': 'true',
+};
+
 // Tạo axios instance
 // Trong môi trường development (Vite), ta sử dụng relative path '/' để Vite proxy bắt được và bypass CORS.
 // Trong production, ta sẽ sử dụng URL đầy đủ từ biến môi trường.
+// Tạo axios instance
 const instance = axios.create({
     baseURL: import.meta.env.DEV ? '/' : (import.meta.env.VITE_API_BASE_URL || '/'),
     headers: {
         'Content-Type': 'application/json',
-        'ngrok-skip-browser-warning': 'true',
+        ...NGROK_HEADERS,
     },
 });
+
+// Đồng bộ baseURL cho global axios để các request dùng axios trực tiếp (như refresh token) đi đúng domain
+axios.defaults.baseURL = instance.defaults.baseURL;
 
 // ==========================================
 // Token Management
@@ -53,11 +64,22 @@ const processQueue = (error, token = null) => {
 
 // ==========================================
 // Request Interceptor
-// Mô tả: Tự động gắn token vào header Authorization
 // ==========================================
 instance.interceptors.request.use(
     (config) => {
         const token = getToken();
+
+        // Danh sách các prefix endpoint yêu cầu login
+        const protectedPaths = ['/profile', '/book-hold', '/borrow-ticket', '/notification'];
+        const isProtected = protectedPaths.some(path => config.url.startsWith(path));
+
+        // Nếu endpoint yêu cầu auth nhưng không có token, chặn sớm ở FE để tránh 401 từ BE
+        if (isProtected && !token) {
+            const controller = new AbortController();
+            config.signal = controller.signal;
+            controller.abort('No auth token available');
+            return config;
+        }
 
         if (token) {
             config.headers.Authorization = `Bearer ${token}`;
@@ -65,51 +87,49 @@ instance.interceptors.request.use(
 
         return config;
     },
-    (error) => {
-        return Promise.reject(error);
-    }
+    (error) => Promise.reject(error)
 );
 
 // ==========================================
 // Response Interceptor
-// Mô tả: Xử lý response và error (đặc biệt là 401 với token refresh)
 // ==========================================
 instance.interceptors.response.use(
     (response) => {
         return response;
     },
     async (error) => {
+        // Kiểm tra nếu request bị abort do thiếu token (từ request interceptor)
+        if (error.message === 'No auth token available') {
+            return Promise.reject(new Error('Vui lòng đăng nhập để thực hiện hành động này'));
+        }
+
         const originalRequest = error.config;
 
         // Xử lý lỗi 401 (Unauthorized)
         if (error.response && error.response.status === 401 && !originalRequest._retry) {
-            // Nếu đang refresh, đưa request vào queue
-            if (isRefreshing) {
-                return new Promise((resolve, reject) => {
-                    failedQueue.push({ resolve, reject });
-                })
-                    .then((token) => {
-                        originalRequest.headers.Authorization = `Bearer ${token}`;
-                        return instance(originalRequest);
-                    })
-                    .catch((err) => {
-                        return Promise.reject(err);
-                    });
-            }
-
-            originalRequest._retry = true;
-            isRefreshing = true;
-
             const refreshToken = getRefreshToken();
 
+            // CHỈ thực hiện refresh nếu CÓ refresh token
             if (refreshToken) {
+                if (isRefreshing) {
+                    return new Promise((resolve, reject) => {
+                        failedQueue.push({ resolve, reject });
+                    })
+                        .then((token) => {
+                            originalRequest.headers.Authorization = `Bearer ${token}`;
+                            return instance(originalRequest);
+                        })
+                        .catch((err) => Promise.reject(err));
+                }
+
+                originalRequest._retry = true;
+                isRefreshing = true;
+
                 try {
-                    // Gọi API refresh token (sử dụng relative path qua proxy)
-                    const response = await axios.post(
-                        '/auth/refresh',
-                        { refreshToken },
-                        { headers: { 'Content-Type': 'application/json' } }
-                    );
+                    // Gọi API refresh (sử dụng global axios đã được set baseURL)
+                    const response = await axios.post('/auth/refresh', { refreshToken }, {
+                        headers: { ...NGROK_HEADERS }
+                    });
 
                     const newAccessToken = response.data.token || response.data.access_token;
                     const newRefreshToken = response.data.refreshToken || response.data.refresh_token;
@@ -123,30 +143,20 @@ instance.interceptors.response.use(
                 } catch (refreshError) {
                     processQueue(refreshError, null);
                     clearTokens();
-
-                    // Redirect về login
-                    if (!window.location.pathname.includes('/login')) {
-                        window.location.href = '/login';
-                    }
-
+                    // KHÔNG tự động redirect ở đây để tránh làm phiền Guest đang xem trang chủ
                     return Promise.reject(refreshError);
                 } finally {
                     isRefreshing = false;
                 }
             } else {
-                // Không có refresh token, redirect về login
+                // Nếu 401 mà không có refresh token -> Guest hặc token quá hạn -> Xóa rác
                 clearTokens();
-                if (!window.location.pathname.includes('/login')) {
-                    window.location.href = '/login';
-                }
             }
         }
 
         // Xử lý lỗi 403 (Forbidden - Không có quyền)
         if (error.response && error.response.status === 403) {
             console.error('Access forbidden:', error.response.data?.message || 'Bạn không có quyền truy cập');
-            // Có thể redirect về trang unauthorized hoặc homepage
-            // window.location.href = '/unauthorized';
         }
 
         return Promise.reject(error);

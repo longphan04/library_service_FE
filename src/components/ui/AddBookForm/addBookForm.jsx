@@ -1,11 +1,13 @@
 import { Plus, X, Check, XCircle } from "lucide-react";
 import useAddBookForm from "../../../hooks/useAddBookForm";
 import { useRef, useState } from "react";
+import ConfirmModal from "../../modal/ConfirmModal";
 
 export default function AddBookForm({ isOpen, onClose, bookToEdit, onSave }) {
     // 1. All hooks must be called at the very top
     const fileInputRef = useRef(null);
     const [showAuthorInput, setShowAuthorInput] = useState(false);
+    const [showConfirmUpdate, setShowConfirmUpdate] = useState(false);
 
     // yearOptions is not a hook but needs to be defined
     const yearOptions = Array.from(
@@ -26,6 +28,11 @@ export default function AddBookForm({ isOpen, onClose, bookToEdit, onSave }) {
         selectedPublisher,
         selectedCategories,
         selectedShelf,
+
+        // refs
+        authorDropdownRef,
+        publisherDropdownRef,
+        categoryDropdownRef,
 
         // inputs
         authorInput,
@@ -72,6 +79,15 @@ export default function AddBookForm({ isOpen, onClose, bookToEdit, onSave }) {
 
     const handleClearAllAuthors = () => {
         setSelectedAuthors([]);
+    };
+
+    const handlePreSubmit = (e) => {
+        e.preventDefault();
+        if (bookToEdit) {
+            setShowConfirmUpdate(true);
+        } else {
+            handleSubmit(e);
+        }
     };
 
     return (
@@ -140,14 +156,14 @@ export default function AddBookForm({ isOpen, onClose, bookToEdit, onSave }) {
                                     </div>
 
                                     {/* Tác giả */}
-                                    <div className="relative">
+                                    <div className="relative" ref={authorDropdownRef}>
                                         <label className="block text-base font-semibold text-gray-800 mb-2">
                                             Tác giả *
                                         </label>
                                         <div className="relative">
                                             <div className="flex items-center gap-3">
                                                 <div
-                                                    className="flex-1 border-2 border-gray-300 rounded-xl cursor-pointer hover:border-gray-500"
+                                                    className="flex-1 border-2 border-gray-300 rounded-xl cursor-pointer hover:border-gray-500 overflow-hidden"
                                                     onClick={() => {
                                                         setShowAuthorDropdown(!showAuthorDropdown);
                                                         setShowAuthorInput(false);
@@ -185,6 +201,16 @@ export default function AddBookForm({ isOpen, onClose, bookToEdit, onSave }) {
 
                                             {showAuthorDropdown && (
                                                 <div className="absolute top-full left-0 right-0 bg-white border-2 border-gray-300 rounded-xl shadow-2xl mt-2 z-20">
+                                                    <input
+                                                        value={authorInput}
+                                                        onChange={(e) => {
+                                                            setAuthorInput(e.target.value);
+                                                            setShowAuthorInput(e.target.value.length > 0);
+                                                        }}
+                                                        placeholder="Tìm tác giả..."
+                                                        className="w-full p-3 border-b-2 border-gray-200 text-base focus:outline-none"
+                                                        onClick={(e) => e.stopPropagation()}
+                                                    />
                                                     <div className="max-h-56 overflow-y-auto">
                                                         {filteredAuthors.slice().map(a => (
                                                             <div
@@ -247,7 +273,7 @@ export default function AddBookForm({ isOpen, onClose, bookToEdit, onSave }) {
                                 {/* Dòng 2: Nhà xuất bản và Thể loại */}
                                 <div className="grid grid-cols-2 gap-6 mb-6">
                                     {/* Nhà xuất bản */}
-                                    <div className="relative">
+                                    <div className="relative" ref={publisherDropdownRef}>
                                         <label className="block text-base font-semibold text-gray-800 mb-2">
                                             Nhà xuất bản
                                         </label>
@@ -295,14 +321,14 @@ export default function AddBookForm({ isOpen, onClose, bookToEdit, onSave }) {
                                     </div>
 
                                     {/* Thể loại */}
-                                    <div className="relative">
+                                    <div className="relative" ref={categoryDropdownRef}>
                                         <label className="block text-base font-semibold text-gray-800 mb-2">
                                             Thể loại
                                         </label>
                                         <div className="relative">
                                             <div className="flex items-center gap-3">
                                                 <div
-                                                    className="flex-1 border-2 border-gray-300 rounded-xl cursor-pointer hover:border-gray-500"
+                                                    className="flex-1 border-2 border-gray-300 rounded-xl cursor-pointer hover:border-gray-500 overflow-hidden"
                                                     onClick={() => setShowCategoryDropdown(!showCategoryDropdown)}
                                                 >
                                                     <div className="p-3">
@@ -431,7 +457,7 @@ export default function AddBookForm({ isOpen, onClose, bookToEdit, onSave }) {
                             </div>
                         </div>
                     </div>
-                    <div className="bg-white rounded-2xl p-10">
+                    <div className="bg-white rounded-2xl p-10 h-[full]">
                         <label className="block text-base font-semibold text-gray-800 mb-4">
                             Mô tả
                         </label>
@@ -448,7 +474,7 @@ export default function AddBookForm({ isOpen, onClose, bookToEdit, onSave }) {
                     {/* Actions */}
                     <div className="flex justify-center gap-6 mt-8">
                         <button
-                            onClick={handleSubmit}
+                            onClick={handlePreSubmit}
                             className="bg-[#7A4A2E] text-white px-12 py-4 rounded-xl font-semibold text-lg hover:bg-[#6a3a1e] transition-colors cursor-pointer"
                         >
                             {bookToEdit ? "Cập nhật sách" : "Thêm sách"}
@@ -462,6 +488,16 @@ export default function AddBookForm({ isOpen, onClose, bookToEdit, onSave }) {
                     </div>
                 </div>
             </div>
+
+            <ConfirmModal
+                open={showConfirmUpdate}
+                title="Bạn có chắc chắn muốn cập nhật thông tin sách này?"
+                onConfirm={(e) => {
+                    handleSubmit(e);
+                    setShowConfirmUpdate(false);
+                }}
+                onCancel={() => setShowConfirmUpdate(false)}
+            />
         </div>
     );
 }

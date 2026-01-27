@@ -4,12 +4,14 @@ import BookHistory from "./BookHistory";
 import UserActions from "./UserActions";
 import { userManagementStaffService } from "@/services/userManagementStaff.service";
 import Spinner from "@/components/ui/Spinner";
+import ConfirmModal from "@/components/modal/ConfirmModal";
 
 export default function UserDetailModal({ user, onClose, onSave }) {
     const [status, setStatus] = useState(user.status);
     const [historyData, setHistoryData] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
+    const [showConfirm, setShowConfirm] = useState(false);
 
     const fetchHistory = useCallback(async () => {
         setLoading(true);
@@ -44,12 +46,14 @@ export default function UserDetailModal({ user, onClose, onSave }) {
     const isChanged = status !== user.status;
 
     const toggleStatus = () => {
-        setStatus((prev) => (prev === "locked" ? "active" : "locked"));
+        setShowConfirm(true);
     };
 
-    const handleSave = () => {
-        onSave({ ...user, status });
-        onClose();
+    const confirmToggle = () => {
+        const nextStatus = status === "locked" ? "active" : "locked";
+        onSave({ ...user, status: nextStatus });
+        setStatus(nextStatus);
+        setShowConfirm(false);
     };
 
     const sendWarning = (historyId) => {
@@ -58,12 +62,15 @@ export default function UserDetailModal({ user, onClose, onSave }) {
     };
 
     // Prepare user info for header from API or fallback to list data
-    const apiUserInfo = historyData?.user || {};
+    const profile = historyData?.data || {};
+    const apiUserInfo = profile.user || {};
+
     const displayUser = {
         ...user,
-        name: apiUserInfo.full_name || user.name,
+        name: profile.full_name || user.name,
         email: apiUserInfo.email || user.email,
-        id: apiUserInfo.member_id || user.id,
+        id: profile.member_id || user.id,
+        avatar: profile.avatar_url || user.avatar
     };
 
     return (
@@ -102,10 +109,18 @@ export default function UserDetailModal({ user, onClose, onSave }) {
                     isLocked={isLocked}
                     isChanged={isChanged}
                     onToggleStatus={toggleStatus}
-                    onSave={handleSave}
+                    onSave={() => { }} // Not used in UserActions.jsx but kept for prop consistency
                     onClose={onClose}
                 />
             </div>
+
+            <ConfirmModal
+                open={showConfirm}
+                title={`Bạn có chắc chắn muốn ${status === "locked" ? "mở khóa" : "khóa"} tài khoản người dùng này?`}
+                confirmVariant={status === "active" ? "danger" : "success"}
+                onConfirm={confirmToggle}
+                onCancel={() => setShowConfirm(false)}
+            />
         </div>
     );
 }

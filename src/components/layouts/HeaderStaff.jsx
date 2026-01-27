@@ -89,20 +89,12 @@ const HeaderStaff = ({ activeTab }) => {
         }
     }, [activeTab, hasUnread]);
 
-    // Detect new notifications and alert user
+    // Polling handled in useEffect above
     const [lastNotiCount, setLastNotiCount] = useState(0);
+    // Detection logic moved to hook for cleaner code
     useEffect(() => {
-        if (unreadCount > lastNotiCount) {
-            // New notification!
-            const latest = notifications.find(n => !n.is_read);
-            if (latest) {
-                // Simple alert as requested
-                // alert(`Thông báo mới: ${latest.title}\n${latest.content}`);
-                // Alternatively, just log it. The red badge will reappear.
-            }
-        }
         setLastNotiCount(unreadCount);
-    }, [unreadCount, notifications]);
+    }, [unreadCount]);
 
 
     // Close dropdowns when clicking outside

@@ -6,12 +6,13 @@
 
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowLeft, Clock, RefreshCw, Eye, X } from 'lucide-react';
+import { ArrowLeft, Clock, RefreshCw, Eye, X, CalendarPlus } from 'lucide-react';
 import Header from '../../components/layouts/Header';
 import Footer from '../../components/layouts/Footer';
 import Tab from '../../components/ui/Tab';
 import Spinner from '../../components/ui/Spinner';
-import { getMyTickets, getById } from '../../services/borrow-ticket.service';
+import Toast from '../../components/ui/Toast';
+import { getMyTickets, getById, extendTicket, cancelTicket } from '../../services/borrow-ticket.service';
 import { FALLBACK_IMAGES, getBookCoverUrl } from '../../utils/imageUrl';
 
 // ==========================================
@@ -19,15 +20,17 @@ import { FALLBACK_IMAGES, getBookCoverUrl } from '../../utils/imageUrl';
 // ==========================================
 const STATUS_CONFIG = {
     RETURNED: { label: 'Hoàn thành', color: 'bg-status-returned-bg text-status-returned-text' },
-    BORROWED: { label: 'Đang mượn', color: 'bg-status-borrowed-bg text-status-borrowed-text' },
+    BORROWED: { label: 'Đã mượn', color: 'bg-status-borrowed-bg text-status-borrowed-text' },
     PENDING: { label: 'Đang chờ', color: 'bg-status-pending-bg text-status-pending-text' },
     OVERDUE: { label: 'Quá hạn', color: 'bg-status-overdue-bg text-status-overdue-text' },
     APPROVED: { label: 'Đã duyệt', color: 'bg-status-approved-bg text-status-approved-text' },
     CANCELLED: { label: 'Đã hủy', color: 'bg-status-cancelled-bg text-status-cancelled-text' },
     REJECTED: { label: 'Từ chối', color: 'bg-status-overdue-bg text-status-overdue-text' },
+    PICKED_UP: { label: 'Đã mượn', color: 'bg-status-borrowed-bg text-status-borrowed-text' },
     // Lowercase variants for API compatibility
+    picked_up: { label: 'Đã mượn', color: 'bg-status-borrowed-bg text-status-borrowed-text' },
     returned: { label: 'Hoàn thành', color: 'bg-status-returned-bg text-status-returned-text' },
-    borrowed: { label: 'Đang mượn', color: 'bg-status-borrowed-bg text-status-borrowed-text' },
+    borrowed: { label: 'Đã mượn', color: 'bg-status-borrowed-bg text-status-borrowed-text' },
     pending: { label: 'Đang chờ', color: 'bg-status-pending-bg text-status-pending-text' },
     overdue: { label: 'Quá hạn', color: 'bg-status-overdue-bg text-status-overdue-text' },
     approved: { label: 'Đã duyệt', color: 'bg-status-approved-bg text-status-approved-text' },
@@ -40,7 +43,7 @@ const TABS = [
     { key: 'all', label: 'Tất cả' },
     { key: 'pending', label: 'Đang chờ' },
     { key: 'approved', label: 'Đã duyệt' },
-    { key: 'borrowed', label: 'Đang mượn' },
+    { key: 'borrowed', label: 'Đã mượn' },
     { key: 'returned', label: 'Đã trả' },
     { key: 'overdue', label: 'Quá hạn' },
     { key: 'cancelled', label: 'Đã hủy' },
@@ -131,34 +134,19 @@ const TableSkeleton = () => (
 // ==========================================
 // TicketDetailModal Component
 // ==========================================
-const TicketDetailModal = ({ isOpen, onClose, ticketId }) => {
+const TicketDetailModal = ({ isOpen, onClose, ticketId, onRefreshList }) => {
     const [ticketDetail, setTicketDetail] = useState(null);
     const [loading, setLoading] = useState(false);
+    const [actionLoading, setActionLoading] = useState(false);
     const [error, setError] = useState(null);
+    const [toast, setToast] = useState({ isOpen: false, type: '', message: '' });
 
     // Fetch ticket detail when modal opens
     useEffect(() => {
         if (isOpen && ticketId) {
             fetchTicketDetail();
         }
-        return () => {
-            // Reset state when modal closes
-            if (!isOpen) {
-                setTicketDetail(null);
-                setError(null);
-            }
-        };
     }, [isOpen, ticketId]);
-
-    // Disable body scroll when modal is open
-    useEffect(() => {
-        if (isOpen) {
-            document.body.style.overflow = 'hidden';
-        }
-        return () => {
-            document.body.style.overflow = 'auto';
-        };
-    }, [isOpen]);
 
     const fetchTicketDetail = async () => {
         setLoading(true);
@@ -166,7 +154,8 @@ const TicketDetailModal = ({ isOpen, onClose, ticketId }) => {
         try {
             const response = await getById(ticketId);
             console.log('[TicketDetailModal] Response:', response);
-            // Handle different response formats
+
+            // Backend trả về data trực tiếp hoặc qua response.data
             const data = response.data || response;
             setTicketDetail(data);
         } catch (err) {
@@ -177,7 +166,78 @@ const TicketDetailModal = ({ isOpen, onClose, ticketId }) => {
         }
     };
 
+    const handleExtend = async () => {
+        if (!ticketId) return;
+
+        try {
+            setActionLoading(true);
+            await extendTicket(ticketId);
+            setToast({
+                isOpen: true,
+                type: 'success',
+                message: 'Gia hạn phiếu mượn thành công (thêm 10 ngày)!'
+            });
+            // Tải lại chi tiết để cập nhật ngày mới
+            fetchTicketDetail();
+            // Thông báo cho component cha cập nhật danh sách
+            onRefreshList?.();
+        } catch (err) {
+            setToast({
+                isOpen: true,
+                type: 'error',
+                message: err.response?.data?.message || err.message || 'Gia hạn thất bại'
+            });
+        } finally {
+            setActionLoading(false);
+        }
+    };
+
+    const handleCancel = async () => {
+        if (!ticketId) return;
+
+        // Thêm xác nhận đơn giản
+        if (!window.confirm('Bạn có chắc chắn muốn hủy phiếu mượn này không?')) return;
+
+        try {
+            setActionLoading(true);
+            await cancelTicket(ticketId);
+            setToast({
+                isOpen: true,
+                type: 'success',
+                message: 'Hủy phiếu mượn thành công!'
+            });
+
+            // Đợi 1 chút để user thấy thông báo rồi mới refresh/đóng
+            setTimeout(() => {
+                onRefreshList?.();
+                onClose();
+            }, 1000);
+        } catch (err) {
+            setToast({
+                isOpen: true,
+                type: 'error',
+                message: err.response?.data?.message || err.message || 'Hủy phiếu thất bại'
+            });
+        } finally {
+            setActionLoading(false);
+        }
+    };
+
     if (!isOpen) return null;
+
+    // Kiểm tra status có thể gia hạn hay không (thường là BORROWED, APPROVED hoặc PICKED_UP)
+    const canExtend = ticketDetail && (
+        ticketDetail.status?.toUpperCase() === 'BORROWED' ||
+        ticketDetail.status?.toUpperCase() === 'PICKED_UP' ||
+        ticketDetail.status?.toUpperCase() === 'APPROVED' ||
+        ticketDetail.status?.toUpperCase() === 'PENDING'
+    );
+
+    // Kiểm tra status có thể hủy hay không (PENDING hoặc APPROVED)
+    const isCancelable = ticketDetail && (
+        ticketDetail.status?.toUpperCase() === 'PENDING' ||
+        ticketDetail.status?.toUpperCase() === 'APPROVED'
+    );
 
     return (
         <div
@@ -214,7 +274,7 @@ const TicketDetailModal = ({ isOpen, onClose, ticketId }) => {
                         </div>
                     )}
 
-                    {error && (
+                    {!loading && error && (
                         <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-center">
                             <p className="text-red-600">{error}</p>
                             <button
@@ -229,82 +289,146 @@ const TicketDetailModal = ({ isOpen, onClose, ticketId }) => {
                     {!loading && !error && ticketDetail && (
                         <div className="space-y-6">
                             {/* Ticket Info */}
-                            <div className="bg-bg-section rounded-lg p-4">
-                                <h3 className="font-semibold text-text-primary mb-4">Thông tin phiếu mượn</h3>
-                                <div className="grid grid-cols-2 gap-4">
+                            <div className="bg-bg-section rounded-lg p-4 border border-border">
+                                <div className="flex justify-between items-start mb-4">
+                                    <h3 className="font-semibold text-text-primary">Thông tin phiếu mượn</h3>
+                                    <StatusBadge status={ticketDetail.status} />
+                                </div>
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                     <div>
-                                        <p className="text-sm text-text-sub">Mã phiếu</p>
-                                        <p className="font-medium">{ticketDetail.id || ticketDetail.ticket_id || ticketId}</p>
+                                        <p className="text-xs text-text-sub font-bold tracking-wider mb-1">Mã phiếu</p>
+                                        <p className="font-medium">{ticketDetail.ticket_id || ticketDetail.id}</p>
                                     </div>
                                     <div>
-                                        <p className="text-sm text-text-sub">Trạng thái</p>
-                                        <StatusBadge status={ticketDetail.status} />
+                                        <p className="text-xs text-text-sub font-bold tracking-wider mb-1">Mã đối chiếu</p>
+                                        <p className="font-medium">{ticketDetail.ticket_code || '---'}</p>
                                     </div>
                                     <div>
-                                        <p className="text-sm text-text-sub">Ngày tạo</p>
-                                        <p className="font-medium">{formatDate(ticketDetail.createdAt || ticketDetail.created_at)}</p>
+                                        <p className="text-xs text-text-sub font-bold tracking-wider mb-1">Ngày tạo</p>
+                                        <p className="font-medium">{formatDate(ticketDetail.requested_at || ticketDetail.created_at || ticketDetail.createdAt)}</p>
                                     </div>
                                     <div>
-                                        <p className="text-sm text-text-sub">Ngày mượn</p>
-                                        <p className="font-medium">{formatDate(ticketDetail.borrowDate || ticketDetail.borrow_date)}</p>
+                                        <p className="text-xs text-text-sub font-bold tracking-wider mb-1">Ngày mượn</p>
+                                        <p className="font-medium">{formatDate(ticketDetail.requested_at || ticketDetail.picked_up_at || ticketDetail.approved_at || ticketDetail.borrowed_at)}</p>
                                     </div>
                                     <div>
-                                        <p className="text-sm text-text-sub">Hạn trả</p>
-                                        <p className="font-medium">{formatDate(ticketDetail.dueDate || ticketDetail.due_date)}</p>
+                                        <p className="text-xs text-text-sub font-bold tracking-wider mb-1">Hạn trả (Dự kiến)</p>
+                                        <p className="font-medium text-primary">{formatDate(ticketDetail.due_date || ticketDetail.due_at || ticketDetail.dueDate)}</p>
                                     </div>
                                     <div>
-                                        <p className="text-sm text-text-sub">Ngày trả thực tế</p>
-                                        <p className="font-medium">{formatDate(ticketDetail.returnDate || ticketDetail.return_date)}</p>
+                                        <p className="text-xs text-text-sub font-bold tracking-wider mb-1">Ngày trả thực tế</p>
+                                        <p className="font-medium">{formatDate(ticketDetail.returned_at || ticketDetail.returnDate || ticketDetail.return_date)}</p>
                                     </div>
                                 </div>
+
+                                {(canExtend || isCancelable) && (
+                                    <div className="mt-5 pt-4 border-t border-border flex flex-row gap-4">
+                                        {/* Nút Gia hạn (Đổi sang bên trái) */}
+                                        <div className="flex-1">
+                                            {canExtend && (
+                                                <button
+                                                    onClick={handleExtend}
+                                                    disabled={actionLoading}
+                                                    className={`
+                                                        w-full flex items-center justify-center gap-2 px-4 py-2 
+                                                        bg-primary text-white rounded-lg 
+                                                        font-medium text-sm
+                                                        hover:bg-primary-hover transition-all
+                                                        ${actionLoading ? 'opacity-70 cursor-not-allowed' : 'active:scale-95'}
+                                                    `}
+                                                >
+                                                    {actionLoading ? <Spinner size="sm" light /> : <CalendarPlus size={18} />}
+                                                    Gia hạn (10 ngày)
+                                                </button>
+                                            )}
+                                        </div>
+
+                                        {/* Nút Hủy phiếu (Đổi sang bên phải) */}
+                                        <div className="flex-1">
+                                            {isCancelable && (
+                                                <button
+                                                    onClick={handleCancel}
+                                                    disabled={actionLoading}
+                                                    className={`
+                                                        w-full flex items-center justify-center gap-2 px-4 py-2 
+                                                        bg-red-600 text-white rounded-lg 
+                                                        font-medium text-sm
+                                                        hover:bg-red-700 transition-all
+                                                        ${actionLoading ? 'opacity-70 cursor-not-allowed' : 'active:scale-95 shadow-md shadow-red-200'}
+                                                    `}
+                                                >
+                                                    {actionLoading ? <Spinner size="sm" light /> : <X size={18} />}
+                                                    Hủy phiếu
+                                                </button>
+                                            )}
+                                        </div>
+                                    </div>
+                                )}
                             </div>
 
                             {/* Books List */}
                             <div>
-                                <h3 className="font-semibold text-text-primary mb-4">Danh sách sách</h3>
+                                <h3 className="font-semibold text-text-primary mb-4 flex items-center gap-2">
+                                    <div className="w-1.5 h-4 bg-primary rounded-full"></div>
+                                    Danh sách sách mượn
+                                </h3>
                                 <div className="space-y-3">
-                                    {(ticketDetail.books || ticketDetail.book_copies || []).length > 0 ? (
-                                        (ticketDetail.books || ticketDetail.book_copies || []).map((book, index) => (
-                                            <div
-                                                key={book.id || book.book_id || book.copy_id || index}
-                                                className="flex items-center gap-4 p-3 bg-bg-section rounded-lg"
-                                            >
-                                                <img
-                                                    src={getBookCoverUrl(book.cover_url || book.coverImage || book.image)}
-                                                    alt={book.title || book.book_title || 'Sách'}
-                                                    className="w-12 h-16 object-cover rounded shadow"
-                                                    onError={(e) => {
-                                                        e.target.src = FALLBACK_IMAGES.book;
-                                                    }}
-                                                />
-                                                <div className="flex-1">
-                                                    <p className="font-medium text-text-primary">
-                                                        {book.title || book.book_title || 'Không rõ tên sách'}
-                                                    </p>
-                                                    <p className="text-sm text-text-sub">
-                                                        {book.author || book.authors?.[0]?.name || 'Không rõ tác giả'}
-                                                    </p>
-                                                    {book.copy_id && (
-                                                        <p className="text-xs text-text-sub">
-                                                            Mã bản sao: {book.copy_id}
+                                    {(ticketDetail.items || ticketDetail.books || []).length > 0 ? (
+                                        (ticketDetail.items || ticketDetail.books || []).map((item, index) => {
+                                            const bookData = item.book || item;
+                                            const copyData = item.copy || {};
+
+                                            return (
+                                                <div
+                                                    key={item.id || item.book_id || index}
+                                                    className="flex items-center gap-4 p-3 bg-white border border-border rounded-xl shadow-sm"
+                                                >
+                                                    <div className="w-14 h-20 shrink-0 overflow-hidden rounded-lg bg-gray-50 border border-border">
+                                                        <img
+                                                            src={getBookCoverUrl(bookData.cover_url || bookData.coverImage || bookData.image)}
+                                                            alt={bookData.title || 'Sách'}
+                                                            className="w-full h-full object-cover"
+                                                            onError={(e) => {
+                                                                e.target.src = FALLBACK_IMAGES.book;
+                                                            }}
+                                                        />
+                                                    </div>
+                                                    <div className="flex-1 min-w-0">
+                                                        <p className="font-bold text-text-primary truncate" title={bookData.title}>
+                                                            {bookData.title || 'Không rõ tên sách'}
                                                         </p>
-                                                    )}
+                                                        <p className="text-sm text-text-sub truncate">
+                                                            {bookData.author || (bookData.authors?.[0]?.name) || 'Không rõ tác giả'}
+                                                        </p>
+                                                        {copyData.copy_id && (
+                                                            <div className="flex items-center gap-2 mt-1">
+                                                                <span className="text-[10px] bg-bg-app px-1.5 py-0.5 rounded border border-border font-bold text-text-sub uppercase">
+                                                                    ID: {copyData.copy_id}
+                                                                </span>
+                                                                {item.status && (
+                                                                    <span className="text-[10px] text-text-sub italic">
+                                                                        ({item.status})
+                                                                    </span>
+                                                                )}
+                                                            </div>
+                                                        )}
+                                                    </div>
                                                 </div>
-                                            </div>
-                                        ))
+                                            );
+                                        })
                                     ) : (
-                                        <p className="text-text-sub text-sm text-center py-4">
-                                            Không có thông tin sách
-                                        </p>
+                                        <div className="text-center py-6 bg-gray-50 rounded-lg border border-dashed border-border">
+                                            <p className="text-text-sub text-sm italic">Không tìm thấy thông tin sách trong phiếu.</p>
+                                        </div>
                                     )}
                                 </div>
                             </div>
 
-                            {/* Notes if any */}
+                            {/* Notes */}
                             {ticketDetail.notes && (
                                 <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-                                    <h4 className="font-medium text-yellow-800 mb-2">Ghi chú</h4>
-                                    <p className="text-sm text-yellow-700">{ticketDetail.notes}</p>
+                                    <h4 className="text-sm font-bold text-yellow-800 mb-2 underline decoration-yellow-300">Ghi chú từ thư viện:</h4>
+                                    <p className="text-sm text-yellow-700 italic">"{ticketDetail.notes}"</p>
                                 </div>
                             )}
                         </div>
@@ -312,14 +436,22 @@ const TicketDetailModal = ({ isOpen, onClose, ticketId }) => {
                 </div>
 
                 {/* Footer */}
-                <div className="border-t border-gray-200 p-4 bg-white">
+                <div className="border-t border-gray-200 p-4 bg-white shadow-inner flex justify-end">
                     <button
                         onClick={onClose}
-                        className="w-full py-3 bg-primary text-white rounded-lg font-medium hover:bg-primary-hover transition-colors"
+                        className="px-6 py-2.5 bg-bg-app border border-border text-text-primary rounded-lg font-bold hover:bg-gray-100 transition-colors active:scale-95 shadow-sm"
                     >
                         Đóng
                     </button>
                 </div>
+
+                <Toast
+                    isOpen={toast.isOpen}
+                    type={toast.type}
+                    message={toast.message}
+                    onClose={() => setToast({ ...toast, isOpen: false })}
+                    duration={3000}
+                />
             </div>
         </div>
     );
@@ -333,30 +465,24 @@ const BorrowHistory = () => {
     const [borrowHistory, setBorrowHistory] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
-
-    // Modal state
     const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
     const [selectedTicketId, setSelectedTicketId] = useState(null);
 
-    // Fetch borrow history from API
     const fetchBorrowHistory = async () => {
         setLoading(true);
         setError(null);
 
         try {
             const response = await getMyTickets();
+            const data = Array.isArray(response) ? response : (response.data || response.tickets || []);
 
-            // Handle different API response formats
-            const data = Array.isArray(response) ? response : response.data || response.tickets || [];
-
-            // Transform data to expected format
             const transformedData = data.map(ticket => ({
-                id: ticket.id || ticket._id || ticket.ticket_id,
-                bookId: ticket.bookId || ticket.book?.id || ticket.book?._id,
-                borrowDate: ticket.borrowDate || ticket.borrow_date || ticket.createdAt || ticket.created_at,
+                id: ticket.ticket_id || ticket.id,
                 status: ticket.status,
-                returnDate: ticket.returnDate || ticket.return_date || ticket.actualReturnDate,
-                dueDate: ticket.dueDate || ticket.due_date || ticket.expectedReturnDate,
+                borrowDate: ticket.requested_at || ticket.picked_up_at || ticket.approved_at || ticket.borrowed_at,
+                pickupDate: ticket.picked_up_at || ticket.approved_at || ticket.borrowed_at,
+                dueDate: ticket.due_date || ticket.due_at || ticket.dueDate,
+                returnDate: ticket.returned_at || ticket.returnDate || ticket.return_date,
             }));
 
             setBorrowHistory(transformedData);
@@ -368,12 +494,10 @@ const BorrowHistory = () => {
         }
     };
 
-    // Fetch on mount
     useEffect(() => {
         fetchBorrowHistory();
     }, []);
 
-    // Filter data based on active tab
     const currentTabKey = TABS[activeTab].key;
     const filteredHistory =
         currentTabKey === 'all'
@@ -382,25 +506,24 @@ const BorrowHistory = () => {
                 const itemStatus = (item.status || '').toLowerCase();
                 const tabKey = currentTabKey.toLowerCase();
 
-                // Handle status mapping
-                if (tabKey === 'approved') {
-                    return itemStatus === 'approved';
+                // Allow PICKED_UP status to appear in 'borrowed' tab
+                if (tabKey === 'borrowed') {
+                    return itemStatus === 'borrowed' || itemStatus === 'picked_up';
                 }
+
+                if (tabKey === 'approved') return itemStatus === 'approved';
                 return itemStatus === tabKey;
             });
 
-    // Handle retry
     const handleRetry = () => {
         fetchBorrowHistory();
     };
 
-    // Handle view detail
     const handleViewDetail = (ticketId) => {
         setSelectedTicketId(ticketId);
         setIsDetailModalOpen(true);
     };
 
-    // Close modal
     const handleCloseModal = () => {
         setIsDetailModalOpen(false);
         setSelectedTicketId(null);
@@ -408,17 +531,15 @@ const BorrowHistory = () => {
 
     return (
         <div className="min-h-screen bg-bg-app flex flex-col">
-            {/* Header */}
             <Header />
 
-            {/* Main Content - flex-1 để fill còn lại */}
             <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8">
                 {/* Page Header */}
                 <div className="flex items-center justify-between mb-8">
                     <div className="flex items-center gap-4">
                         <Link
                             to="/"
-                            className="p-2 rounded-full hover:bg-primary/10 text-primary transition-colors"
+                            className="p-2 rounded-full hover:bg-primary/10 text-primary transition-colors cursor-pointer"
                         >
                             <ArrowLeft size={24} />
                         </Link>
@@ -432,19 +553,17 @@ const BorrowHistory = () => {
                         </div>
                     </div>
 
-                    {/* Refresh Button */}
                     {!loading && (
                         <button
                             onClick={handleRetry}
-                            className="p-2 rounded-full hover:bg-primary/10 text-primary transition-colors"
+                            className="p-2 rounded-full hover:bg-primary/10 text-primary transition-colors cursor-pointer"
                             title="Làm mới"
                         >
-                            <RefreshCw size={20} />
+                            <RefreshCw size={20} className={loading ? 'animate-spin' : ''} />
                         </button>
                     )}
                 </div>
 
-                {/* Tab Navigation */}
                 <Tab
                     tabs={TABS}
                     activeTab={activeTab}
@@ -452,9 +571,8 @@ const BorrowHistory = () => {
                     className="mb-6"
                 />
 
-                {/* Error State */}
                 {error && (
-                    <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
+                    <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6 text-center">
                         <p className="text-red-600 mb-2">{error}</p>
                         <button
                             onClick={handleRetry}
@@ -465,12 +583,10 @@ const BorrowHistory = () => {
                     </div>
                 )}
 
-                {/* Loading State */}
                 {loading && <TableSkeleton />}
 
-                {/* Borrow History Table */}
                 {!loading && !error && (
-                    <div className="bg-white rounded-lg shadow-sm overflow-hidden">
+                    <div className="bg-white rounded-lg shadow-sm border border-border overflow-hidden">
                         <div className="overflow-x-auto">
                             <table className="w-full">
                                 <thead>
@@ -500,7 +616,7 @@ const BorrowHistory = () => {
                                         <tr>
                                             <td
                                                 colSpan="6"
-                                                className="px-4 py-12 text-center text-text-sub"
+                                                className="px-4 py-12 text-center text-text-sub italic"
                                             >
                                                 Không có lịch sử mượn sách
                                             </td>
@@ -512,7 +628,7 @@ const BorrowHistory = () => {
                                                 className="border-b border-border hover:bg-bg-card-hover transition-colors"
                                             >
                                                 <td className="px-4 py-3 text-sm font-medium text-text-primary">
-                                                    {record.id}
+                                                    #{record.id}
                                                 </td>
                                                 <td className="px-4 py-3 text-sm text-text-primary">
                                                     {formatDate(record.borrowDate)}
@@ -521,7 +637,7 @@ const BorrowHistory = () => {
                                                     <StatusBadge status={record.status} />
                                                 </td>
                                                 <td className="px-4 py-3 text-sm text-text-primary">
-                                                    {calculateBorrowDuration(record.borrowDate, record.dueDate)}
+                                                    {calculateBorrowDuration(record.pickupDate, record.dueDate)}
                                                 </td>
                                                 <td className="px-4 py-3 text-sm text-text-primary">
                                                     {formatDate(record.returnDate)}
@@ -529,10 +645,9 @@ const BorrowHistory = () => {
                                                 <td className="px-4 py-3">
                                                     <button
                                                         onClick={() => handleViewDetail(record.id)}
-                                                        className="flex items-center gap-2 px-3 py-1.5 bg-primary text-white text-sm rounded-lg hover:bg-primary-hover transition-colors"
+                                                        className="flex items-center gap-2 px-3 py-1.5 bg-primary text-white text-sm rounded-lg hover:bg-primary-hover transition-colors cursor-pointer"
                                                     >
-                                                        <Eye size={16} />
-                                                        Xem chi tiết
+                                                        <Eye size={16} /> Chi tiết
                                                     </button>
                                                 </td>
                                             </tr>
@@ -543,23 +658,15 @@ const BorrowHistory = () => {
                         </div>
                     </div>
                 )}
-
-                {/* Summary Info */}
-                {!loading && !error && filteredHistory.length > 0 && (
-                    <div className="mt-4 text-sm text-text-sub">
-                        Hiển thị {filteredHistory.length} kết quả
-                    </div>
-                )}
             </main>
 
-            {/* Footer - Sticky ở cuối trang */}
             <Footer />
 
-            {/* Ticket Detail Modal */}
             <TicketDetailModal
                 isOpen={isDetailModalOpen}
                 onClose={handleCloseModal}
                 ticketId={selectedTicketId}
+                onRefreshList={fetchBorrowHistory}
             />
         </div>
     );

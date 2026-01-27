@@ -57,10 +57,10 @@ const Toast = ({
     // Style mapping theo type
     // ==========================================
     const styles = {
-        success: 'bg-green-50 border-green-500 text-green-600',
-        error: 'bg-red-50 border-red-500 text-red-600',
-        warning: 'bg-yellow-50 border-yellow-500 text-yellow-600',
-        info: 'bg-blue-50 border-blue-500 text-blue-600',
+        success: 'bg-white border-success text-success',
+        error: 'bg-white border-error text-error',
+        warning: 'bg-white border-warning text-warning',
+        info: 'bg-white border-primary text-primary',
     };
 
     // ==========================================
@@ -77,7 +77,7 @@ const Toast = ({
                     flex items-center gap-3 
                     px-4 py-3 
                     rounded-lg border-l-4 
-                    shadow-lg backdrop-blur-sm
+                    shadow-xl
                     min-w-[280px] max-w-sm
                     animate-in slide-in-from-right duration-300
                     ${styles[type]}
