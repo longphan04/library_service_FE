@@ -89,7 +89,7 @@ export default function useAddBookForm({
         }
 
         if (bookToEdit.cover_url) {
-            setPreviewImage(`https://work-garage-sufficient-pgp.trycloudflare.com/public/${bookToEdit.cover_url}`);
+            setPreviewImage(`https://place-potentially-downloaded-lyrics.trycloudflare.com/public/${bookToEdit.cover_url}`);
         }
 
         setFormData({
