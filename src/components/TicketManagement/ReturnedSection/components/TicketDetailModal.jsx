@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { X } from "lucide-react";
-import { FALLBACK_IMAGES } from '../../../../utils/imageUrl';
+import { FALLBACK_IMAGES } from "@/utils/imageUrl";
 import { returnedTicketStaffService } from "@/services/returnedTicketStaff.service";
 
 export default function TicketDetailModal({

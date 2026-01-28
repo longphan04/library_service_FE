@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { X } from "lucide-react";
+import { FALLBACK_IMAGES } from "@/utils/imageUrl";
 import ConfirmModal from "@/components/modal/ConfirmModal";
-import { FALLBACK_IMAGES } from '../../../../utils/imageUrl';
 import { pickedUpTicketStaffService } from "@/services/pickedUpTicketStaff.service";
 
 export default function TicketDetailModal({

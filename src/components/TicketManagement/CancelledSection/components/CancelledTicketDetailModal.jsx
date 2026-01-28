@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { X } from "lucide-react";
-import { FALLBACK_IMAGES } from '../../../../utils/imageUrl';
+import { FALLBACK_IMAGES } from '@/utils/imageUrl';
 import { canceledTicketStaffService } from "@/services/canceledTicketStaff.service";
 import dayjs from "dayjs";
 

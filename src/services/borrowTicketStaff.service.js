@@ -1,6 +1,7 @@
 import axios from "@/utils/axiosConfig";
+import { IMAGE_BASE_URL } from "@/config/constants";
 
-const API_BASE = "https://place-potentially-downloaded-lyrics.trycloudflare.com";
+const API_BASE = "";
 
 export const borrowTicketStaffService = {
     // Lấy danh sách ticket pending
@@ -73,7 +74,7 @@ export const borrowTicketStaffService = {
             books: data.items.map((item) => ({
                 id: item.book.book_id,
                 name: item.book.title,
-                image: `${API_BASE}/public/${item.book.cover_url}`,
+                image: `${IMAGE_BASE_URL}/${item.book.cover_url}`,
                 author: "—",
                 category: "—",
                 quantity: 1,

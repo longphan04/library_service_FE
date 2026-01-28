@@ -1,29 +1,27 @@
 import axios from '@/utils/axiosConfig';
 
-const BASE_URL = 'https://place-potentially-downloaded-lyrics.trycloudflare.com';
-
-export const getAuthors = () => axios.get(`${BASE_URL}/author`);
-export const getPublishers = () => axios.get(`${BASE_URL}/publisher`);
-export const getShelves = () => axios.get(`${BASE_URL}/shelf`);
-export const getCategories = () => axios.get(`${BASE_URL}/category`);
+export const getAuthors = () => axios.get('/author');
+export const getPublishers = () => axios.get('/publisher');
+export const getShelves = () => axios.get('/shelf');
+export const getCategories = () => axios.get('/category');
 export const createBook = (formData) =>
-    axios.post(`${BASE_URL}/book`, formData, {
+    axios.post('/book', formData, {
         headers: { 'Content-Type': 'multipart/form-data' },
     });
 
 export const getBookDetail = (id) =>
-    axios.get(`${BASE_URL}/book/${id}`);
+    axios.get(`/book/${id}`);
 
 export const uploadImage = (file) =>
-    axios.post(`${BASE_URL}/upload`, file, {
+    axios.post('/upload', file, {
         headers: { 'Content-Type': 'multipart/form-data' },
     });
 
 
 export const updateBook = (id, formData) =>
-    axios.put(`${BASE_URL}/book/${id}`, formData, {
+    axios.put(`/book/${id}`, formData, {
         headers: { 'Content-Type': 'multipart/form-data' },
     });
 
 export const createAuthor = (data) =>
-    axios.post(`${BASE_URL}/author`, data);
+    axios.post('/author', data);

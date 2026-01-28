@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { X } from "lucide-react";
 import ConfirmModal from "@/components/modal/ConfirmModal";
-import { FALLBACK_IMAGES } from '../../../../utils/imageUrl';
+import { FALLBACK_IMAGES } from '@/utils/imageUrl';
 
 import { approvedTicketStaffService } from "@/services/approvedTicketStaff.service";
 
@@ -144,10 +144,9 @@ export default function ApprovedTicketDetailModal({
             </div>
 
             {/* TABLE HEADER - Simplified */}
-            <div className="grid grid-cols-[100px_2fr_1fr_1fr_100px] bg-[#7A4A2E] text-white px-4 py-3 rounded-t">
+            <div className="grid grid-cols-[100px_2fr_1fr_100px] bg-[#7A4A2E] text-white px-4 py-3 rounded-t">
               <div>Ảnh</div>
               <div>Tên sách</div>
-              <div>Tác giả</div>
               <div>ID sách</div>
               <div className="text-center">Bản số</div>
             </div>
@@ -159,7 +158,7 @@ export default function ApprovedTicketDetailModal({
                 return (
                   <div
                     key={book.id}
-                    className="grid grid-cols-[100px_2fr_1fr_1fr_100px] px-4 py-4 border-b border-gray-200 items-center hover:bg-gray-50 transition"
+                    className="grid grid-cols-[100px_2fr_1fr_100px] px-4 py-4 border-b border-gray-200 items-center hover:bg-gray-50 transition"
                   >
                     <img
                       src={book.image}
@@ -174,8 +173,6 @@ export default function ApprovedTicketDetailModal({
                       <div className="font-medium text-gray-800">{book.name}</div>
                       <div className="text-sm text-gray-500">{book.category}</div>
                     </div>
-
-                    <div className="text-gray-700">{book.author}</div>
 
                     <div className="font-mono text-[#7A4A2E] font-medium">
                       {book.bookId}

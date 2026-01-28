@@ -1,6 +1,7 @@
 import axios from "@/utils/axiosConfig";
+import { IMAGE_BASE_URL } from "@/config/constants";
 
-const API_BASE = "https://place-potentially-downloaded-lyrics.trycloudflare.com";
+const API_BASE = "";
 
 export const returnedTicketStaffService = {
     // Lấy danh sách ticket đã trả sách (RETURNED)
@@ -44,7 +45,7 @@ export const returnedTicketStaffService = {
                     id: item.copy.id,
                     bookId: item.book.book_id,
                     name: item.book.title,
-                    image: item.book.cover_url ? `${API_BASE}/public/${item.book.cover_url}` : null,
+                    image: item.book.cover_url ? `${IMAGE_BASE_URL}/${item.book.cover_url}` : null,
                     status: item.status.toLowerCase(),
                     copyNote: item.copy.note,
                     author: "—",

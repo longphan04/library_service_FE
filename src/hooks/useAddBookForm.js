@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo, useRef } from "react";
+import { IMAGE_BASE_URL } from "@/config/constants";
 import {
     getAuthors,
     getPublishers,
@@ -89,7 +90,7 @@ export default function useAddBookForm({
         }
 
         if (bookToEdit.cover_url) {
-            setPreviewImage(`https://place-potentially-downloaded-lyrics.trycloudflare.com/public/${bookToEdit.cover_url}`);
+            setPreviewImage(`${IMAGE_BASE_URL}/${bookToEdit.cover_url}`);
         }
 
         setFormData({
@@ -110,9 +111,11 @@ export default function useAddBookForm({
     /* =======================
        FILTER
     ======================= */
-    const filteredAuthors = authors.filter(a =>
-        a.name.toLowerCase().includes(authorInput.toLowerCase())
-    );
+    const filteredAuthors = useMemo(() => {
+        return authors.filter(a =>
+            a.name.toLowerCase().includes(authorInput.toLowerCase())
+        );
+    }, [authors, authorInput]);
 
     const filteredPublishers = publishers.filter(p =>
         p.name.toLowerCase().includes(publisherInput.toLowerCase())
