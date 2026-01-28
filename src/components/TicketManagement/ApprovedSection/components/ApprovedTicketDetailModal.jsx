@@ -15,8 +15,6 @@ export default function ApprovedTicketDetailModal({
 }) {
   const [books, setBooks] = useState([]);
   const [userInfo, setUserInfo] = useState(null);
-  const [showConfirm, setShowConfirm] = useState(false);
-  const [confirmConfig, setConfirmConfig] = useState({ title: "", onConfirm: () => { } });
 
   // Effect để disable scroll khi modal mở
   useEffect(() => {
@@ -209,14 +207,7 @@ export default function ApprovedTicketDetailModal({
                   <button
                     onClick={() => {
                       if (ticket?.id) {
-                        setConfirmConfig({
-                          title: "Xác nhận khách hàng đã nhận sách cho phiếu này?",
-                          onConfirm: () => {
-                            onConfirm && onConfirm(ticket.id);
-                            setShowConfirm(false);
-                          }
-                        });
-                        setShowConfirm(true);
+                        onConfirm && onConfirm(ticket.id);
                       }
                     }}
                     className="px-8 py-4 text-white rounded-lg font-medium hover:opacity-90 transition text-base cursor-pointer"
@@ -231,12 +222,6 @@ export default function ApprovedTicketDetailModal({
         </div>
       </div>
 
-      <ConfirmModal
-        open={showConfirm}
-        title={confirmConfig.title}
-        onConfirm={confirmConfig.onConfirm}
-        onCancel={() => setShowConfirm(false)}
-      />
     </div>
   );
 }

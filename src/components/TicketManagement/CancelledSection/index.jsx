@@ -41,8 +41,9 @@ export default function CancelledBookSection({
   // Filter
   const filteredTickets = allTickets
     .filter((t) =>
-      t.userName.toLowerCase().includes(search.toLowerCase()) ||
-      t.email.toLowerCase().includes(search.toLowerCase())
+      t.userName?.toLowerCase().includes(search.toLowerCase()) ||
+      t.email?.toLowerCase().includes(search.toLowerCase()) ||
+      t.id?.toString().includes(search)
     )
     .map(ticket => ({
       ...ticket,

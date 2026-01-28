@@ -12,11 +12,11 @@ export default function ConfirmModal({
 }) {
     return (
         <Modal open={open} title={title} onClose={onCancel}>
-            <div className="flex gap-6 mt-6">
+            <div className="flex gap-2 mt-4">
                 <ActionButton
                     onClick={onConfirm}
                     variant={confirmVariant}
-                    className="flex-1 h-10 rounded-full font-medium"
+                    className="flex-1 justify-center h-10 rounded-full font-medium"
                 >
                     {confirmLabel}
                 </ActionButton>
@@ -24,7 +24,7 @@ export default function ConfirmModal({
                 <ActionButton
                     onClick={onCancel}
                     variant="outline"
-                    className="flex-1 h-10 rounded-full font-medium"
+                    className="flex-1 justify-center h-10 rounded-full font-medium"
                 >
                     {cancelLabel}
                 </ActionButton>

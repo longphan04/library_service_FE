@@ -213,7 +213,7 @@ export default function UserManagement() {
             </div>
 
             {/* ================= TABLE HEADER ================= */}
-            <div className="grid grid-cols-[40px_2.2fr_1.7fr_1.5fr_1.5fr_250px] text-white px-4 py-4 rounded-t-lg"
+            <div className="grid grid-cols-[40px_2.5fr_2.2fr_1.5fr_250px] text-white px-4 py-4 rounded-t-lg"
                 style={{ backgroundColor: "#7A4A2E" }}>
                 <input
                     type="checkbox"
@@ -223,7 +223,6 @@ export default function UserManagement() {
                 />
                 <div>Tên người dùng</div>
                 <div>Email</div>
-                <div>Ngày tham gia</div>
                 <div>Trạng thái</div>
                 <div className="text-right pr-4">Thao tác</div>
             </div>
@@ -246,7 +245,7 @@ export default function UserManagement() {
                     currentItems.map((user) => (
                         <div
                             key={user.id}
-                            className="grid grid-cols-[40px_2fr_2fr_1.5fr_1.5fr_250px] px-4 py-4 border-b border-gray-200 items-center hover:bg-gray-50 transition cursor-pointer"
+                            className="grid grid-cols-[40px_2.5fr_2.2fr_1.5fr_250px] px-4 py-4 border-b border-gray-200 items-center hover:bg-gray-50 transition cursor-pointer"
                             onClick={(e) => handleRowClick(user, e)}
                         >
                             {/* Checkbox - cần stopPropagation để không mở modal khi click */}
@@ -262,7 +261,6 @@ export default function UserManagement() {
 
                             <div className="font-medium text-gray-800">{user.name}</div>
                             <div className="text-gray-600">{user.email}</div>
-                            <div className="text-gray-600">{user.date}</div>
 
                             <div>
                                 <span

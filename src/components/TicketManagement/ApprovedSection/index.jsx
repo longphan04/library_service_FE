@@ -46,8 +46,9 @@ export default function ApprovedBookSection({
   // Filter
   const filteredTickets = allTickets
     .filter((t) =>
-      t.userName.toLowerCase().includes(search.toLowerCase()) ||
-      t.email.toLowerCase().includes(search.toLowerCase())
+      t.userName?.toLowerCase().includes(search.toLowerCase()) ||
+      t.email?.toLowerCase().includes(search.toLowerCase()) ||
+      t.id?.toString().includes(search)
     )
     .map(ticket => ({
       ...ticket,
@@ -89,7 +90,7 @@ export default function ApprovedBookSection({
       onConfirm: () => {
         updateTicketStatus(ticketId, "PICKED_UP");
         if (refreshData) refreshData();
-        setCheckedTickets(prev => ({ ...prev, [ticketId]: false }));
+        setCheckedTickets({});
         setIsModalOpen(false);
         setSelectedTicket(null);
         setShowConfirm(false);
@@ -120,15 +121,7 @@ export default function ApprovedBookSection({
       onConfirm: () => {
         bulkUpdateTickets(selectedIds, "PICKED_UP");
         if (refreshData) refreshData();
-
-        // Reset checkboxes
-        setCheckedTickets(prev => {
-          const newState = { ...prev };
-          selectedTickets.forEach(t => {
-            delete newState[t.id];
-          });
-          return newState;
-        });
+        setCheckedTickets({});
         setShowConfirm(false);
       }
     });
@@ -145,6 +138,7 @@ export default function ApprovedBookSection({
         onConfirm: () => {
           updateTicketStatus(id, "PICKED_UP");
           if (refreshData) refreshData();
+          setCheckedTickets({});
           setShowConfirm(false);
         }
       });
