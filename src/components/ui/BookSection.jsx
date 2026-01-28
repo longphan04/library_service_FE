@@ -121,7 +121,7 @@ const BookSection = ({
                     <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4 md:gap-5 lg:gap-6">
                         {Array.from({ length: itemsPerPage }).map((_, i) => (
                             <div key={i} className="bg-white rounded-lg p-2 shadow-sm space-y-2">
-                                <div className="aspect-3/4 w-full bg-gray-200 rounded animate-pulse" />
+                                <div className="aspect-[3/4] w-full bg-gray-200 rounded animate-pulse" />
                                 <div className="h-4 bg-gray-200 rounded animate-pulse w-3/4" />
                                 <div className="h-3 bg-gray-200 rounded animate-pulse w-1/2" />
                             </div>

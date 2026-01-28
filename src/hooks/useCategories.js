@@ -5,6 +5,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import categoryService from '../services/category.service';
+import usePrefetch from './usePrefetch';
 
 /**
  * Custom hook để quản lý categories
@@ -15,12 +16,15 @@ const useCategories = () => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
 
+    const { prefetch } = usePrefetch();
+
     const fetchCategories = useCallback(async () => {
         setLoading(true);
         setError(null);
 
         try {
-            const response = await categoryService.getAll();
+            // Sử dụng prefetch để cache danh sách categories
+            const response = await prefetch('categories-all', () => categoryService.getAll());
             setCategories(Array.isArray(response) ? response : response.data || []);
         } catch (err) {
             setError(err.message || 'Failed to fetch categories');
@@ -28,7 +32,7 @@ const useCategories = () => {
         } finally {
             setLoading(false);
         }
-    }, []);
+    }, [prefetch]);
 
     useEffect(() => {
         fetchCategories();

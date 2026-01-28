@@ -46,7 +46,7 @@ const setCache = (key, data) => {
     if (!key || !data) return;
     const cacheKey = String(key);
     const entry = { data, timestamp: Date.now() };
-    
+
     bookCache.set(cacheKey, entry);
     // Also cache by other standard identifiers if available
     if (data.book_id && String(data.book_id) !== cacheKey) {
@@ -76,7 +76,7 @@ export const getAll = async (params = {}) => {
 
     // Cache key dựa trên params
     const cacheKey = `getAll:${JSON.stringify(cleanParams)}`;
-    
+
     // Check cache (trừ khi có yeu cầu force refresh - nhưng ở đây chưa implement params.forceRefresh)
     const cached = getFromCache(cacheKey);
     if (cached) return cached;
@@ -137,16 +137,16 @@ export const getAll = async (params = {}) => {
  * console.log(book.title); // "Lịch sử Việt Nam"
  */
 export const getById = async (id) => {
-    // Check cache first
-    const cached = getFromCache(id);
-    if (cached) return cached;
+    // IMPORTANT: Do NOT use cache for getById
+    // Cache may contain incomplete data from list pages (missing description, publish_year, etc.)
+    // Always fetch fresh data from API for detail pages
 
     // Gọi API GET /book/:id
     const response = await axios.get(`/book/${id}`);
-    
-    // Save to cache
+
+    // Update cache with complete data for future use
     setCache(id, response.data);
-    
+
     return response.data;
 };
 
@@ -172,7 +172,7 @@ export const getByIsbn = async (isbn) => {
 
     // Gọi API GET /book?isbn=xxx (search theo ISBN)
     const response = await axios.get('/book', { params: { isbn } });
-    
+
     let bookData = null;
 
     // API trả về mảng books, lấy cái đầu tiên nếu có
@@ -211,7 +211,7 @@ export const getByIsbn = async (isbn) => {
  */
 export const getBooksByIdentifiers = async (ids) => {
     if (!Array.isArray(ids) || ids.length === 0) return [];
-    
+
     const uniqueIds = [...new Set(ids)];
     const result = [];
     const missingIds = [];
@@ -231,7 +231,7 @@ export const getBooksByIdentifiers = async (ids) => {
         try {
             // console.log(`[BookService] Batch fetching ${missingIds.length} items`);
             const response = await axios.post('/book/identifier', { ids: missingIds });
-            
+
             let fetchedBooks = [];
             if (Array.isArray(response.data)) {
                 fetchedBooks = response.data;
@@ -244,7 +244,7 @@ export const getBooksByIdentifiers = async (ids) => {
                 // Determine primary key (ID) and secondary key (ISBN)
                 if (book.book_id) setCache(book.book_id, book);
                 if (book.isbn) setCache(book.isbn, book);
-                
+
                 result.push(book);
             });
         } catch (error) {

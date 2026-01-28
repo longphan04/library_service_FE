@@ -4,6 +4,7 @@
 // ==========================================
 
 import axios, { getToken, getRefreshToken, setTokens, clearTokens } from './axios';
+import { getAvatarUrl } from '../utils/imageUrl';
 
 // ==========================================
 // Token Management Functions (re-export)
@@ -55,6 +56,9 @@ export const login = async (credentials) => {
                     profile: profileData,
                     fullName: profileData.full_name,
                     full_name: profileData.full_name,
+                    // Map avatar fields (ensure we catch all potential backend field names)
+                    avatar: getAvatarUrl(profileData.avatar || profileData.avatar_url || profileData.image || profileData.imageUrl || profileData.avatarUrl),
+                    avatarUrl: getAvatarUrl(profileData.avatar || profileData.avatar_url || profileData.image || profileData.imageUrl || profileData.avatarUrl),
                 };
             } catch (profileError) {
                 console.error('Failed to fetch profile data:', profileError);
@@ -119,6 +123,9 @@ export const loginStaff = async (credentials) => {
                     profile: profileData,
                     fullName: profileData.full_name,
                     full_name: profileData.full_name,
+                    // Map avatar fields (ensure we catch all potential backend field names)
+                    avatar: getAvatarUrl(profileData.avatar || profileData.avatar_url || profileData.image || profileData.imageUrl || profileData.avatarUrl),
+                    avatarUrl: getAvatarUrl(profileData.avatar || profileData.avatar_url || profileData.image || profileData.imageUrl || profileData.avatarUrl),
                 };
             } catch (profileError) {
                 console.error('Failed to fetch profile data:', profileError);
@@ -219,7 +226,13 @@ export const getCurrentUser = async () => {
             profile: profileData,
             fullName: profileData.full_name,
             full_name: profileData.full_name,
+            // Map avatar fields (ensure we catch all potential backend field names)
+            avatar: getAvatarUrl(profileData.avatar || profileData.avatar_url || profileData.image || profileData.imageUrl || profileData.avatarUrl),
+            avatarUrl: getAvatarUrl(profileData.avatar || profileData.avatar_url || profileData.image || profileData.imageUrl || profileData.avatarUrl),
         };
+
+        console.log('[AuthService] getCurrentUser profileData:', profileData);
+        console.log('[AuthService] Mapped User:', user);
 
         if (user) {
             localStorage.setItem('user', JSON.stringify(user));

@@ -4,7 +4,7 @@
 // Vị trí: src/pages/user/BookDetail.jsx
 // ==========================================
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, RefreshCw } from 'lucide-react';
 import Header from '../../components/layouts/Header';
@@ -22,25 +22,62 @@ import ExpandableText from '../../components/ui/ExpandableText';
 // Loading Skeleton
 // ==========================================
 const BookDetailSkeleton = () => (
-    <div className="bg-bg-section rounded-2xl p-6 sm:p-8 animate-pulse">
+    <div className="bg-bg-section rounded-2xl p-6 sm:p-8 animate-pulse h-full">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {/* Cover skeleton */}
+            {/* Cover skeleton - Match aspect ratio of real image */}
             <div className="md:col-span-1">
-                <div className="aspect-ratio: 3/4 bg-border rounded-lg"></div>
-            </div>
-            {/* Info skeleton */}
-            <div className="md:col-span-2 space-y-6">
-                <div className="h-6 bg-border rounded w-24"></div>
-                <div className="h-10 bg-border rounded w-3/4"></div>
-                <div className="space-y-3">
-                    <div className="h-4 bg-border rounded w-1/2"></div>
-                    <div className="h-4 bg-border rounded w-1/3"></div>
-                    <div className="h-4 bg-border rounded w-1/4"></div>
+                <div className="sticky top-24">
+                    <div className="aspect-3/4 w-full bg-border/50 rounded-lg"></div>
                 </div>
-                <div className="h-24 bg-border rounded"></div>
-                <div className="flex gap-4">
-                    <div className="h-12 bg-border rounded flex-1"></div>
-                    <div className="h-12 bg-border rounded flex-1"></div>
+            </div>
+            {/* Info skeleton - Match flex column layout */}
+            <div className="md:col-span-2 flex flex-col h-full space-y-6">
+                {/* Category Badge */}
+                <div className="mb-2">
+                    <div className="h-6 w-24 bg-border/50 rounded-full"></div>
+                </div>
+
+                {/* Title */}
+                <div className="h-10 w-3/4 bg-border/50 rounded-lg"></div>
+
+                {/* Author & Meta */}
+                <div className="flex gap-4 mb-6">
+                    <div className="h-5 w-32 bg-border/50 rounded"></div>
+                    <div className="h-5 w-16 bg-border/50 rounded"></div>
+                    <div className="h-5 w-24 bg-border/50 rounded"></div>
+                </div>
+
+                {/* Description */}
+                <div className="space-y-3 flex-1">
+                    <div className="h-5 w-40 bg-border/50 rounded mb-2"></div>
+                    <div className="h-4 w-full bg-border/50 rounded"></div>
+                    <div className="h-4 w-full bg-border/50 rounded"></div>
+                    <div className="h-4 w-5/6 bg-border/50 rounded"></div>
+                    <div className="h-4 w-4/5 bg-border/50 rounded"></div>
+                </div>
+
+                {/* Meta Grid */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 bg-gray-50/50 p-4 rounded-xl border border-gray-100/50 mt-auto">
+                    <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 bg-border/50 rounded-lg"></div>
+                        <div className="space-y-2">
+                            <div className="h-3 w-20 bg-border/50 rounded"></div>
+                            <div className="h-4 w-32 bg-border/50 rounded"></div>
+                        </div>
+                    </div>
+                    <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 bg-border/50 rounded-lg"></div>
+                        <div className="space-y-2">
+                            <div className="h-3 w-20 bg-border/50 rounded"></div>
+                            <div className="h-4 w-24 bg-border/50 rounded"></div>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Actions */}
+                <div className="mt-8 flex flex-col sm:flex-row gap-4 pt-6 border-t border-gray-100/50">
+                    <div className="flex-1 h-12 bg-border/50 rounded-lg"></div>
+                    <div className="flex-1 h-12 bg-border/50 rounded-lg"></div>
                 </div>
             </div>
         </div>
@@ -53,6 +90,9 @@ const BookDetailSkeleton = () => (
 const BookDetail = () => {
     const { bookId } = useParams();
     const navigate = useNavigate();
+
+    // Ref to track current bookId for race condition handling
+    const currentBookIdRef = useRef(bookId);
 
     // Book data state
     const [book, setBook] = useState(null);
@@ -77,49 +117,84 @@ const BookDetail = () => {
     // ==========================================
     // Fetch Book Data from API
     // ==========================================
-    const fetchBook = async () => {
-        setLoading(true);
-        setError(null);
-
-        try {
-            const response = await bookService.getById(bookId);
-
-            // Handle different API response formats
-            const bookData = response.data || response;
-
-            // Transform data to match API response format
-            setBook({
-                id: bookData.book_id || bookData.id || bookData._id,
-                title: bookData.title || 'Không rõ',
-                author: bookData.authors?.[0]?.name || bookData.author?.name || bookData.authorName || 'Không rõ',
-                coverImage: getBookCoverUrl(
-                    bookData.cover_url || bookData.coverImage || bookData.image || bookData.thumbnail
-                ),
-                publishYear: bookData.publish_year || bookData.publishYear || bookData.year || 'N/A',
-                categoryId: bookData.categories?.[0]?.category_id || bookData.category?.id || bookData.categoryId,
-                categoryName: bookData.categories?.[0]?.name || bookData.category?.name || bookData.categoryName || 'Không phân loại',
-                availableCopies: bookData.available_copies || bookData.availableCopies || bookData.available || 0,
-                totalCopies: bookData.total_copies || bookData.totalCopies || bookData.total || 0,
-                description: bookData.description || 'Không có mô tả',
-                versions: bookData.versions || [
-                    { id: 'default', year: bookData.publish_year || bookData.publishYear || new Date().getFullYear(), available: true }
-                ],
-                publisher: bookData.publisher?.name || bookData.publisherName,
-                isbn: bookData.isbn,
-            });
-        } catch (err) {
-            console.error('Error fetching book:', err);
-            setError(err.message || 'Không thể tải thông tin sách');
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    // Fetch on mount
     useEffect(() => {
-        if (bookId) {
-            fetchBook();
-        }
+        // Update ref to current bookId
+        currentBookIdRef.current = bookId;
+
+        if (!bookId) return;
+
+        // Create AbortController for this fetch
+        const abortController = new AbortController();
+
+        const fetchBook = async () => {
+            // Reset state for new book
+            setBook(null);
+            setLoading(true);
+            setError(null);
+
+            try {
+                // Use direct API call for reliability (not prefetch which may have stale cache)
+                const response = await bookService.getById(bookId);
+
+                // Check if this request is still relevant (bookId hasn't changed)
+                if (currentBookIdRef.current !== bookId) {
+                    console.log('[BookDetail] Stale response ignored for bookId:', bookId);
+                    return;
+                }
+
+                // Handle different API response formats
+                let bookData = response.data || response;
+                if (bookData.book) {
+                    bookData = bookData.book;
+                } else if (bookData.data) {
+                    bookData = bookData.data;
+                }
+
+                console.log('[BookDetail] Raw API Response:', response);
+                console.log('[BookDetail] Processed bookData:', bookData);
+
+                // Transform data to match component format
+                setBook({
+                    id: bookData.book_id || bookData.id || bookData._id,
+                    title: bookData.title || 'Không rõ',
+                    author: bookData.authors?.[0]?.name || bookData.author?.name || bookData.authorName || 'Không rõ',
+                    coverImage: getBookCoverUrl(
+                        bookData.cover_url || bookData.coverImage || bookData.image || bookData.thumbnail
+                    ),
+                    publishYear: bookData.publish_year || bookData.publishYear || bookData.year || bookData.publication_year || bookData.publicationYear || 'N/A',
+                    categoryId: bookData.categories?.[0]?.category_id || bookData.category?.id || bookData.categoryId,
+                    categoryName: bookData.categories?.[0]?.name || bookData.category?.name || bookData.categoryName || 'Không phân loại',
+                    availableCopies: bookData.available_copies || bookData.availableCopies || bookData.available || 0,
+                    totalCopies: bookData.total_copies || bookData.totalCopies || bookData.total || 0,
+                    description: bookData.description || bookData.summary || bookData.desc || 'Không có mô tả',
+                    versions: bookData.versions || [
+                        { id: 'default', year: bookData.publish_year || bookData.publishYear || new Date().getFullYear(), available: true }
+                    ],
+                    publisher: bookData.publisher?.name || bookData.publisherName || bookData.publisher,
+                    isbn: bookData.isbn,
+                });
+            } catch (err) {
+                // Ignore abort errors
+                if (err.name === 'AbortError') {
+                    console.log('[BookDetail] Fetch aborted for bookId:', bookId);
+                    return;
+                }
+                console.error('Error fetching book:', err);
+                setError(err.message || 'Không thể tải thông tin sách');
+            } finally {
+                // Only set loading false if this is still the current request
+                if (currentBookIdRef.current === bookId) {
+                    setLoading(false);
+                }
+            }
+        };
+
+        fetchBook();
+
+        // Cleanup: abort fetch on unmount or bookId change
+        return () => {
+            abortController.abort();
+        };
     }, [bookId]);
 
     // ==========================================

@@ -18,6 +18,7 @@ import { AlertCircle, ArrowLeft } from 'lucide-react';
 // Services
 import bookService from '../../services/book.service';
 import categoryService from '../../services/category.service';
+import { searchBooks } from '../../utils/searchUtils';
 import FloatingChatButton from '../../components/ui/FloatingChatButton';
 
 // ==========================================
@@ -158,25 +159,13 @@ const BookSearch = () => {
     };
 
     // ==========================================
-    // Logic Tìm kiếm & Lọc (Sàng lọc phía Client)
+    // Logic Tìm kiếm & Lọc (Token-based Search)
     // ==========================================
-    // Áp dụng bộ lọc so sánh chuỗi chặt chẽ trên danh sách sách trả về từ API
-    // để đảm bảo đáp ứng chính xác yêu cầu "tiêu đề hoặc tác giả chứa keyword".
+    // Áp dụng token-based search: tách keyword thành các từ,
+    // khớp nếu ít nhất một từ match với title hoặc author
     const filteredBooks = useMemo(() => {
         if (!keywordFromUrl) return books;
-
-        const term = keywordFromUrl.toLowerCase().trim();
-        return books.filter(book => {
-            const title = (book.title || '').toLowerCase();
-            const author = (
-                book.authors?.[0]?.name ||
-                book.author?.name ||
-                book.authorName ||
-                'Không rõ'
-            ).toLowerCase();
-
-            return title.includes(term) || author.includes(term);
-        });
+        return searchBooks(books, keywordFromUrl);
     }, [books, keywordFromUrl]);
 
     const totalResults = filteredBooks.length;
@@ -201,7 +190,7 @@ const BookSearch = () => {
         const queryToSearch = typeof value === 'string' ? value : inputValue;
         // Khi tìm theo keyword -> Xóa danh mục để đảm bảo độ ưu tiên của tìm kiếm keyword
         updateSearchParams({ keyword: queryToSearch, category: '' });
-        
+
         // Lưu sources từ AI
         if (sources && sources.length > 0) {
             setAiSources(sources);

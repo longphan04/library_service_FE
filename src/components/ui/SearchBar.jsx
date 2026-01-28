@@ -1,22 +1,49 @@
 // ==========================================
 // Component: SearchBar
-// Mô tả: Thanh tìm kiếm với icon search và nút đóng
+// Mô tả: Thanh tìm kiếm với dropdown autocomplete và navigation
 // Vị trí: src/components/ui/SearchBar.jsx
 // ==========================================
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Search, X, Loader2 } from 'lucide-react';
-import aiService from '../../services/ai.service';
+import bookService from '../../services/book.service';
+import { searchBooks } from '../../utils/searchUtils';
 import { getBookCoverUrl, FALLBACK_IMAGES } from '../../utils/imageUrl';
 
 // ==========================================
+// Helper: Highlight matching text
+// ==========================================
+const HighlightText = ({ text, query }) => {
+    if (!query || !text) return <span>{text}</span>;
+
+    const escapedQuery = query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const regex = new RegExp(`(${escapedQuery})`, 'gi');
+    const parts = text.split(regex);
+
+    return (
+        <span>
+            {parts.map((part, index) =>
+                regex.test(part) ? (
+                    <mark key={index} className="bg-primary/20 text-primary font-semibold rounded px-0.5">
+                        {part}
+                    </mark>
+                ) : (
+                    <span key={index}>{part}</span>
+                )
+            )}
+        </span>
+    );
+};
+
+// ==========================================
 // Props:
-// - placeholder: string - Placeholder text (default: "Tìm kiếm theo tên sách hoặc tác giả...")
+// - placeholder: string - Placeholder text
 // - value: string - Giá trị input (controlled)
 // - onChange: function - Callback khi giá trị thay đổi
-// - onSearch: function - Callback khi submit search
-// - onClose: function - Callback khi bấm nút X để tắt/đóng search
-// - className: string - Custom classes cho container
+// - onSearch: function - Callback khi submit search (Enter)
+// - onClose: function - Callback khi bấm nút X
+// - className: string - Custom classes
 // ==========================================
 
 const SearchBar = ({
@@ -27,77 +54,101 @@ const SearchBar = ({
     onClose,
     className = '',
 }) => {
-    // State nội bộ nếu không dùng controlled mode
+    const navigate = useNavigate();
+
+    // State
     const [internalValue, setInternalValue] = useState('');
     const [suggestions, setSuggestions] = useState([]);
-    const [isLoadingSuggestions, setIsLoadingSuggestions] = useState(false);
-    const [showSuggestions, setShowSuggestions] = useState(false);
-    const suggestionsRef = useRef(null);
-    const suggestionsCache = useRef(new Map()); // Cache for suggestions
-    const searchCache = useRef(new Map());      // Cache for search results
+    const [isLoading, setIsLoading] = useState(false);
+    const [showDropdown, setShowDropdown] = useState(false);
+    const [selectedIndex, setSelectedIndex] = useState(-1);
 
-    // Xác định giá trị hiển thị (controlled hoặc uncontrolled)
+    // Refs
+    const dropdownRef = useRef(null);
+    const inputRef = useRef(null);
+    const abortControllerRef = useRef(null);
+    const cacheRef = useRef(new Map());
+
+    // Controlled/Uncontrolled value
     const value = controlledValue !== undefined ? controlledValue : internalValue;
 
-    // Fetch suggestions khi người dùng nhập
-    useEffect(() => {
-        if (value.trim().length < 2) {
+    // ==========================================
+    // Fetch suggestions from bookService
+    // ==========================================
+    const fetchSuggestions = useCallback(async (query) => {
+        const trimmed = query.trim();
+
+        // Reset if empty
+        if (!trimmed) {
             setSuggestions([]);
-            setShowSuggestions(false);
+            setShowDropdown(false);
             return;
         }
 
-        const fetchSuggestions = async () => {
-            const trimmedValue = value.trim();
-            // Check cache first
-            if (suggestionsCache.current.has(trimmedValue)) {
-                setSuggestions(suggestionsCache.current.get(trimmedValue));
-                setShowSuggestions(true);
-                return;
+        // Check cache first
+        if (cacheRef.current.has(trimmed)) {
+            setSuggestions(cacheRef.current.get(trimmed));
+            setShowDropdown(true);
+            return;
+        }
+
+        // Cancel previous request
+        if (abortControllerRef.current) {
+            abortControllerRef.current.abort();
+        }
+        abortControllerRef.current = new AbortController();
+
+        setIsLoading(true);
+
+        try {
+            const response = await bookService.getAll({
+                keyword: trimmed,
+                limit: 6
+            });
+
+            // Extract books array from response
+            let books = [];
+            if (Array.isArray(response)) {
+                books = response;
+            } else if (response?.data && Array.isArray(response.data)) {
+                books = response.data;
+            } else if (response?.books && Array.isArray(response.books)) {
+                books = response.books;
             }
 
-            setIsLoadingSuggestions(true);
-            try {
-                // Gọi AI để lấy gợi ý sách
-                const response = await aiService.chat(
-                    `Gợi ý 5 cuốn sách liên quan đến: "${value}". Trả về danh sách ISBN và tên sách.`,
-                    'search-suggestions'
-                );
+            // Apply token-based filter on FE for better matching
+            const results = searchBooks(books, trimmed).slice(0, 6);
 
-                // Parse response để lấy identifiers
-                if (response.sources && Array.isArray(response.sources)) {
-                    const bookSources = response.sources.slice(0, 5);
-                    
-                    // Fetch book details từ API
-                    const identifiers = bookSources
-                        .map(s => s.identifier || s.bookId)
-                        .filter(Boolean);
-                    
-                    if (identifiers.length > 0) {
-                        const booksData = await aiService.getBooksByIdentifiers(identifiers);
-                        const booksArray = Array.isArray(booksData) ? booksData : (booksData?.data || []);
-                        const results = booksArray.slice(0, 5);
-                        
-                        setSuggestions(results);
-                        setShowSuggestions(true);
-                        
-                        // Cache the results
-                        suggestionsCache.current.set(trimmedValue, results);
-                    }
-                }
-            } catch (error) {
+            // Cache results
+            cacheRef.current.set(trimmed, results);
+
+            setSuggestions(results);
+            setShowDropdown(results.length > 0);
+            setSelectedIndex(-1);
+        } catch (error) {
+            if (error.name !== 'AbortError') {
                 console.error('[SearchBar] Error fetching suggestions:', error);
                 setSuggestions([]);
-            } finally {
-                setIsLoadingSuggestions(false);
             }
-        };
+        } finally {
+            setIsLoading(false);
+        }
+    }, []);
 
-        const timer = setTimeout(fetchSuggestions, 300); // Debounce 300ms
+    // Debounced fetch
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            fetchSuggestions(value);
+        }, 300);
+
         return () => clearTimeout(timer);
-    }, [value]);
+    }, [value, fetchSuggestions]);
 
-    // Handle input change
+    // ==========================================
+    // Event Handlers
+    // ==========================================
+
+    // Input change
     const handleChange = (e) => {
         const newValue = e.target.value;
         if (onChange) {
@@ -107,127 +158,101 @@ const SearchBar = ({
         }
     };
 
-    // Handle suggestion click
-    const handleSuggestionClick = (book) => {
-        const searchTerm = book.title || '';
-        if (onChange) {
-            onChange(searchTerm);
-        } else {
-            setInternalValue(searchTerm);
-        }
-        setShowSuggestions(false);
-        
-        // Pass book as source when clicking suggestion
+    // Form submit (Enter key) - navigate to search page
+    const handleSubmit = (e) => {
+        e.preventDefault();
+        setShowDropdown(false);
+
+        if (!value.trim()) return;
+
+        // Call onSearch callback if provided (for search page)
         if (onSearch) {
-            onSearch(searchTerm, [book]);
+            onSearch(value);
         }
     };
 
-    // Close suggestions when clicking outside
-    useEffect(() => {
-        const handleClickOutside = (e) => {
-            if (suggestionsRef.current && !suggestionsRef.current.contains(e.target)) {
-                setShowSuggestions(false);
-            }
-        };
+    // Click on suggestion - navigate to book detail
+    const handleSuggestionClick = (book) => {
+        const bookId = book.book_id || book.id;
+        setShowDropdown(false);
 
-        if (showSuggestions) {
-            document.addEventListener('mousedown', handleClickOutside);
+        // Navigate to book detail page
+        if (bookId) {
+            navigate(`/books/${bookId}`);
         }
-        return () => document.removeEventListener('mousedown', handleClickOutside);
-    }, [showSuggestions]);
+    };
 
-    // Handle form submit - gọi AI để lấy sách gợi ý
-    const handleSubmit = async (e) => {
-        e.preventDefault();
-        setShowSuggestions(false);
-        
-        if (!value.trim()) return;
-
-        // Check search cache
-        const trimmedValue = value.trim();
-        if (searchCache.current.has(trimmedValue)) {
-            const cachedSources = searchCache.current.get(trimmedValue);
-             if (onSearch) {
-                onSearch(value, cachedSources);
+    // Keyboard navigation
+    const handleKeyDown = (e) => {
+        if (!showDropdown || suggestions.length === 0) {
+            if (e.key === 'Escape') {
+                setShowDropdown(false);
             }
             return;
         }
 
-        setIsLoadingSuggestions(true);
-        try {
-            // Gọi AI để lấy sách liên quan
-            const response = await aiService.chat(value, 'search-query');
-            
-            // Extract sources từ response
-            const sources = response.sources || response?.data?.sources || [];
-            
-            if (sources && sources.length > 0) {
-                // Lấy identifiers từ sources
-                const identifiers = sources
-                    .map(source => source.identifier || source.bookId || source.id)
-                    .filter(Boolean);
-
-                if (identifiers.length > 0) {
-                    // Fetch full book data từ API (giống như chatbot)
-                    const booksData = await aiService.getBooksByIdentifiers(identifiers);
-                    const booksArray = Array.isArray(booksData) ? booksData : (booksData?.data || []);
-                    
-                    // Enrich sources với full book data
-                    const enrichedSources = sources.map((source, index) => {
-                        const matchedBook = booksArray.find(book => 
-                            (book.isbn || book.book_id) === (source.identifier || source.bookId || source.id)
-                        ) || booksArray[index];
-
-                        return {
-                            ...matchedBook,
-                            ...source,
-                            id: matchedBook?.book_id || matchedBook?.id || source.id,
-                        };
-                    }).filter(book => book !== null);
-
-                    // Cache results
-                    searchCache.current.set(trimmedValue, enrichedSources);
-
-                    // Gọi callback với search term và full book data
-                    if (onSearch) {
-                        onSearch(value, enrichedSources);
-                    }
-                } else {
-                     // Cache simple sources
-                    searchCache.current.set(trimmedValue, sources);
-
-                    // Không có identifiers, gửi sources như cũ
-                    if (onSearch) {
-                        onSearch(value, sources);
-                    }
+        switch (e.key) {
+            case 'ArrowDown':
+                e.preventDefault();
+                setSelectedIndex(prev =>
+                    prev < suggestions.length - 1 ? prev + 1 : 0
+                );
+                break;
+            case 'ArrowUp':
+                e.preventDefault();
+                setSelectedIndex(prev =>
+                    prev > 0 ? prev - 1 : suggestions.length - 1
+                );
+                break;
+            case 'Enter':
+                if (selectedIndex >= 0 && selectedIndex < suggestions.length) {
+                    e.preventDefault();
+                    handleSuggestionClick(suggestions[selectedIndex]);
                 }
-            } else {
-                // Không có sources, submit mà không sources
-                if (onSearch) {
-                    onSearch(value, []);
-                }
-            }
-        } catch (error) {
-            console.error('[SearchBar] Error submitting search:', error);
-            // Fallback: submit without sources
-            if (onSearch) {
-                onSearch(value, []);
-            }
-        } finally {
-            setIsLoadingSuggestions(false);
+                break;
+            case 'Escape':
+                e.preventDefault();
+                setShowDropdown(false);
+                break;
         }
     };
 
-    // Handle close button click - tắt chức năng search
+    // Close button
     const handleClose = () => {
+        setShowDropdown(false);
         if (onClose) {
             onClose();
         }
     };
 
+    // Click outside to close
+    useEffect(() => {
+        const handleClickOutside = (e) => {
+            if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
+                setShowDropdown(false);
+            }
+        };
+
+        if (showDropdown) {
+            document.addEventListener('mousedown', handleClickOutside);
+        }
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, [showDropdown]);
+
+    // Cleanup abort controller on unmount
+    useEffect(() => {
+        return () => {
+            if (abortControllerRef.current) {
+                abortControllerRef.current.abort();
+            }
+        };
+    }, []);
+
+    // ==========================================
+    // Render
+    // ==========================================
     return (
-        <div className={`relative ${className}`}>
+        <div className={`relative ${className}`} ref={dropdownRef}>
             <form
                 onSubmit={handleSubmit}
                 className={`
@@ -246,10 +271,12 @@ const SearchBar = ({
 
                 {/* Input Field */}
                 <input
+                    ref={inputRef}
                     type="text"
                     value={value}
                     onChange={handleChange}
-                    onFocus={() => value.trim().length >= 2 && setShowSuggestions(true)}
+                    onKeyDown={handleKeyDown}
+                    onFocus={() => value.trim() && suggestions.length > 0 && setShowDropdown(true)}
                     placeholder={placeholder}
                     className="
                         w-full py-3 pl-12 pr-12
@@ -275,7 +302,7 @@ const SearchBar = ({
                     "
                     aria-label="Đóng tìm kiếm"
                 >
-                    {isLoadingSuggestions ? (
+                    {isLoading ? (
                         <Loader2 size={18} className="animate-spin" />
                     ) : (
                         <X size={18} strokeWidth={2} />
@@ -283,46 +310,82 @@ const SearchBar = ({
                 </button>
             </form>
 
-            {/* Suggestions Dropdown */}
-            {showSuggestions && suggestions.length > 0 && (
-                <div
-                    ref={suggestionsRef}
-                    className="absolute top-full left-0 right-0 mt-2 bg-white border border-border rounded-2xl shadow-lg z-50 max-h-80 overflow-y-auto"
-                >
-                    <div className="p-2">
-                        <p className="text-xs font-semibold text-text-sub uppercase px-2 py-1 mb-1">
-                            Gợi ý từ AI
-                        </p>
-                        {suggestions.map((book, idx) => (
-                            <button
-                                key={`${book.id || idx}`}
-                                onClick={() => handleSuggestionClick(book)}
-                                className="w-full flex gap-2 p-2 hover:bg-gray-50 rounded-lg transition-colors mb-1 text-left"
-                            >
-                                {/* Book Cover */}
-                                <img
-                                    src={getBookCoverUrl(book.cover_url || book.coverImage)}
-                                    alt={book.title}
-                                    onError={(e) => {
-                                        e.target.onerror = null;
-                                        e.target.src = FALLBACK_IMAGES.bookPlaceholder;
-                                    }}
-                                    className="w-10 h-14 object-cover rounded"
-                                />
-                                {/* Book Info */}
-                                <div className="flex-1 min-w-0">
-                                    <h4 className="text-sm font-medium text-text-primary line-clamp-1">
-                                        {book.title}
-                                    </h4>
-                                    <p className="text-xs text-text-sub line-clamp-1">
-                                        {Array.isArray(book.authors)
-                                            ? book.authors.map(a => a.name).join(', ')
-                                            : book.author || 'Unknown'}
-                                    </p>
+            {/* Dropdown Suggestions - TEMPORARILY DISABLED */}
+            {false && showDropdown && (
+                <div className="absolute top-full left-0 right-0 mt-2 bg-white border border-border rounded-2xl shadow-lg z-50 overflow-hidden">
+                    {isLoading && suggestions.length === 0 ? (
+                        // Loading skeleton
+                        <div className="p-3 space-y-2">
+                            {[1, 2, 3].map(i => (
+                                <div key={i} className="flex gap-3 animate-pulse">
+                                    <div className="w-10 h-14 bg-gray-200 rounded" />
+                                    <div className="flex-1 space-y-2">
+                                        <div className="h-4 bg-gray-200 rounded w-3/4" />
+                                        <div className="h-3 bg-gray-200 rounded w-1/2" />
+                                    </div>
                                 </div>
-                            </button>
-                        ))}
-                    </div>
+                            ))}
+                        </div>
+                    ) : suggestions.length > 0 ? (
+                        // Results list
+                        <div className="max-h-80 overflow-y-auto">
+                            <div className="p-2">
+                                <p className="text-xs font-semibold text-text-sub uppercase px-2 py-1 mb-1">
+                                    Kết quả tìm kiếm
+                                </p>
+                                {suggestions.map((book, idx) => (
+                                    <button
+                                        key={book.book_id || book.id || idx}
+                                        onClick={() => handleSuggestionClick(book)}
+                                        className={`
+                                            w-full flex gap-3 p-2 rounded-lg transition-colors text-left
+                                            ${selectedIndex === idx
+                                                ? 'bg-primary/10 ring-1 ring-primary/20'
+                                                : 'hover:bg-gray-50'
+                                            }
+                                        `}
+                                    >
+                                        {/* Book Cover */}
+                                        <img
+                                            src={getBookCoverUrl(book.cover_url || book.coverImage || book.image)}
+                                            alt={book.title}
+                                            onError={(e) => {
+                                                e.target.onerror = null;
+                                                e.target.src = FALLBACK_IMAGES.bookPlaceholder;
+                                            }}
+                                            className="w-10 h-14 object-cover rounded shadow-sm"
+                                        />
+                                        {/* Book Info */}
+                                        <div className="flex-1 min-w-0">
+                                            <h4 className="text-sm font-medium text-text-primary line-clamp-1">
+                                                <HighlightText text={book.title} query={value} />
+                                            </h4>
+                                            <p className="text-xs text-text-sub line-clamp-1">
+                                                {book.authors?.[0]?.name || book.author || 'Không rõ tác giả'}
+                                            </p>
+                                            {book.categories?.[0]?.name && (
+                                                <span className="inline-block mt-1 text-[10px] bg-gray-100 text-text-sub px-1.5 py-0.5 rounded">
+                                                    {book.categories[0].name}
+                                                </span>
+                                            )}
+                                        </div>
+                                    </button>
+                                ))}
+                            </div>
+                            {/* Footer hint */}
+                            <div className="border-t border-gray-100 px-3 py-2 bg-gray-50 text-xs text-text-sub">
+                                <kbd className="px-1.5 py-0.5 bg-white rounded border border-gray-200 font-mono text-[10px]">Enter</kbd>
+                                {' '}để xem tất cả kết quả
+                            </div>
+                        </div>
+                    ) : !isLoading && value.trim() ? (
+                        // Empty state
+                        <div className="p-6 text-center text-text-sub">
+                            <Search size={32} className="mx-auto mb-2 opacity-30" />
+                            <p className="text-sm">Không tìm thấy sách phù hợp</p>
+                            <p className="text-xs mt-1">Thử tìm với từ khóa khác</p>
+                        </div>
+                    ) : null}
                 </div>
             )}
         </div>
@@ -330,3 +393,4 @@ const SearchBar = ({
 };
 
 export default SearchBar;
+

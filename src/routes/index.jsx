@@ -54,19 +54,23 @@ import AdminProfile from '../pages/admin/account/AdminProfile';
 // Utilities
 import ScrollToTop from '../components/utils/ScrollToTop';
 
+import { PrefetchProvider } from '@/contexts/PrefetchContext';
+
 /**
  * Root Component - Bao bọc toàn bộ ứng dụng trong các context cần thiết.
  * Việc đặt Provider bên trong cấu trúc Router giúp giải quyết triệt để các lỗi runtime
  * liên quan đến việc hook được sử dụng bên ngoài provider khi định tuyến thay đổi.
  */
 const Root = () => (
-    <AuthProvider>
-        <BookDetailProvider>
-            <ScrollToTop />
-            <Outlet />
-            <Toaster position="top-right" reverseOrder={false} />
-        </BookDetailProvider>
-    </AuthProvider>
+    <PrefetchProvider>
+        <AuthProvider>
+            <BookDetailProvider>
+                <ScrollToTop />
+                <Outlet />
+                <Toaster position="top-right" reverseOrder={false} />
+            </BookDetailProvider>
+        </AuthProvider>
+    </PrefetchProvider>
 );
 
 // ==========================================

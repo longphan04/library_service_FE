@@ -63,7 +63,7 @@ const CategoryBookListSkeleton = () => (
             {Array.from({ length: 8 }).map((_, i) => (
                 <div key={i} className="animate-pulse">
                     {/* Skeleton ảnh bìa sách - tỷ lệ 3:4 */}
-                    <div className="aspect-3/4 bg-border rounded-lg mb-2"></div>
+                    <div className="aspect-[3/4] bg-border rounded-lg mb-2"></div>
                     {/* Skeleton tiêu đề */}
                     <div className="h-4 bg-border rounded w-3/4 mb-1"></div>
                     {/* Skeleton tên tác giả */}

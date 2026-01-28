@@ -85,7 +85,7 @@ const BookshelfSkeleton = () => (
     <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4 sm:gap-6">
         {Array.from({ length: 8 }).map((_, i) => (
             <div key={i} className="animate-pulse">
-                <div className="aspect-3/4 bg-border rounded-lg mb-2"></div>
+                <div className="aspect-[3/4] bg-border rounded-lg mb-2"></div>
                 <div className="h-4 bg-border rounded w-3/4 mb-1"></div>
                 <div className="h-3 bg-border rounded w-1/2"></div>
             </div>
@@ -168,20 +168,18 @@ const BookshelfItem = ({ hold, onRemove, isSelected, onToggleSelect }) => {
     return (
         <div className="relative group flex flex-col h-full">
             {/* Checkbox chọn sách - Ẩn mặc định, hiển thị on hover hoặc khi được chọn */}
-            <div className={`absolute top-2 left-2 z-20 transition-opacity duration-300 ${
-                isSelected 
-                    ? 'opacity-100' 
+            <div className={`absolute top-2 left-2 z-20 transition-opacity duration-300 ${isSelected
+                    ? 'opacity-100'
                     : 'opacity-0 group-hover:opacity-100'
-            }`}>
+                }`}>
                 <input
                     type="checkbox"
                     checked={isSelected}
                     onChange={() => onToggleSelect(id)}
-                    className={`w-5 h-5 rounded-md cursor-pointer shadow-sm transition-all duration-300 ${
-                        isSelected
+                    className={`w-5 h-5 rounded-md cursor-pointer shadow-sm transition-all duration-300 ${isSelected
                             ? 'bg-primary border-primary checked:bg-primary checked:border-primary accent-primary'
                             : 'bg-white/90 border border-gray-300 hover:border-primary hover:bg-primary/5'
-                    }`}
+                        }`}
                 />
             </div>
 

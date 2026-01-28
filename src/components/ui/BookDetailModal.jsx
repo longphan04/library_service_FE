@@ -4,7 +4,7 @@
 // Vị trí: src/components/ui/BookDetailModal.jsx
 // ==========================================
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { X, RefreshCw } from 'lucide-react';
 import Button from './Button';
@@ -53,6 +53,9 @@ const BookDetailModal = ({
     onClose,
     bookId,
 }) => {
+    // Ref to track current bookId for race condition handling
+    const currentBookIdRef = useRef(bookId);
+
     // Trạng thái dữ liệu sách
     const [book, setBook] = useState(null);
     const [loading, setLoading] = useState(true);
@@ -74,50 +77,80 @@ const BookDetailModal = ({
     // ==========================================
     // FetchBook: Lấy dữ liệu sách từ API
     // ==========================================
-    const fetchBook = async () => {
-        if (!bookId) return;
-
-        setLoading(true);
-        setError(null);
-
-        try {
-            const response = await bookService.getById(bookId);
-
-            // Xử lý các định dạng phản hồi khác nhau của API
-            const bookData = response.data || response;
-
-            // Chuyển đổi dữ liệu để khớp với định dạng hiển thị
-            setBook({
-                id: bookData.book_id || bookData.id || bookData._id,
-                title: bookData.title || 'Không rõ',
-                author: bookData.authors?.[0]?.name || bookData.author?.name || bookData.authorName || 'Không rõ',
-                coverImage: getBookCoverUrl(
-                    bookData.cover_url || bookData.coverImage || bookData.image || bookData.thumbnail
-                ),
-                publishYear: bookData.publish_year || bookData.publishYear || bookData.year || 'N/A',
-                categoryId: bookData.categories?.[0]?.category_id || bookData.category?.id || bookData.categoryId,
-                categoryName: bookData.categories?.[0]?.name || bookData.category?.name || bookData.categoryName || 'Không phân loại',
-                availableCopies: bookData.available_copies || bookData.availableCopies || bookData.available || 0,
-                totalCopies: bookData.total_copies || bookData.totalCopies || bookData.total || 0,
-                description: bookData.description || 'Không có mô tả',
-                publisher: bookData.publisher?.name || bookData.publisherName,
-                isbn: bookData.isbn,
-            });
-        } catch (err) {
-            console.error('Lỗi khi tải dữ liệu sách:', err);
-            setError(err.message || 'Không thể tải thông tin sách');
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    // Tải dữ liệu khi mở modal hoặc thay đổi ID sách
     useEffect(() => {
-        if (isOpen && bookId) {
-            setBook(null); // Xóa dữ liệu cũ để tránh hiển thị sai lệch khi đang tải
-            fetchBook();
+        // Update ref to current bookId
+        currentBookIdRef.current = bookId;
+
+        if (!isOpen || !bookId) return;
+
+        // Create AbortController for this fetch
+        const abortController = new AbortController();
+
+        const fetchBook = async () => {
+            // Reset state for new book
+            setBook(null);
+            setLoading(true);
             setError(null);
-        }
+
+            try {
+                const response = await bookService.getById(bookId);
+
+                // Check if this request is still relevant (bookId hasn't changed)
+                if (currentBookIdRef.current !== bookId) {
+                    console.log('[BookDetailModal] Stale response ignored for bookId:', bookId);
+                    return;
+                }
+
+                // Xử lý các định dạng phản hồi khác nhau của API
+                let bookData = response.data || response;
+                if (bookData.book) {
+                    bookData = bookData.book;
+                } else if (bookData.data) {
+                    bookData = bookData.data;
+                }
+
+                console.log('[BookDetailModal] Raw API Response:', response);
+                console.log('[BookDetailModal] Processed bookData:', bookData);
+
+                // Chuyển đổi dữ liệu để khớp với định dạng hiển thị
+                setBook({
+                    id: bookData.book_id || bookData.id || bookData._id,
+                    title: bookData.title || 'Không rõ',
+                    author: bookData.authors?.[0]?.name || bookData.author?.name || bookData.authorName || 'Không rõ',
+                    coverImage: getBookCoverUrl(
+                        bookData.cover_url || bookData.coverImage || bookData.image || bookData.thumbnail
+                    ),
+                    publishYear: bookData.publish_year || bookData.publishYear || bookData.year || bookData.publication_year || bookData.publicationYear || 'N/A',
+                    categoryId: bookData.categories?.[0]?.category_id || bookData.category?.id || bookData.categoryId,
+                    categoryName: bookData.categories?.[0]?.name || bookData.category?.name || bookData.categoryName || 'Không phân loại',
+                    availableCopies: bookData.available_copies || bookData.availableCopies || bookData.available || 0,
+                    totalCopies: bookData.total_copies || bookData.totalCopies || bookData.total || 0,
+                    description: bookData.description || bookData.summary || bookData.desc || 'Không có mô tả',
+                    publisher: bookData.publisher?.name || bookData.publisherName || bookData.publisher,
+                    isbn: bookData.isbn,
+                });
+            } catch (err) {
+                // Ignore abort errors
+                if (err.name === 'AbortError') {
+                    console.log('[BookDetailModal] Fetch aborted for bookId:', bookId);
+                    return;
+                }
+                console.error('Lỗi khi tải dữ liệu sách:', err);
+                setError(err.message || 'Không thể tải thông tin sách');
+            } finally {
+                // Only set loading false if this is still the current request
+                if (currentBookIdRef.current === bookId) {
+                    setLoading(false);
+                }
+            }
+        };
+
+        fetchBook();
+
+        // Cleanup: abort fetch on unmount or bookId/isOpen change
+        return () => {
+            abortController.abort();
+        };
     }, [isOpen, bookId]);
 
     // ==========================================

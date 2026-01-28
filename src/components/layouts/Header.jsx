@@ -8,6 +8,8 @@ import { useState, useRef, useEffect } from 'react';
 import { Link, NavLink, useNavigate } from 'react-router-dom';
 import userService from '../../services/user.service';
 import authService from '../../services/auth.service';
+import categoryService from '../../services/category.service';
+import usePrefetch from '../../hooks/usePrefetch';
 import {
     Search,
     User,
@@ -62,6 +64,7 @@ const DEFAULT_AVATAR = FALLBACK_IMAGES.avatarPlaceholder;
 // ==========================================
 const Header = () => {
     const navigate = useNavigate();
+    const { prefetch } = usePrefetch();
 
     // Get user data from AuthContext (fetched from API on mount)
     const { isAuthenticated, user, isLoading: isAuthLoading, logout: authLogout, updateUser } = useAuth();
@@ -113,11 +116,11 @@ const Header = () => {
             // Nếu có sources từ AI, truyền vào state
             const searchParams = new URLSearchParams();
             searchParams.set('q', value);
-            
+
             if (sources && sources.length > 0) {
                 // Pass sources data để trang search hiển thị
-                navigate(`/search?q=${encodeURIComponent(value)}`, { 
-                    state: { sources } 
+                navigate(`/search?q=${encodeURIComponent(value)}`, {
+                    state: { sources }
                 });
             } else {
                 navigate(`/search?q=${encodeURIComponent(value)}`);
@@ -244,6 +247,16 @@ const Header = () => {
                                 <NavLink
                                     key={item.path}
                                     to={item.path}
+                                    onMouseEnter={() => {
+                                        if (item.path === '/categories') {
+                                            prefetch('categories-all', () => categoryService.getAll());
+                                        }
+                                    }}
+                                    onFocus={() => {
+                                        if (item.path === '/categories') {
+                                            prefetch('categories-all', () => categoryService.getAll());
+                                        }
+                                    }}
                                     className={({ isActive }) =>
                                         `text-sm font-medium transition-colors hover:text-primary ${isActive ? 'text-primary' : 'text-text-primary'
                                         }`

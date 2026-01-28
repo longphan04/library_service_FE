@@ -2,6 +2,8 @@ import { useState, useEffect, memo, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useBookDetail } from '@/contexts/BookDetailContext';
 import { FALLBACK_IMAGES, getBookCoverUrl } from '@/utils/imageUrl';
+import usePrefetch from '@/hooks/usePrefetch';
+import bookService from '@/services/book.service';
 
 // ==========================================
 // Hằng số (Constants)
@@ -42,6 +44,7 @@ const BookCard = memo(function BookCard({
     // ==========================================
     const { openBookDetail } = useBookDetail();
     const navigate = useNavigate();
+    const { prefetch } = usePrefetch();
 
     // ==========================================
     // Trạng thái hình ảnh (Image State)
@@ -92,6 +95,12 @@ const BookCard = memo(function BookCard({
         }
     };
 
+    const handlePrefetch = useCallback(() => {
+        if (id) {
+            prefetch(`book-detail-${id}`, () => bookService.getById(id));
+        }
+    }, [id, prefetch]);
+
     // ==========================================
     // Component hiển thị nội dung bên trong card
     // ==========================================
@@ -138,6 +147,9 @@ const BookCard = memo(function BookCard({
     return (
         <article
             className={`group bg-white rounded-lg shadow-md overflow-hidden transition-all duration-300 hover:shadow-lg ${className}`}
+            onMouseEnter={handlePrefetch}
+            onFocus={handlePrefetch}
+            onMouseDown={handlePrefetch}
         >
             <div
                 onClick={handleCardClick}

@@ -179,7 +179,7 @@ const CategoriesPage = () => {
                             <div className="h-8 bg-border rounded w-1/3 mb-8" />
                             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 grid-rows-2 gap-4 sm:gap-6">
                                 {Array.from({ length: ITEMS_PER_PAGE }).map((_, i) => (
-                                    <div key={i} className="aspect-3/2 bg-border rounded-xl" />
+                                    <div key={i} className="aspect-[3/2] bg-border rounded-xl" />
                                 ))}
                             </div>
                         </div>
