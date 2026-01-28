@@ -201,16 +201,6 @@ export default function AddBookForm({ isOpen, onClose, bookToEdit, onSave }) {
 
                                             {showAuthorDropdown && (
                                                 <div className="absolute top-full left-0 right-0 bg-white border-2 border-gray-300 rounded-xl shadow-2xl mt-2 z-20">
-                                                    <input
-                                                        value={authorInput}
-                                                        onChange={(e) => {
-                                                            setAuthorInput(e.target.value);
-                                                            setShowAuthorInput(e.target.value.length > 0);
-                                                        }}
-                                                        placeholder="Tìm tác giả..."
-                                                        className="w-full p-3 border-b-2 border-gray-200 text-base focus:outline-none"
-                                                        onClick={(e) => e.stopPropagation()}
-                                                    />
                                                     <div className="max-h-56 overflow-y-auto">
                                                         {filteredAuthors.slice().map(a => (
                                                             <div

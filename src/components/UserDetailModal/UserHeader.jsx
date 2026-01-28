@@ -1,3 +1,4 @@
+import { IMAGE_BASE_URL } from '@/config/constants';
 import InfoRow from "./InfoRow";
 
 export default function UserHeader({ user, status }) {
@@ -6,7 +7,7 @@ export default function UserHeader({ user, status }) {
             <div className="w-28 h-28 rounded-full bg-gray-300 flex items-center justify-center text-4xl shrink-0 overflow-hidden border-2 border-primary/20">
                 {user.avatar ? (
                     <img
-                        src={`https://work-garage-sufficient-pgp.trycloudflare.com/public/${user.avatar}`}
+                        src={`${IMAGE_BASE_URL}/${user.avatar}`}
                         alt={user.name}
                         className="w-full h-full object-cover"
                         onError={(e) => {

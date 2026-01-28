@@ -119,6 +119,10 @@ const HotCategorySection = ({ className = '' }) => {
     /** Danh sách sách của category đang chọn */
     const [books, setBooks] = useState([]);
 
+    /** Pagination State */
+    const [currentPage, setCurrentPage] = useState(1);
+    const [totalPages, setTotalPages] = useState(0);
+
     /** Loading states */
     const [loading, setLoading] = useState(true);
     const [booksLoading, setBooksLoading] = useState(false);
@@ -159,8 +163,6 @@ const HotCategorySection = ({ className = '' }) => {
         }
     }, []);
 
-    // ... (rest of code)
-
     // ==========================================
     // Effects
     // ==========================================
@@ -170,14 +172,7 @@ const HotCategorySection = ({ className = '' }) => {
         fetchHotCategories();
     }, [fetchHotCategories]);
 
-    // Auto-select first category when data loads (Handling in fetchHotCategories mostly, but ensuring sync here if needed)
-    useEffect(() => {
-        if (!selectedCategory && hotCategories.length > 0) {
-            setSelectedCategory(hotCategories[0]);
-        }
-    }, [hotCategories, selectedCategory]);
-
-    // Fetches books when a category is selected
+    // Fetches books when a category is selected or page changes
     useEffect(() => {
         const fetchBooks = async () => {
             if (!selectedCategory) return;
@@ -185,10 +180,16 @@ const HotCategorySection = ({ className = '' }) => {
             try {
                 const response = await bookService.getAll({
                     categoryId: selectedCategory.id,
-                    limit: BOOKS_LIMIT
+                    limit: BOOKS_LIMIT,
+                    page: currentPage
                 });
+
+                // Handle different response structures
                 const data = response.books || response.data || [];
+                const total = response.totalPages || (response.total ? Math.ceil(response.total / BOOKS_LIMIT) : 0) || 1;
+
                 setBooks(data);
+                setTotalPages(total);
             } catch (err) {
                 console.error('Error fetching books:', err);
                 setBooks([]);
@@ -198,10 +199,26 @@ const HotCategorySection = ({ className = '' }) => {
         };
 
         fetchBooks();
-    }, [selectedCategory]);
+    }, [selectedCategory, currentPage]);
 
     const handleCategoryClick = (category) => {
-        setSelectedCategory(category);
+        if (selectedCategory?.id !== category.id) {
+            setSelectedCategory(category);
+            setCurrentPage(1); // Reset page when category changes
+        }
+    };
+
+    // Pagination Handlers
+    const handlePrevPage = () => {
+        if (currentPage > 1) {
+            setCurrentPage(prev => prev - 1);
+        }
+    };
+
+    const handleNextPage = () => {
+        if (currentPage < totalPages) {
+            setCurrentPage(prev => prev + 1);
+        }
     };
 
     if (loading) {
@@ -319,6 +336,37 @@ const HotCategorySection = ({ className = '' }) => {
                                         );
                                     })}
                                 </div>
+
+                                {/* Pagination Controls */}
+                                {totalPages > 1 && (
+                                    <div className="flex justify-center items-center gap-4 mt-6">
+                                        <button
+                                            onClick={handlePrevPage}
+                                            disabled={currentPage === 1}
+                                            className="p-2 rounded-full hover:bg-bg-hover text-text-secondary disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                                            aria-label="Previous page"
+                                        >
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                                <path d="M15 18l-6-6 6-6" />
+                                            </svg>
+                                        </button>
+
+                                        <span className="text-sm font-medium text-text-secondary">
+                                            Trang {currentPage} / {totalPages}
+                                        </span>
+
+                                        <button
+                                            onClick={handleNextPage}
+                                            disabled={currentPage === totalPages}
+                                            className="p-2 rounded-full hover:bg-bg-hover text-text-secondary disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                                            aria-label="Next page"
+                                        >
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                                <path d="M9 18l6-6-6-6" />
+                                            </svg>
+                                        </button>
+                                    </div>
+                                )}
                             </div>
                         ) : (
                             /* Empty state */

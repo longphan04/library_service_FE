@@ -1,8 +1,8 @@
 import { useState, useEffect, useCallback } from "react";
 import axios from "@/utils/axiosConfig";
 
-const API_URL = "https://work-garage-sufficient-pgp.trycloudflare.com/book";
-const CATEGORY_API_URL = "https://work-garage-sufficient-pgp.trycloudflare.com/category";
+const API_PATH = "/book";
+const CATEGORY_API_PATH = "/category";
 
 export default function useBookManagement() {
     const [books, setBooks] = useState([]);
@@ -34,7 +34,7 @@ export default function useBookManagement() {
 
     const openEditBook = async (bookId) => {
         try {
-            const res = await axios.get(`${API_URL}/${bookId}`);
+            const res = await axios.get(`${API_PATH}/${bookId}`);
             setEditingBook(res.data);
         } catch (e) {
             console.error("Lỗi load book:", e);
@@ -45,7 +45,7 @@ export default function useBookManagement() {
     const fetchBooks = useCallback(async (isMounted) => {
         setLoading(true);
         try {
-            const res = await axios.get(API_URL, {
+            const res = await axios.get(API_PATH, {
                 params: {
                     q: debouncedSearchTerm || undefined,
                     categoryId: selectedCategory !== "all" ? selectedCategory : undefined,
@@ -90,7 +90,7 @@ export default function useBookManagement() {
     // api lọc sách
     useEffect(() => {
         axios
-            .get(CATEGORY_API_URL)
+            .get(CATEGORY_API_PATH)
             .then((res) => {
                 console.log("📂 Categories Response:", res.data);
 
@@ -153,7 +153,7 @@ export default function useBookManagement() {
 
         try {
             await Promise.all(
-                ids.map(id => axios.delete(`${API_URL}/${id}`))
+                ids.map(id => axios.delete(`${API_PATH}/${id}`))
             );
 
             setBooks(prev => prev.filter(b => !ids.includes(String(b.book_id))));

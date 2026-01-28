@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import Chart from "react-apexcharts";
 import { buildTooltip, buildTooltipCompareTwo } from "../../../utils/hs-apexcharts-helpers";
 import AdminTabs from "@/components/ui/AdminTabs";
-import { getBorrowReturnStats, getTicketFlowStats } from "../../../services/dashboard.service";
+import { getBorrowApprovedStats, getTicketFlowStats } from "../../../services/dashboard.service";
 
 export default function Statistics() {
     const navigate = useNavigate();

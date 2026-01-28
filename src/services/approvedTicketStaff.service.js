@@ -1,6 +1,7 @@
 import axios from "@/utils/axiosConfig";
+import { IMAGE_BASE_URL } from "@/config/constants";
 
-const API_BASE = "https://work-garage-sufficient-pgp.trycloudflare.com";
+const API_BASE = ""; // Relative to axios baseURL
 
 export const approvedTicketStaffService = {
     // Lấy danh sách ticket APPROVED (để duyệt trả sách)
@@ -47,7 +48,7 @@ export const approvedTicketStaffService = {
                     id: item.copy.id, // ID của bản sao
                     bookId: item.book.book_id,
                     name: item.book.title,
-                    image: item.book.cover_url ? `${API_BASE}/public/${item.book.cover_url}` : null,
+                    image: item.book.cover_url ? `${IMAGE_BASE_URL}/${item.book.cover_url}` : null,
                     status: item.status.toLowerCase(),
                     copyNote: item.copy.note,
                     author: "—", // API chưa trả về tác giả

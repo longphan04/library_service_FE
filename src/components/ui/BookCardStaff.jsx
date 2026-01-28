@@ -1,3 +1,4 @@
+import { IMAGE_BASE_URL } from '@/config/constants';
 import { FALLBACK_IMAGES, getBookCoverUrl } from '../../utils/imageUrl';
 
 export default function BookCard({ book, isChecked, onCheckChange, onEdit }) {
@@ -9,7 +10,7 @@ export default function BookCard({ book, isChecked, onCheckChange, onEdit }) {
           <img
             src={
               book.cover_url
-                ? `https://work-garage-sufficient-pgp.trycloudflare.com/public/${book.cover_url}`
+                ? `${IMAGE_BASE_URL}/${book.cover_url}`
                 : FALLBACK_IMAGES.book
             }
             alt={book.title}

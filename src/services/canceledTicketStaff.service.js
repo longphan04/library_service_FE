@@ -1,6 +1,7 @@
 import axios from "@/utils/axiosConfig";
+import { IMAGE_BASE_URL } from "@/config/constants";
 
-const API_BASE = "https://work-garage-sufficient-pgp.trycloudflare.com";
+const API_BASE = "";
 
 export const canceledTicketStaffService = {
     // Lấy danh sách ticket CANCELLED
@@ -56,7 +57,7 @@ export const canceledTicketStaffService = {
                     note: item.copy.note,
                     bookId: item.book.book_id,
                     title: item.book.title,
-                    cover: item.book.cover_url ? `${API_BASE}/public/${item.book.cover_url}` : null,
+                    cover: item.book.cover_url ? `${IMAGE_BASE_URL}/${item.book.cover_url}` : null,
                     status: item.status,
                 })),
 

@@ -3,7 +3,7 @@ import { useState } from "react";
 import axios from "@/utils/axiosConfig";
 import { toast } from "react-hot-toast";
 
-const API_URL = "https://work-garage-sufficient-pgp.trycloudflare.com/notification/";
+const API_URL = "/notification/";
 
 export default function useNotiStaff() {
     const [notifications, setNotifications] = useState([]);
