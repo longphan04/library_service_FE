@@ -9,7 +9,7 @@ export default function BookCard({ book, isChecked, onCheckChange, onEdit }) {
           <img
             src={
               book.cover_url
-                ? `https://place-potentially-downloaded-lyrics.trycloudflare.com/public/${book.cover_url}`
+                ? `https://work-garage-sufficient-pgp.trycloudflare.com/public/${book.cover_url}`
                 : FALLBACK_IMAGES.book
             }
             alt={book.title}

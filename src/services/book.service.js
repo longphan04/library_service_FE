@@ -22,44 +22,51 @@
 import axios, { getToken } from './axios';
 
 // ==========================================
+// Caching System
+// ==========================================
+
+const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
+const bookCache = new Map(); // Key: Identifier, Value: { data, timestamp }
+
+const getFromCache = (key) => {
+    if (!key) return null;
+    const cacheKey = String(key);
+    if (bookCache.has(cacheKey)) {
+        const { data, timestamp } = bookCache.get(cacheKey);
+        if (Date.now() - timestamp < CACHE_TTL) {
+            // console.log(`[BookCache] Hit: ${cacheKey}`);
+            return data;
+        }
+        bookCache.delete(cacheKey);
+    }
+    return null;
+};
+
+const setCache = (key, data) => {
+    if (!key || !data) return;
+    const cacheKey = String(key);
+    const entry = { data, timestamp: Date.now() };
+    
+    bookCache.set(cacheKey, entry);
+    // Also cache by other standard identifiers if available
+    if (data.book_id && String(data.book_id) !== cacheKey) {
+        bookCache.set(String(data.book_id), entry);
+    }
+    if (data.isbn && data.isbn !== cacheKey) {
+        bookCache.set(data.isbn, entry);
+    }
+};
+
+// ==========================================
 // getAll - Lấy danh sách sách
 // ==========================================
 
 /**
  * Lấy danh sách sách với các tùy chọn filter, search, sort, pagination
- * 
- * @param {Object} params - Các tham số truy vấn
- * @param {string} [params.category] - ID danh mục để lọc sách
- * @param {string} [params.keyword] - Từ khóa tìm kiếm (tên sách hoặc tác giả)
- * @param {string} [params.sort] - Cách sắp xếp:
- *                                  - 'title': Theo tên A-Z
- *                                  - '-title': Theo tên Z-A
- *                                  - 'createdAt': Cũ nhất trước
- *                                  - '-createdAt': Mới nhất trước
- * @param {number} [params.page] - Số trang cần lấy (bắt đầu từ 1)
- * @param {number} [params.limit] - Số sách mỗi trang
- * 
- * @returns {Promise<Object>} Response object chứa:
- *   - data/books: Mảng sách
- *   - total: Tổng số sách
- *   - page: Trang hiện tại
- *   - totalPages: Tổng số trang
- * 
- * @example
- * // Lấy 12 sách đầu tiên
- * const result = await bookService.getAll({ limit: 12 });
- * 
- * // Lấy sách theo danh mục với tìm kiếm
- * const result = await bookService.getAll({
- *   category: 'abc123',
- *   keyword: 'Việt Nam',
- *   page: 1,
- *   limit: 12
- * });
+ * Có sử dụng caching để tối ưu performance
  */
 export const getAll = async (params = {}) => {
     // Lọc bỏ các params có giá trị undefined, null hoặc chuỗi rỗng
-    // Điều này giúp tránh gửi params không cần thiết lên server
     const cleanParams = Object.entries(params).reduce((acc, [key, value]) => {
         if (value !== undefined && value !== null && value !== '') {
             acc[key] = value;
@@ -67,14 +74,39 @@ export const getAll = async (params = {}) => {
         return acc;
     }, {});
 
+    // Cache key dựa trên params
+    const cacheKey = `getAll:${JSON.stringify(cleanParams)}`;
+    
+    // Check cache (trừ khi có yeu cầu force refresh - nhưng ở đây chưa implement params.forceRefresh)
+    const cached = getFromCache(cacheKey);
+    if (cached) return cached;
+
     // DEBUG: Log the actual params being sent
-    console.log('[bookService.getAll] 📤 Request params:', cleanParams);
+    // console.log('[bookService.getAll] 📤 Request params:', cleanParams);
 
     // Gọi API GET /book với các query params
     const response = await axios.get('/book', { params: cleanParams });
 
     // DEBUG: Log response
-    console.log('[bookService.getAll] 📥 Response:', response.data);
+    // console.log('[bookService.getAll] 📥 Response:', response.data);
+
+    // Save to cache
+    setCache(cacheKey, response.data);
+
+    // Cache individual books if possible (nếu response trả về list books)
+    let booksList = [];
+    if (Array.isArray(response.data)) {
+        booksList = response.data;
+    } else if (response.data?.data && Array.isArray(response.data.data)) {
+        booksList = response.data.data;
+    } else if (response.data?.books && Array.isArray(response.data.books)) {
+        booksList = response.data.books;
+    }
+
+    booksList.forEach(book => {
+        if (book.book_id) setCache(book.book_id, book);
+        if (book.isbn) setCache(book.isbn, book);
+    });
 
     // Trả về data từ response
     return response.data;
@@ -105,9 +137,125 @@ export const getAll = async (params = {}) => {
  * console.log(book.title); // "Lịch sử Việt Nam"
  */
 export const getById = async (id) => {
+    // Check cache first
+    const cached = getFromCache(id);
+    if (cached) return cached;
+
     // Gọi API GET /book/:id
     const response = await axios.get(`/book/${id}`);
+    
+    // Save to cache
+    setCache(id, response.data);
+    
     return response.data;
+};
+
+// ==========================================
+// getByIsbn - Lấy chi tiết sách theo ISBN
+// ==========================================
+
+/**
+ * Lấy thông tin chi tiết của một cuốn sách theo ISBN
+ * Sử dụng cho tính năng tìm kiếm sách từ AI response (thường trả về ISBN)
+ * 
+ * @param {string} isbn - ISBN của sách cần lấy
+ * 
+ * @returns {Promise<Object>} Thông tin chi tiết sách
+ * 
+ * @example
+ * const book = await bookService.getByIsbn('9781794217010');
+ */
+export const getByIsbn = async (isbn) => {
+    // Check cache first
+    const cached = getFromCache(isbn);
+    if (cached) return cached;
+
+    // Gọi API GET /book?isbn=xxx (search theo ISBN)
+    const response = await axios.get('/book', { params: { isbn } });
+    
+    let bookData = null;
+
+    // API trả về mảng books, lấy cái đầu tiên nếu có
+    if (response.data && Array.isArray(response.data)) {
+        if (response.data.length > 0) {
+            bookData = response.data[0];
+        }
+    }
+    // Hoặc nếu API trả về object với data field
+    else if (response.data && response.data.data && Array.isArray(response.data.data)) {
+        if (response.data.data.length > 0) {
+            bookData = response.data.data[0];
+        }
+    } else {
+        bookData = response.data;
+    }
+
+    if (bookData) {
+        setCache(isbn, bookData);
+        return bookData;
+    }
+
+    throw new Error(`Book not found with ISBN: ${isbn}`);
+};
+
+// ==========================================
+// getBooksByIdentifiers - Batch fetch sách
+// ==========================================
+
+/**
+ * Lấy danh sách sách từ danh sách identifiers (ISBN hoặc ID)
+ * Có sử dụng caching để giảm số request
+ * 
+ * @param {Array<string>} ids - Danh sách ISBN/ID
+ * @returns {Promise<Array>} Danh sách sách chi tiết
+ */
+export const getBooksByIdentifiers = async (ids) => {
+    if (!Array.isArray(ids) || ids.length === 0) return [];
+    
+    const uniqueIds = [...new Set(ids)];
+    const result = [];
+    const missingIds = [];
+
+    // 1. Check cache first
+    uniqueIds.forEach(id => {
+        const cached = getFromCache(id);
+        if (cached) {
+            result.push(cached);
+        } else {
+            missingIds.push(id);
+        }
+    });
+
+    // 2. Fetch missing items if any
+    if (missingIds.length > 0) {
+        try {
+            // console.log(`[BookService] Batch fetching ${missingIds.length} items`);
+            const response = await axios.post('/book/identifier', { ids: missingIds });
+            
+            let fetchedBooks = [];
+            if (Array.isArray(response.data)) {
+                fetchedBooks = response.data;
+            } else if (response.data?.data && Array.isArray(response.data.data)) {
+                fetchedBooks = response.data.data;
+            }
+
+            // 3. Update cache
+            fetchedBooks.forEach(book => {
+                // Determine primary key (ID) and secondary key (ISBN)
+                if (book.book_id) setCache(book.book_id, book);
+                if (book.isbn) setCache(book.isbn, book);
+                
+                result.push(book);
+            });
+        } catch (error) {
+            console.error('[BookService] Batch fetch error:', error);
+            // Fallback: try individual fetch if batch fails? 
+            // Or just return what we currently have + error propagation?
+            // For now, return what we have to not break UI completely
+        }
+    }
+
+    return result;
 };
 
 // ==========================================
@@ -266,6 +414,8 @@ export const parseQueryString = (search) => {
 const bookService = {
     getAll,           // Lấy danh sách sách
     getById,          // Lấy chi tiết sách
+    getByIsbn,        // Lấy chi tiết sách theo ISBN
+    getBooksByIdentifiers, // Batch fetch identifiers
     getBookCopies,    // Lấy danh sách bản sao
     getRecentBooks,   // Lấy sách mới thêm
     getRecommendations, // Lấy sách đề xuất

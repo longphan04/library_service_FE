@@ -154,7 +154,7 @@ export default function BookManagement() {
   // Xử lý click nút "Chỉnh sửa" trong BookCard
   const handleEditBookCard = async (bookId) => {
     try {
-      const res = await axios.get(`https://place-potentially-downloaded-lyrics.trycloudflare.com/book/${bookId}`);
+      const res = await axios.get(`https://work-garage-sufficient-pgp.trycloudflare.com/book/${bookId}`);
       setEditingBook(res.data);   // FULL DATA
       setShowAddBookForm(true);
     } catch (err) {

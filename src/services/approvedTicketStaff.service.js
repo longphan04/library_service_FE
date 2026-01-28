@@ -1,6 +1,6 @@
 import axios from "@/utils/axiosConfig";
 
-const API_BASE = "https://place-potentially-downloaded-lyrics.trycloudflare.com";
+const API_BASE = "https://work-garage-sufficient-pgp.trycloudflare.com";
 
 export const approvedTicketStaffService = {
     // Lấy danh sách ticket APPROVED (để duyệt trả sách)

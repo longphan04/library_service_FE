@@ -73,6 +73,8 @@ const normalizeHoldData = (hold) => {
         status: hold.status || 'ACTIVE',
         // Thời gian tạo - Quan trọng cho bộ đếm ngược 10 phút
         createdAt: hold.created_at || hold.createdAt || hold.createdAtDate || null,
+        // Thời gian hết hạn - Sử dụng để tính countdown thời gian thực
+        expiresAt: hold.expires_at || hold.expiresAt || null,
     };
 };
 

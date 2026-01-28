@@ -6,6 +6,21 @@ const ChatModal = ({ isOpen, onClose, messages = [], isLoading = false, onSendMe
     const [inputText, setInputText] = useState('');
     const messagesEndRef = useRef(null);
 
+    // Format AI response content to add line breaks after numbered items
+    const formatAIContent = (content) => {
+        if (!content || typeof content !== 'string') return content;
+
+        // Remove extra whitespace and newlines first, then add single newline before numbered items
+        let formatted = content
+            .replace(/\n\s*\n/g, '\n') // Remove multiple newlines
+            .replace(/\s+$/gm, ''); // Remove trailing whitespace on each line
+        
+        // Add newline before numbered items that don't already have one
+        formatted = formatted.replace(/([^\n])\s+(\d+)\.\s/g, '$1\n$2. ');
+        
+        return formatted.trim();
+    };
+
     const scrollToBottom = () => {
         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
     };
@@ -103,14 +118,14 @@ const ChatModal = ({ isOpen, onClose, messages = [], isLoading = false, onSendMe
                         <div className={`flex flex-col gap-1 max-w-[85%] ${msg.role === 'user' ? 'items-end' : 'items-start'}`}>
                             {/* Message Bubble */}
                             <div className={`
-                                p-3 rounded-2xl text-sm leading-relaxed shadow-sm
+                                p-3 rounded-2xl text-sm leading-relaxed shadow-sm whitespace-pre-wrap break-words
                                 ${msg.role === 'user'
                                     ? 'bg-primary text-white rounded-tr-sm'
                                     : 'bg-white border border-border text-text-primary rounded-tl-sm'
                                 }
                                 ${msg.isError ? 'bg-red-50 text-red-600 border-red-100' : ''}
                             `}>
-                                {msg.content}
+                                {msg.role === 'assistant' ? formatAIContent(msg.content) : msg.content}
                             </div>
 
                             {/* Book Sources */}
@@ -119,7 +134,7 @@ const ChatModal = ({ isOpen, onClose, messages = [], isLoading = false, onSendMe
                                     <p className="text-[10px] font-semibold text-text-sub uppercase tracking-wider pl-1">
                                         Sách được đề xuất
                                     </p>
-                                    <div className="flex gap-2 w-full overflow-x-auto pb-2 -mx-2 px-2 snap-x scrollbar-hide">
+                                    <div className="flex gap-2 w-full overflow-x-auto pb-3 -mx-2 px-2 snap-x scroll-smooth hover:scrollbar-thumb-gray-400 scrollbar-thin scrollbar-track-transparent scrollbar-thumb-gray-300">
                                         {msg.sources.map((book, idx) => (
                                             <ChatBookCard
                                                 key={`${book.id || idx}`}

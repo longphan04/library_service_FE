@@ -1,6 +1,6 @@
 import axios from '@/utils/axiosConfig';
 
-const BASE_URL = 'https://place-potentially-downloaded-lyrics.trycloudflare.com';
+const BASE_URL = 'https://work-garage-sufficient-pgp.trycloudflare.com';
 
 export const getAuthors = () => axios.get(`${BASE_URL}/author`);
 export const getPublishers = () => axios.get(`${BASE_URL}/publisher`);

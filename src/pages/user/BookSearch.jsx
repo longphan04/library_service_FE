@@ -5,13 +5,14 @@
 // ==========================================
 
 import { useState, useEffect, useRef, useMemo } from 'react';
-import { Link, useSearchParams } from 'react-router-dom';
+import { Link, useSearchParams, useLocation } from 'react-router-dom';
 import Header from '../../components/layouts/Header';
 import Footer from '../../components/layouts/Footer';
 import SearchBar from '../../components/ui/SearchBar';
 import SortBar from '../../components/ui/SortBar';
 import CategoryDropdown from '../../components/ui/CategoryDropdown';
 import BookSection from '../../components/ui/BookSection'; // Sử dụng BookSection cho giao diện slider
+import ChatBookCard from '../../components/ui/ChatBookCard';
 import { AlertCircle, ArrowLeft } from 'lucide-react';
 
 // Services
@@ -32,6 +33,10 @@ const ITEMS_PER_SLIDE = 18;
 const BookSearch = () => {
     // Quản lý trạng thái URL thông qua SearchParams
     const [searchParams, setSearchParams] = useSearchParams();
+    const location = useLocation();
+
+    // Lấy sources từ navigate state (từ AI recommendations)
+    const [aiSources, setAiSources] = useState(location.state?.sources || []);
 
     // Lấy các tham số từ URL
     // Ưu tiên: 'keyword' (chuẩn mới) > 'q' (cũ/từ header)
@@ -192,10 +197,15 @@ const BookSearch = () => {
     // ==========================================
     const handleSearchChange = (value) => setInputValue(value);
 
-    const handleSearchSubmit = (value) => {
+    const handleSearchSubmit = (value, sources = []) => {
         const queryToSearch = typeof value === 'string' ? value : inputValue;
         // Khi tìm theo keyword -> Xóa danh mục để đảm bảo độ ưu tiên của tìm kiếm keyword
         updateSearchParams({ keyword: queryToSearch, category: '' });
+        
+        // Lưu sources từ AI
+        if (sources && sources.length > 0) {
+            setAiSources(sources);
+        }
     };
 
     const handleSearchClose = () => {
@@ -293,6 +303,30 @@ const BookSearch = () => {
                             >
                                 Thử lại
                             </button>
+                        </div>
+                    </div>
+                )}
+
+                {/* Hiển thị AI Recommendations */}
+                {aiSources.length > 0 && (
+                    <div className="mb-8 bg-bg-section rounded-2xl p-6">
+                        <h2 className="text-lg font-bold text-text-primary mb-4">
+                            📚 Sách Được Đề Xuất
+                        </h2>
+                        <div className="flex gap-2 w-full overflow-x-auto pb-3 -mx-2 px-2 snap-x scroll-smooth">
+                            {aiSources.map((book, idx) => (
+                                <ChatBookCard
+                                    key={`${book.id || idx}`}
+                                    book={book}
+                                    onClick={() => {
+                                        // Có thể mở chi tiết sách hoặc navigate
+                                        const bookId = book.book_id || book.id;
+                                        if (bookId) {
+                                            // Navigate to book detail nếu cần
+                                        }
+                                    }}
+                                />
+                            ))}
                         </div>
                     </div>
                 )}

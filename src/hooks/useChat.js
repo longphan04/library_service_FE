@@ -112,47 +112,88 @@ export const useChat = () => {
 
             if (sources && Array.isArray(sources) && sources.length > 0) {
 
-                // Fetch books
+                // Fetch books using the new /book/identifier endpoint
                 const fetchBooks = async () => {
-                    const bookPromises = sources.map(async (source) => {
-                        const identifier = source.identifier || source.bookId || source.id;
+                    // Collect all identifiers (ISBNs)
+                    const identifiers = sources
+                        .map(source => source.identifier || source.bookId || source.id)
+                        .filter(Boolean); // Remove undefined/null values
 
-                        // If no identifier, we can't look it up, but we can still display the card from source info
-                        if (!identifier) {
-                            return {
+                    if (identifiers.length === 0) {
+                        // No identifiers available, use source data as-is
+                        const enrichedSources = sources.map(source => ({
+                            ...source,
+                            isNotFound: true,
+                            id: source.id || uuidv4(),
+                        }));
+
+                        setMessages((prev) => prev.map(msg =>
+                            msg.id === botMessageId
+                                ? { ...msg, sources: enrichedSources, isLoadingSources: false }
+                                : msg
+                        ));
+                        return;
+                    }
+
+                    try {
+                        // Call the unified /book/identifier endpoint
+                        const booksData = await aiService.getBooksByIdentifiers(identifiers);
+                        
+                        // Ensure booksData is an array
+                        const booksArray = Array.isArray(booksData) ? booksData : (booksData?.data || []);
+
+                        if (booksArray.length === 0) {
+                            // No books found, use source data with isNotFound flag
+                            const fallbackSources = sources.map(source => ({
                                 ...source,
-                                isNotFound: true, // Flag to indicate we can't open details
-                                id: uuidv4(), // Generate temp ID for key
-                            };
-                        }
-
-                        try {
-                            const book = await bookService.getById(identifier);
-                            return {
-                                ...book,
-                                score: source.score, // Preserve score from AI source
-                                category: book.category?.name || source.category, // Prefer DB category name
-                            };
-                        } catch (error) {
-                            console.warn(`Book not found: ${identifier}`, error);
-                            return {
-                                id: identifier,
-                                title: source.title || "Sách không tìm thấy",
                                 isNotFound: true,
-                                ...source
-                            };
+                                id: source.id || uuidv4(),
+                            }));
+
+                            setMessages((prev) => prev.map(msg =>
+                                msg.id === botMessageId
+                                    ? { ...msg, sources: fallbackSources, isLoadingSources: false }
+                                    : msg
+                            ));
+                            return;
                         }
-                    });
+                        
+                        // Enrich sources with book data and preserve AI metadata (score, category, etc.)
+                        const enrichedSources = sources.map((source, index) => {
+                            const matchedBook = booksArray.find(book => 
+                                (book.isbn || book.book_id) === (source.identifier || source.bookId || source.id)
+                            ) || booksArray[index]; // Fallback to index matching if ISBN doesn't match
 
-                    const results = await Promise.all(bookPromises);
-                    const enrichedSources = results.filter((book) => book !== null);
+                            return {
+                                ...matchedBook,
+                                ...source,
+                                score: source.score,
+                                category: matchedBook?.category?.name || matchedBook?.category || source.category,
+                                id: matchedBook?.book_id || matchedBook?.id || source.id || uuidv4(),
+                            };
+                        });
 
-                    // Update the existing message with sources
-                    setMessages((prev) => prev.map(msg =>
-                        msg.id === botMessageId
-                            ? { ...msg, sources: enrichedSources, isLoadingSources: false }
-                            : msg
-                    ));
+                        setMessages((prev) => prev.map(msg =>
+                            msg.id === botMessageId
+                                ? { ...msg, sources: enrichedSources, isLoadingSources: false }
+                                : msg
+                        ));
+                    } catch (error) {
+                        console.error('[useChat] Error fetching books by identifiers:', error);
+                        
+                        // Fallback: use source data as-is with isNotFound flag
+                        const fallbackSources = sources.map(source => ({
+                            ...source,
+                            isNotFound: true,
+                            id: source.id || uuidv4(),
+                        }));
+
+                        setMessages((prev) => prev.map(msg =>
+                            msg.id === botMessageId
+                                ? { ...msg, sources: fallbackSources, isLoadingSources: false }
+                                : msg
+                        ));
+                    }
                 };
 
                 // Trigger fetch without awaiting it for the main UI thread

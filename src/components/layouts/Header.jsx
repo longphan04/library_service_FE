@@ -108,10 +108,20 @@ const Header = () => {
     };
 
     // Xử lý tìm kiếm
-    const handleSearch = (value) => {
+    const handleSearch = (value, sources = []) => {
         if (value.trim()) {
-            // Chuyển đến trang BookSearch với query parameter
-            navigate(`/search?q=${encodeURIComponent(value)}`);
+            // Nếu có sources từ AI, truyền vào state
+            const searchParams = new URLSearchParams();
+            searchParams.set('q', value);
+            
+            if (sources && sources.length > 0) {
+                // Pass sources data để trang search hiển thị
+                navigate(`/search?q=${encodeURIComponent(value)}`, { 
+                    state: { sources } 
+                });
+            } else {
+                navigate(`/search?q=${encodeURIComponent(value)}`);
+            }
             closeSearch();
         }
     };

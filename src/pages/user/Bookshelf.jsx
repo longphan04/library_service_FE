@@ -5,9 +5,9 @@
 // Vị trí: src/pages/user/Bookshelf.jsx
 // ==========================================
 
-import { useState, useCallback, useEffect, useMemo } from 'react';
+import { useState, useCallback, useEffect, useMemo, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { BookMarked, Plus, Trash2, RefreshCw, ShoppingCart, AlertTriangle, Clock, Tag } from 'lucide-react';
+import { BookMarked, Plus, Trash2, RefreshCw, ShoppingCart, AlertTriangle, Tag } from 'lucide-react';
 import Header from '../../components/layouts/Header';
 import Footer from '../../components/layouts/Footer';
 import BookCard from '../../components/ui/BookCardUser';
@@ -19,23 +19,28 @@ import useBookHold from '../../hooks/useBookHold';
 // ==========================================
 // Hằng số (Constants)
 // ==========================================
-const HOLD_EXPIRATION_TIME = 10 * 60 * 1000; // 10 phút tính bằng milliseconds
 const MAX_SELECTED_BOOKS = 5; // Giới hạn 5 quyển mỗi lần mượn
 
 // ==========================================
 // Component: CountdownTimer
-// Mô tả: Hiển thị bộ đếm ngược và tự động gọi callback khi hết giờ
+// Mô tả: Hiển thị bộ đếm ngược dạng mm:ss và tự động gọi callback khi hết giờ
 // ==========================================
-const CountdownTimer = ({ createdAt, onExpire }) => {
+const CountdownTimer = ({ expiresAt, onExpire }) => {
     const [timeLeft, setTimeLeft] = useState(null);
+    const onExpireRef = useRef(onExpire);
+
+    // Cập nhật ref khi onExpire thay đổi (không trigger effect)
+    useEffect(() => {
+        onExpireRef.current = onExpire;
+    }, [onExpire]);
 
     useEffect(() => {
-        if (!createdAt) return;
+        if (!expiresAt) return;
 
         const calculateTimeLeft = () => {
-            const start = new Date(createdAt).getTime();
+            const expiryTime = new Date(expiresAt).getTime();
             const now = new Date().getTime();
-            const diff = HOLD_EXPIRATION_TIME - (now - start);
+            const diff = expiryTime - now;
             return Math.max(0, diff);
         };
 
@@ -44,7 +49,7 @@ const CountdownTimer = ({ createdAt, onExpire }) => {
         setTimeLeft(initial);
 
         if (initial <= 0) {
-            onExpire();
+            onExpireRef.current?.();
             return;
         }
 
@@ -54,12 +59,12 @@ const CountdownTimer = ({ createdAt, onExpire }) => {
 
             if (remaining <= 0) {
                 clearInterval(timer);
-                onExpire();
+                onExpireRef.current?.();
             }
         }, 1000);
 
         return () => clearInterval(timer);
-    }, [createdAt, onExpire]);
+    }, [expiresAt]); // Chỉ phụ thuộc vào expiresAt
 
     if (timeLeft === null) return null;
 
@@ -67,11 +72,8 @@ const CountdownTimer = ({ createdAt, onExpire }) => {
     const seconds = Math.floor((timeLeft % 60000) / 1000);
 
     return (
-        <div className="flex items-center gap-1.5 text-error font-medium text-xs mt-1">
-            <Clock size={14} />
-            <span>
-                Còn {minutes}:{seconds.toString().padStart(2, '0')}
-            </span>
+        <div className="text-right text-error font-semibold text-sm">
+            {minutes}:{seconds.toString().padStart(2, '0')}
         </div>
     );
 };
@@ -152,25 +154,38 @@ const ConfirmDeleteModal = ({ isOpen, onClose, onConfirm, bookTitle, loading }) 
 // Component: BookshelfItem (Từng cuốn sách trong kệ)
 // ==========================================
 const BookshelfItem = ({ hold, onRemove, isSelected, onToggleSelect }) => {
-    const { id, book, status, createdAt } = hold;
+    const { id, book, status, expiresAt } = hold;
 
+    // Tách handleExpire để tránh tạo hàm mới mỗi lần parent render
+    // Chỉ cần id và book.title, không phụ thuộc vào onRemove
     const handleExpire = useCallback(() => {
-        onRemove(id, book.title, true); // true nghĩa là tự động xóa do hết hạn
+        // Gọi callback với id, title, và flag true (auto delete)
+        if (onRemove) {
+            onRemove(id, book.title, true);
+        }
     }, [id, book.title, onRemove]);
 
     return (
         <div className="relative group flex flex-col h-full">
-            {/* Checkbox chọn sách - Hiển thị đè lên ảnh bìa */}
-            <div className="absolute top-2 left-2 z-20">
+            {/* Checkbox chọn sách - Ẩn mặc định, hiển thị on hover hoặc khi được chọn */}
+            <div className={`absolute top-2 left-2 z-20 transition-opacity duration-300 ${
+                isSelected 
+                    ? 'opacity-100' 
+                    : 'opacity-0 group-hover:opacity-100'
+            }`}>
                 <input
                     type="checkbox"
                     checked={isSelected}
                     onChange={() => onToggleSelect(id)}
-                    className="w-5 h-5 rounded-md border-gray-300 text-primary focus:ring-primary cursor-pointer shadow-sm bg-white/80 backdrop-blur-xs transition-transform hover:scale-110"
+                    className={`w-5 h-5 rounded-md cursor-pointer shadow-sm transition-all duration-300 ${
+                        isSelected
+                            ? 'bg-primary border-primary checked:bg-primary checked:border-primary accent-primary'
+                            : 'bg-white/90 border border-gray-300 hover:border-primary hover:bg-primary/5'
+                    }`}
                 />
             </div>
 
-            {/* Thẻ sách chuẩn - Thêm border nếu đang được chọn */}
+            {/* Thẻ sách chuẩn */}
             <BookCard
                 id={book.id}
                 title={book.title}
@@ -179,7 +194,7 @@ const BookshelfItem = ({ hold, onRemove, isSelected, onToggleSelect }) => {
                 availableCopies={book.availableCopies}
                 showAvailability={false}
                 onClick={() => onToggleSelect(id)}
-                className={`transition-all duration-300 ${isSelected ? 'ring-2 ring-primary ring-offset-2' : ''}`}
+                className="transition-all duration-300"
             >
                 {/* Thông tin bổ sung */}
                 <div className="mt-2 space-y-1.5 border-t border-gray-100 pt-1.5">
@@ -189,8 +204,8 @@ const BookshelfItem = ({ hold, onRemove, isSelected, onToggleSelect }) => {
                         <span className="line-clamp-2 break-words">{book.category}</span>
                     </p>
 
-                    {/* Bộ đếm ngược hiển thị ngay dưới danh mục - theo yêu cầu */}
-                    <CountdownTimer createdAt={createdAt} onExpire={handleExpire} />
+                    {/* Bộ đếm ngược dạng số mm:ss - căn phải, màu đỏ */}
+                    <CountdownTimer expiresAt={expiresAt} onExpire={handleExpire} />
 
                     {/* Note - Cho phép hiển thị nhiều dòng hơn (tự động kéo dài card) */}
                     {book.note && (
@@ -303,6 +318,8 @@ const Bookshelf = () => {
             if (isLimitError) {
                 // Sử dụng Toast màu nâu (warning) để đồng nhất thay vì PopUp
                 showToast('warning', 'Bạn đã mượn tối đa 3 phiếu. Vui lòng trả sách để có thể mượn thêm!');
+                // Reset error state của hook để không hiển thị error box
+                refetch();
             } else {
                 // Các lỗi khác vẫn dùng Toast error
                 showToast('error', apiMessage || 'Mượn sách thất bại. Vui lòng thử lại.');

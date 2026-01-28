@@ -2,7 +2,8 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import Chart from "react-apexcharts";
 import { buildTooltip, buildTooltipCompareTwo } from "../../../utils/hs-apexcharts-helpers";
-import { getBorrowApprovedStats, getTicketFlowStats } from "../../../services/dashboard.service";
+import AdminTabs from "@/components/ui/AdminTabs";
+import { getBorrowReturnStats, getTicketFlowStats } from "../../../services/dashboard.service";
 
 export default function Statistics() {
     const navigate = useNavigate();
@@ -315,27 +316,7 @@ export default function Statistics() {
             </h1>
 
             {/* TAB BUTTONS */}
-            <div className="flex justify-center gap-4 mb-4">
-                <button
-                    className="px-6 py-2 rounded-full bg-[#D9A37B] text-white cursor-default shadow-sm"
-                >
-                    Thống kê
-                </button>
-
-                <button
-                    onClick={() => navigate("/admin/inventory")}
-                    className="px-6 py-2 rounded-full bg-[#E2C6A6] text-[#7A4A2E] hover:opacity-90 hover:bg-[#D4B595] transition-colors"
-                >
-                    Tồn kho
-                </button>
-
-                <button
-                    onClick={() => navigate("/admin/inventory-log")}
-                    className="px-6 py-2 rounded-full bg-[#E2C6A6] text-[#7A4A2E] hover:opacity-90 hover:bg-[#D4B595] transition-colors"
-                >
-                    Biến động kho
-                </button>
-            </div>
+            <AdminTabs active="statistics" />
 
             {/* TIME RANGE SELECTOR */}
             <div className="flex justify-end max-w-6xl mx-auto mb-4 px-4">

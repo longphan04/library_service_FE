@@ -113,7 +113,7 @@ const BookCard = memo(function BookCard({
             {/* Thông tin sách - Đảm bảo layout không vỡ với space-y-1 */}
             <div className="p-3 space-y-1">
                 {/* Tiêu đề */}
-                <h3 className="text-sm font-medium text-text-primary line-clamp-2 group-hover:text-primary transition-colors">
+                <h3 className="text-sm font-medium text-text-primary line-clamp-1 group-hover:text-primary transition-colors">
                     {title}
                 </h3>
 

@@ -4,6 +4,8 @@
 // ==========================================
 
 import axios from './axios';
+import { getBooksByIdentifiers as fetchBooksWithCache } from './book.service';
+
 
 /**
  * Send a message to the AI chat
@@ -22,8 +24,21 @@ export const chat = async (message, sessionId, topK = 5) => {
     return response.data;
 };
 
+/**
+ * Fetch book details by ISBN identifiers
+ * Delegates to book.service which handles caching
+ * @param {Array<string|number>} ids - Array of ISBN identifiers
+ * @returns {Promise<Array>} Array of book objects with full details
+ */
+export const getBooksByIdentifiers = async (ids) => {
+    // Delegate to book service to use centralized cache
+    return fetchBooksWithCache(ids);
+};
+
+
 const aiService = {
     chat,
+    getBooksByIdentifiers,
 };
 
 export default aiService;
