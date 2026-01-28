@@ -62,15 +62,20 @@ export default function UserDetailModal({ user, onClose, onSave }) {
     };
 
     // Prepare user info for header from API or fallback to list data
-    const profile = historyData?.data || {};
-    const apiUserInfo = profile.user || {};
+    // profile could be an array of history or the profile object itself depending on API structure
+    const profile = (historyData?.data && !Array.isArray(historyData.data)) ? historyData.data : (historyData?.user || historyData?.profile || {});
+    const apiUserInfo = profile.user || historyData?.user || {};
 
     const displayUser = {
         ...user,
-        name: profile.full_name || user.name,
-        email: apiUserInfo.email || user.email,
-        id: profile.member_id || user.id,
-        avatar: profile.avatar_url || user.avatar
+        name: profile.full_name || profile.profile?.full_name || user.name,
+        email: apiUserInfo.email || profile.email || user.email,
+        id: profile.user_id || profile.profile_id || user.id,
+        phone: profile.phone || profile.profile?.phone || user.phone,
+        date: (profile.created_at || profile.profile?.created_at || profile.createdAt)
+            ? new Date(profile.created_at || profile.profile?.created_at || profile.createdAt).toLocaleDateString('vi-VN')
+            : user.date,
+        avatar: profile.avatar_url || profile.profile?.avatar_url || user.avatar
     };
 
     return (

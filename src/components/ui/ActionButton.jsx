@@ -13,7 +13,7 @@ export default function ActionButton({
         success: "bg-green-500 text-white hover:bg-green-600",
         danger: "bg-red-500 text-white hover:bg-red-600",
         outline:
-            "border border-gray-300 absolute text-gray-700 hover:bg-gray-100",
+            "border border-gray-300 text-gray-700 hover:bg-gray-100",
     };
 
     return (

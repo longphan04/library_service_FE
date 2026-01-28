@@ -55,7 +55,9 @@ export default function PendingSection({
   const filteredTickets = allTickets
     .filter((t) => t.status === "pending" || t.status === "rejected")
     .filter((t) =>
-      t.userName.toLowerCase().includes(search.toLowerCase())
+      t.userName?.toLowerCase().includes(search.toLowerCase()) ||
+      t.email?.toLowerCase().includes(search.toLowerCase()) ||
+      t.id?.toString().includes(search)
     )
     .map(ticket => ({
       ...ticket,
@@ -179,7 +181,9 @@ export default function PendingSection({
           await borrowTicketStaffService.updateStatus(id, "APPROVED");
           updateTicketStatus(id, "APPROVED");
           if (refreshData) refreshData();
-          setCheckedTickets(prev => ({ ...prev, [id]: false }));
+          setCheckedTickets({});
+          setIsModalOpen(false);
+          setSelectedTicket(null);
         } catch (err) {
           console.error(err);
           alert("Duyệt phiếu thất bại");
@@ -198,7 +202,9 @@ export default function PendingSection({
           await borrowTicketStaffService.updateStatus(id, "CANCELLED");
           updateTicketStatus(id, "CANCELLED");
           if (refreshData) refreshData();
-          setCheckedTickets(prev => ({ ...prev, [id]: false }));
+          setCheckedTickets({});
+          setIsModalOpen(false);
+          setSelectedTicket(null);
         } catch (err) {
           console.error(err);
           alert("Từ chối phiếu thất bại");
@@ -258,8 +264,8 @@ export default function PendingSection({
           setSelectedTicket(null);
         }}
         ticket={selectedTicket}
-        onConfirm={handleConfirmTicket}
-        onReject={handleRejectTicket}
+        onConfirm={confirmOne}
+        onReject={rejectOne}
       />
 
       {totalPages > 1 && (

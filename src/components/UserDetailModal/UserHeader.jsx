@@ -26,7 +26,6 @@ export default function UserHeader({ user, status }) {
                 <InfoRow label="Email" value={user.email} />
                 <InfoRow label="ID" value={user.id} />
                 <InfoRow label="Số điện thoại" value={user.phone || "—"} />
-                <InfoRow label="Ngày tham gia" value={user.date || "—"} />
 
                 <div className="flex gap-4 items-center mt-2">
                     <span className="font-semibold w-32">Trạng thái:</span>

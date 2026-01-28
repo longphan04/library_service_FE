@@ -12,9 +12,6 @@ export default function TicketDetailModal({
 }) {
   const [books, setBooks] = useState([]);
   const [userInfo, setUserInfo] = useState(null);
-  const [showConfirm, setShowConfirm] = useState(false);
-  const [confirmConfig, setConfirmConfig] = useState({ title: "", onConfirm: () => { } });
-  const [showReject, setShowReject] = useState(false);
 
   // Effect để disable scroll khi modal mở
   useEffect(() => {
@@ -42,30 +39,16 @@ export default function TicketDetailModal({
 
   // Xử lý xác nhận toàn bộ ticket
   const handleConfirm = () => {
-    setConfirmConfig({
-      title: "Bạn có chắc chắn muốn duyệt phiếu mượn này?",
-      onConfirm: () => {
-        if (onConfirm) {
-          onConfirm(ticket.id, books);
-        }
-        setShowConfirm(false);
-      }
-    });
-    setShowConfirm(true);
+    if (onConfirm) {
+      onConfirm(ticket.id, books);
+    }
   };
 
   // Xử lý từ chối toàn bộ ticket
   const handleReject = () => {
-    setConfirmConfig({
-      title: "Bạn có chắc chắn muốn từ chối phiếu mượn này?",
-      onConfirm: () => {
-        if (onReject) {
-          onReject(ticket.id);
-        }
-        setShowReject(false);
-      }
-    });
-    setShowReject(true);
+    if (onReject) {
+      onReject(ticket.id);
+    }
   };
 
   // Tính tổng số lượng sách
@@ -214,20 +197,6 @@ export default function TicketDetailModal({
         </div>
       </div>
 
-      <ConfirmModal
-        open={showConfirm}
-        title={confirmConfig.title}
-        onConfirm={confirmConfig.onConfirm}
-        onCancel={() => setShowConfirm(false)}
-      />
-
-      <ConfirmModal
-        open={showReject}
-        title={confirmConfig.title}
-        confirmVariant="danger"
-        onConfirm={confirmConfig.onConfirm}
-        onCancel={() => setShowReject(false)}
-      />
     </div>
   );
 }

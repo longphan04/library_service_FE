@@ -3,8 +3,8 @@ import { FALLBACK_IMAGES, getBookCoverUrl } from '../../utils/imageUrl';
 
 export default function BookCard({ book, isChecked, onCheckChange, onEdit }) {
   return (
-    <div className="w-full h-[320px]">
-      <div className="bg-white rounded-lg p-6 shadow-sm flex items-start gap-6 w-full h-full border border-gray-100 hover:shadow-md transition-shadow relative overflow-hidden">
+    <div className="w-full min-h-[320px] h-full">
+      <div className="bg-white rounded-lg p-6 shadow-sm flex items-start gap-6 w-full h-full border border-gray-100 hover:shadow-md transition-shadow relative">
         {/* Thumbnail */}
         <div className="w-[120px] h-[180px] flex-shrink-0 flex items-center justify-center bg-gray-50 rounded-md overflow-hidden border border-gray-100">
           <img
@@ -22,10 +22,16 @@ export default function BookCard({ book, isChecked, onCheckChange, onEdit }) {
         </div>
 
         {/* Content */}
-        <div className="flex-1 flex flex-col min-w-0 h-full">
-          <div className="flex-1 overflow-hidden">
+        <div className="flex-1 flex flex-col min-w-0">
+          <div>
             <h3
-              className="font-bold text-xl mb-2 text-gray-900 line-clamp-2 leading-tight h-[3.5rem]"
+              className="font-bold text-lg mb-2 text-gray-900 line-clamp-2 leading-tight overflow-hidden"
+              style={{
+                display: '-webkit-box',
+                WebkitLineClamp: 2,
+                WebkitBoxOrient: 'vertical',
+                height: '2.8rem', // Fixed height for 2 lines
+              }}
               title={book.title}
             >
               {book.title}
@@ -47,11 +53,11 @@ export default function BookCard({ book, isChecked, onCheckChange, onEdit }) {
             </div>
 
             {/* Categories */}
-            <div className="flex flex-wrap gap-2 mt-4 max-h-[64px] overflow-hidden">
+            <div className="flex flex-wrap gap-2 mt-4 overflow-hidden" style={{ height: '25px' }}>
               {book.categories?.slice(0, 3).map((cat) => (
                 <span
                   key={cat.category_id}
-                  className="px-3 py-1 rounded-full text-white text-[10px] font-semibold"
+                  className="px-3 py-1 rounded-full text-white text-[10px] font-semibold whitespace-nowrap"
                   style={{ backgroundColor: '#7A4A2E' }}
                 >
                   {cat.name}
@@ -64,7 +70,7 @@ export default function BookCard({ book, isChecked, onCheckChange, onEdit }) {
           </div>
 
           {/* Footer Actions (Checkbox & Edit Button) */}
-          <div className="mt-4 pt-4 border-t border-gray-50 flex items-center gap-4">
+          <div className="mt-auto pt-4 border-t border-gray-50 flex items-center gap-4">
             <div className="flex-shrink-0 flex items-center gap-2">
               <input
                 type="checkbox"

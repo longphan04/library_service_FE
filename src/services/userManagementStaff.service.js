@@ -9,13 +9,21 @@ export const userManagementStaffService = {
             const response = await axios.get('/user/member');
             // Format data: id, name, email, date, status
             if (response.data.data && Array.isArray(response.data.data)) {
-                return response.data.data.map(user => ({
-                    id: user.user_id,
-                    name: user.profile?.full_name || 'N/A',
-                    email: user.email,
-                    date: user.created_at ? new Date(user.created_at).toLocaleDateString('vi-VN') : 'N/A',
-                    status: user.status === 'BANNED' ? 'locked' : 'active',
-                }));
+                return response.data.data.map(user => {
+                    const profileData = user.profile || user || {};
+                    const userData = user.user || user || {};
+                    const rawDate = user.created_at || profileData.created_at || userData.created_at || user.createdAt;
+
+                    return {
+                        id: user.user_id || user.id,
+                        name: profileData.full_name || user.full_name || 'N/A',
+                        email: userData.email || user.email || 'N/A',
+                        date: rawDate ? new Date(rawDate).toLocaleDateString('vi-VN') : 'N/A',
+                        avatar: profileData.avatar_url || user.avatar_url || profileData.avatar || user.avatar || null,
+                        phone: profileData.phone || user.phone || null,
+                        status: (userData.status || user.status || 'ACTIVE').toUpperCase() === 'BANNED' ? 'locked' : 'active',
+                    };
+                });
             }
             return [];
         } catch (error) {

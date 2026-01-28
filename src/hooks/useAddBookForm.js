@@ -236,19 +236,32 @@ export default function useAddBookForm({
 
     // thêm tác giả
     const handleAddNewAuthor = async () => {
-        if (!authorInput.trim()) return;
+        const nameToAdd = authorInput.trim();
+        if (!nameToAdd) return;
 
         try {
-            const res = await createAuthor({ name: authorInput });
+            const res = await createAuthor({ name: nameToAdd });
+            // API trả về object author mới có author_id và name
             const newAuthor = res.data;
 
-            setAuthors(prev => [...prev, newAuthor]);
-            setSelectedAuthors(prev => [...prev, newAuthor]);
-            setAuthorInput("");
-            setShowAuthorDropdown(false);
+            if (newAuthor && (newAuthor.author_id || newAuthor.id)) {
+                // Đảm bảo lấy đúng ID trường hợp API trả về key khác
+                const normalizedAuthor = {
+                    author_id: newAuthor.author_id || newAuthor.id,
+                    name: newAuthor.name
+                };
+
+                setAuthors(prev => [...prev, normalizedAuthor]);
+                setSelectedAuthors(prev => [...prev, normalizedAuthor]);
+                setAuthorInput("");
+                setShowAuthorDropdown(false);
+            } else {
+                throw new Error("Dữ liệu trả về từ API không hợp lệ");
+            }
         } catch (err) {
-            console.error(err);
-            alert("Không thể thêm tác giả");
+            console.error("Lỗi khi thêm tác giả:", err);
+            const errorMsg = err.response?.data?.message || "Không thể thêm tác giả vào hệ thống";
+            alert(errorMsg);
         }
     };
 

@@ -87,11 +87,7 @@ export default function PickedUpBookSection({
             onConfirm: () => {
                 updateTicketStatus(ticketId, "RETURNED");
                 if (refreshData) refreshData();
-                setCheckedTickets(prev => {
-                    const newState = { ...prev };
-                    delete newState[ticketId];
-                    return newState;
-                });
+                setCheckedTickets({});
                 setIsModalOpen(false);
                 setSelectedTicket(null);
                 setShowConfirm(false);
@@ -115,11 +111,7 @@ export default function PickedUpBookSection({
             onConfirm: () => {
                 bulkUpdateTickets(selectedIds, "RETURNED");
                 if (refreshData) refreshData();
-                setCheckedTickets(prev => {
-                    const newState = { ...prev };
-                    selectedIds.forEach(id => delete newState[id]);
-                    return newState;
-                });
+                setCheckedTickets({});
                 setShowConfirm(false);
             }
         });
@@ -132,11 +124,7 @@ export default function PickedUpBookSection({
             onConfirm: () => {
                 updateTicketStatus(id, "RETURNED");
                 if (refreshData) refreshData();
-                setCheckedTickets(prev => {
-                    const newState = { ...prev };
-                    delete newState[id];
-                    return newState;
-                });
+                setCheckedTickets({});
                 setShowConfirm(false);
             }
         });

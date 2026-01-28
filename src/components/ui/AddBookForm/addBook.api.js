@@ -24,4 +24,4 @@ export const updateBook = (id, formData) =>
     });
 
 export const createAuthor = (data) =>
-    axios.post('/author', data);
+    axios.post('/author/', data);
