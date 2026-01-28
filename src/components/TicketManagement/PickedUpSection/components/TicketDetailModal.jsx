@@ -151,7 +151,9 @@ export default function TicketDetailModal({
                                     />
                                     <div>
                                         <div className="font-medium text-gray-800">{book.name}</div>
-                                        <div className="text-sm text-gray-500">{book.category}</div>
+                                        {book.category && book.category !== "—" && (
+                                            <div className="text-sm text-gray-500">{book.category}</div>
+                                        )}
                                     </div>
                                     <div className="font-mono text-[#7A4A2E] font-medium">
                                         {book.bookId}

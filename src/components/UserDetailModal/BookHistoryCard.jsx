@@ -61,7 +61,7 @@ export default function BookHistoryCard({ history, onSendWarning }) {
                 {/* ID */}
                 <div className="font-medium min-w-[100px]">
                     <div className="text-sm text-gray-500">Mã phiếu</div>
-                    <div className="font-semibold text-sm truncate" title={ticketCode}>{ticketCode}</div>
+                    <div className="font-semibold text-sm truncate" title={ticketId}>{ticketId}</div>
                 </div>
 
                 {/* Số lượng - show status if details not loaded, or count if loaded */}

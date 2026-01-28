@@ -137,7 +137,7 @@ export default function TicketDetailModal({
             </h3>
 
             {/* TABLE HEADER - Không có checkbox */}
-            <div className="grid grid-cols-[100px_1fr_1fr_120px] bg-[#7A4A2E] text-white px-4 py-3 rounded-t">
+            <div className="grid grid-cols-[100px_2fr_1fr_100px] bg-[#7A4A2E] text-white px-4 py-3 rounded-t">
               <div>Ảnh</div>
               <div>Tên sách</div>
               <div>ID sách</div>
@@ -149,7 +149,7 @@ export default function TicketDetailModal({
               {books.map((book) => (
                 <div
                   key={book.id}
-                  className="grid grid-cols-[100px_1fr_1fr_120px] px-4 py-4 border-b border-gray-200 items-center hover:bg-gray-50 transition"
+                  className="grid grid-cols-[100px_2fr_1fr_100px] px-4 py-4 border-b border-gray-200 items-center hover:bg-gray-50 transition"
                 >
                   <img
                     src={book.image}
@@ -162,7 +162,9 @@ export default function TicketDetailModal({
 
                   <div>
                     <div className="font-medium text-gray-800">{book.name}</div>
-                    <div className="text-sm text-gray-500">{book.category}</div>
+                    {book.category && book.category !== "—" && (
+                      <div className="text-sm text-gray-500">{book.category}</div>
+                    )}
                   </div>
 
                   <div className="font-mono text-[#7A4A2E] font-medium">
